@@ -22,7 +22,7 @@ Add these line to `~/.bashrc` or run these line every time you run this server.
 ```sh
 export CHANNEL_ID=""
 export CHANNEL_SECRET=""
-export MID=""
+export CHANNEL_MID=""
 ```
 
 ## Pre requirements

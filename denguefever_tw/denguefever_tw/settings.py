@@ -11,6 +11,9 @@ https://docs.djangoproject.com/en/1.10/ref/settings/
 """
 
 import os
+import json
+import logging
+from pprint import pformat
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -37,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'dengue_linebot.apps.DengueLinebotConfig'
 ]
 
 MIDDLEWARE = [
@@ -118,3 +122,53 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.10/howto/static-files/
 
 STATIC_URL = '/static/'
+
+
+
+# Setup Global Logging
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '%(levelname)s:%(asctime)s:%(module)s:%(process)d:%(thread)d:%(message)s'
+        },
+        'simple': {
+            'format': '%(levelname)s %(message)s'
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'DEBUG' if DEBUG else 'INFO',
+        },
+    },
+}
+
+
+# Setup LOGGING for settings
+logger = logging.getLogger('django-setting')
+handler = logging.StreamHandler()
+handler.setFormatter(logging.Formatter(LOGGING['formatters']['verbose']['format']))
+logger.addHandler(handler)
+logger.setLevel(logging.DEBUG if DEBUG else logging.WARNING)
+
+
+# Load LINE API key
+try:
+    with open('denguefever_tw/.api_key.json') as api_key_file:
+        LINE_BOT_SETTINGS = json.load(api_key_file)
+except FileNotFoundError as e:
+    logger.debug('.api_key.json does not exist. Load env variables')
+    LINE_BOT_SETTINGS = {
+        'channel_id': os.environ['CHANNEL_ID'],
+        'channel_secret': os.environ['CHANNEL_SECRET'],
+        'channel_mid': os.environ['CHANNEL_MID']
+    }
+logger.debug('API data is set to\n'+pformat(LINE_BOT_SETTINGS))
