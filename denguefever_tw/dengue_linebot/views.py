@@ -3,7 +3,9 @@ from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 
 import logging
+from pprint import pformat
 
+import ujson
 from linebot.client import LineBotClient
 
 
@@ -29,7 +31,9 @@ def reply(request):
                                                    e=ke))
         return HttpResponseBadRequest()
 
-    logger.info('Request Received: {}'.format(request.body))
+    req_json = ujson.loads(request.body.decode('utf-8'))
+    logger.info('Request Received: {req}'.format(req=pformat(req_json, indent=4)))
+    req_content = req_json['result'][0]['content']
 
     # TODO: Reply
     return HttpResponse()
