@@ -8,6 +8,8 @@ from pprint import pformat
 import ujson
 from linebot.client import LineBotClient
 
+from .LINEBotHandler import LINE_operation_factory
+from .LINEBotHandler import LINE_message_factory
 
 client = LineBotClient(**settings.LINE_BOT_SETTINGS)
 logger = logging.getLogger('django')
@@ -31,9 +33,14 @@ def reply(request):
                                                    e=ke))
         return HttpResponseBadRequest()
 
+    # Load request content
     req_json = ujson.loads(request.body.decode('utf-8'))
     logger.info('Request Received: {req}'.format(req=pformat(req_json, indent=4)))
     req_content = req_json['result'][0]['content']
 
-    # TODO: Reply
+    if 'onType' in req_content.keys():
+        handler = LINE_operation_factory(client, req_content['onType'])
+    elif 'contentType' in req_content.keys():
+        handler = LINE_message_factory(client, req_content['contentType'])
+    handler.handle(req_content)
     return HttpResponse()
