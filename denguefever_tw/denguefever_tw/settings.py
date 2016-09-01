@@ -11,9 +11,10 @@ https://docs.djangoproject.com/en/1.10/ref/settings/
 """
 
 import os
-import json
 import logging
 from pprint import pformat
+
+import ujson
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -163,7 +164,7 @@ logger.setLevel(logging.DEBUG if DEBUG else logging.WARNING)
 # Load LINE API key
 try:
     with open('denguefever_tw/.api_key.json') as api_key_file:
-        LINE_BOT_SETTINGS = json.load(api_key_file)
+        LINE_BOT_SETTINGS = ujson.load(api_key_file)
 except FileNotFoundError as e:
     logger.debug('.api_key.json does not exist. Load env variables')
     LINE_BOT_SETTINGS = {
