@@ -136,6 +136,16 @@ class LINELocationHandler(LINEMessageHandler):
         self.latitude = self.location['latitude']
         self.longitude = self.location['longitude']
 
+    def handle(self):
+        resp = self._client.send_location(
+            to_mid=self.user_mid,
+            title='Location',
+            address=self.address,
+            latitude=self.latitude,
+            longitude=self.longitude,
+        )
+        return resp
+
 
 class LINEStickerHandler(LINEMessageHandler):
     def _load_content(self, req_content):
