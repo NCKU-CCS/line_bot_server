@@ -43,5 +43,6 @@ def reply(request):
     elif 'contentType' in req_content.keys():
         handler = LINE_message_factory(client, req_content)
     logger.debug('{handler} is created.'.format(handler=handler.__class__.__name__))
-    handler.handle()
+    resp = handler.handle()
+    logger.debug('Response after handled:\n{resp}'.format(resp=pformat(resp.content)))
     return HttpResponse()
