@@ -6,8 +6,11 @@ import logging
 from pprint import pformat
 
 import ujson
+import requests
 from linebot.client import LineBotClient
 
+from .LINEBotHandler import LINE_operation_factory
+from .LINEBotHandler import LINE_message_factory
 
 client = LineBotClient(**settings.LINE_BOT_SETTINGS)
 logger = logging.getLogger('django')
@@ -31,9 +34,22 @@ def reply(request):
                                                    e=ke))
         return HttpResponseBadRequest()
 
+    # Load request content
     req_json = ujson.loads(request.body.decode('utf-8'))
     logger.info('Request Received: {req}'.format(req=pformat(req_json, indent=4)))
     req_content = req_json['result'][0]['content']
 
-    # TODO: Reply
+    if 'opType' in req_content.keys():
+        handler = LINE_operation_factory(client, req_content)
+    elif 'contentType' in req_content.keys():
+        handler = LINE_message_factory(client, req_content)
+    logger.debug('{handler} is created.'.format(handler=handler.__class__.__name__))
+    resp = handler.handle()
+    if resp.status_code == requests.codes.ok:
+        logger.debug(('Successfully handled\n'
+                      'Response after handled:\n{resp}').format(resp=pformat(resp.text)))
+    else:
+        logger.debug(('Failed to handle\n'
+                      'Response after handled:\n{resp}').format(resp=pformat(resp.text)))
+
     return HttpResponse()
