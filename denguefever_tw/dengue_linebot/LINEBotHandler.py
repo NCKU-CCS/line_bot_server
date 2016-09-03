@@ -143,7 +143,7 @@ class LINEStickerHandler(LINEMessageHandler):
         self.STKPKGID = self.content_metadata['STKPKGID']
         self.STKID = self.content_metadata['STKID']
         self.STKVER = self.content_metadata['STKVER']
-        self.STKTXT = self.content_type['STKTXT']
+        self.STKTXT = self.content_metadata['STKTXT']
 
 
 class LINEContactHandler(LINEMessageHandler):
