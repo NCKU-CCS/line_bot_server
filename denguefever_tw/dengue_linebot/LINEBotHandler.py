@@ -37,24 +37,39 @@ def LINE_operation_factory(client, req_content):
     if op_type == LINEOperationType.ADD_FRIEND:
         handler_cls = LINEAddFriendHandler
     elif op_type == LINEOperationType.BLOCK_ACCOUNT:
-        handler_cls == LINEBlockHandler
+        handler_cls = LINEBlockHandler
     else:
         raise ValueError(op_type, 'No such onType')
     return handler_cls(client, req_content)
 
 
 class LINEOperationHandler(LINEBotHandler):
+    welcome_msg = ("哈囉~ {name}\n"
+                   "很開心你加我為好友\n"
+                   "我可以為你做......\n")
+
     def _load_content(self, req_content):
         self.revision = req_content['revision']
         self.op_type = req_content['opType']
         self.params = req_content['params']
 
-    def handle(self):
-        raise NotImplementedError('Operation Currently Not Supported\n')
-
 
 class LINEAddFriendHandler(LINEOperationHandler):
-    pass
+    def handle(self):
+        user_mid = self.params[0]
+        user_profile = self._client.get_user_profile(user_mid)[0]
+        user_name = user_profile['display_name']
+        user_picture_url = user_profile['picture_url']
+        user_status_msg = user_profile['status_message']
+
+        # TODO: add user to database if not exist
+
+        # TODO: send re-add friend msg if the user is not new
+        resp = self._client.send_text(
+            to_mid=user_mid,
+            text=self.welcome_msg.format(name=user_name)
+        )
+        return resp
 
 
 class LINEBlockHandler(LINEOperationHandler):
