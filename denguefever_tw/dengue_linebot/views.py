@@ -38,9 +38,10 @@ def reply(request):
     logger.info('Request Received: {req}'.format(req=pformat(req_json, indent=4)))
     req_content = req_json['result'][0]['content']
 
-    if 'onType' in req_content.keys():
-        handler = LINE_operation_factory(client, req_content['onType'])
+    if 'opType' in req_content.keys():
+        handler = LINE_operation_factory(client, req_content)
     elif 'contentType' in req_content.keys():
-        handler = LINE_message_factory(client, req_content['contentType'])
-    handler.handle(req_content)
+        handler = LINE_message_factory(client, req_content)
+    logger.debug('{handler} is created.'.format(handler=handler.__class__.__name__))
+    handler.handle()
     return HttpResponse()
