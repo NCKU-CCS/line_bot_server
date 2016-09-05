@@ -1,6 +1,12 @@
 from abc import ABCMeta, abstractmethod
 from datetime import datetime
 from enum import IntEnum
+import logging
+
+from .models import LINEUser
+
+
+logger = logging.getLogger(__name__)
 
 
 class LINEOperationType(IntEnum):
@@ -44,10 +50,6 @@ def LINE_operation_factory(client, req_content):
 
 
 class LINEOperationHandler(LINEBotHandler):
-    welcome_msg = ("哈囉~ {name}\n"
-                   "很開心你加我為好友\n"
-                   "我可以為你做......\n")
-
     def _load_content(self, req_content):
         self.revision = req_content['revision']
         self.op_type = req_content['opType']
@@ -55,19 +57,38 @@ class LINEOperationHandler(LINEBotHandler):
 
 
 class LINEAddFriendHandler(LINEOperationHandler):
+    welcome_msg = ("哈囉~ {name}\n"
+                   "很開心你加我為好友\n"
+                   "我可以為你......\n")
+    rejoin_msg = ("{name} 很開心你回來了~\n"
+                  "我可以為你...")
+
+    def _load_content(self, req_content):
+        super()._load_content(req_content)
+        self.user_mid = self.params[0]
+        user_profile = self._client.get_user_profile(self.user_mid)[0]
+        self.name = user_profile['display_name']
+        self.picture_url = user_profile['picture_url']
+        self.status_msg = user_profile['status_message']
+
     def handle(self):
-        user_mid = self.params[0]
-        user_profile = self._client.get_user_profile(user_mid)[0]
-        user_name = user_profile['display_name']
-        user_picture_url = user_profile['picture_url']
-        user_status_msg = user_profile['status_message']
+        line_user, created = LINEUser.objects.update_or_create(
+            user_mid=self.user_mid,
+            name=self.name,
+            status_message=self.status_msg
+        )
+        if created:
+            msg = self.welcome_msg.format(name=self.name)
+            logger.info('{name} ({mid}) add linebot as friend'.format(name=self.name,
+                                                                      mid=self.user_mid))
+        else:
+            msg = self.rejoin_msg.format(name=self.name)
+            logger.info('{name} ({mid}) unblock linebot'.format(name=self.name,
+                                                                mid=self.user_mid))
 
-        # TODO: add user to database if not exist
-
-        # TODO: send re-add friend msg if the user is not new
         resp = self._client.send_text(
-            to_mid=user_mid,
-            text=self.welcome_msg.format(name=user_name)
+            to_mid=self.user_mid,
+            text=msg
         )
         return resp
 
