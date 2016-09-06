@@ -105,6 +105,7 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
+
 # Load LINE API key
 try:
     with open('denguefever_tw/.api_key.json') as api_key_file:
@@ -112,8 +113,8 @@ try:
 except FileNotFoundError as e:
     logging.debug('.api_key.json does not exist. Load env variables')
     LINE_BOT_SETTINGS = {
-        'channel_id': os.environ['CHANNEL_ID'],
-        'channel_secret': os.environ['CHANNEL_SECRET'],
-        'channel_mid': os.environ['CHANNEL_MID']
+        'channel_id': get_env_variable('CHANNEL_ID'),
+        'channel_secret': get_env_variable('CHANNEL_SECRET'),
+        'channel_mid': get_env_variable('CHANNEL_MID')
     }
 logging.debug('API data is set to\n'+pformat(LINE_BOT_SETTINGS))
