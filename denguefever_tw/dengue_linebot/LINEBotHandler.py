@@ -1,6 +1,12 @@
 from abc import ABCMeta, abstractmethod
 from datetime import datetime
 from enum import IntEnum
+import logging
+
+from .models import LINEUser
+
+
+logger = logging.getLogger(__name__)
 
 
 class LINEOperationType(IntEnum):
@@ -37,7 +43,7 @@ def LINE_operation_factory(client, req_content):
     if op_type == LINEOperationType.ADD_FRIEND:
         handler_cls = LINEAddFriendHandler
     elif op_type == LINEOperationType.BLOCK_ACCOUNT:
-        handler_cls == LINEBlockHandler
+        handler_cls = LINEBlockHandler
     else:
         raise ValueError(op_type, 'No such onType')
     return handler_cls(client, req_content)
@@ -49,12 +55,42 @@ class LINEOperationHandler(LINEBotHandler):
         self.op_type = req_content['opType']
         self.params = req_content['params']
 
-    def handle(self):
-        raise NotImplementedError('Operation Currently Not Supported\n')
-
 
 class LINEAddFriendHandler(LINEOperationHandler):
-    pass
+    welcome_msg = ("哈囉~ {name}\n"
+                   "很開心你加我為好友\n"
+                   "我可以為你......\n")
+    rejoin_msg = ("{name} 很開心你回來了~\n"
+                  "我可以為你...")
+
+    def _load_content(self, req_content):
+        super()._load_content(req_content)
+        self.user_mid = self.params[0]
+        user_profile = self._client.get_user_profile(self.user_mid)[0]
+        self.name = user_profile['display_name']
+        self.picture_url = user_profile['picture_url']
+        self.status_msg = user_profile['status_message']
+
+    def handle(self):
+        line_user, created = LINEUser.objects.update_or_create(
+            user_mid=self.user_mid,
+            name=self.name,
+            status_message=self.status_msg
+        )
+        if created:
+            msg = self.welcome_msg.format(name=self.name)
+            logger.info('{name} ({mid}) add linebot as friend'.format(name=self.name,
+                                                                      mid=self.user_mid))
+        else:
+            msg = self.rejoin_msg.format(name=self.name)
+            logger.info('{name} ({mid}) unblock linebot'.format(name=self.name,
+                                                                mid=self.user_mid))
+
+        resp = self._client.send_text(
+            to_mid=self.user_mid,
+            text=msg
+        )
+        return resp
 
 
 class LINEBlockHandler(LINEOperationHandler):

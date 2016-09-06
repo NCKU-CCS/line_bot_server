@@ -119,3 +119,4 @@ tags
 # Custom
 ssl
 denguefever_tw/denguefever_tw/.api_key.json
+denguefever_tw/denguefever_tw/settings/local.py
