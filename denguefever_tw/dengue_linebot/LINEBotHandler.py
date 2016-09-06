@@ -1,3 +1,5 @@
+from django.http import HttpResponse
+
 from abc import ABCMeta, abstractmethod
 from datetime import datetime
 from enum import IntEnum
@@ -94,7 +96,8 @@ class LINEAddFriendHandler(LINEOperationHandler):
 
 
 class LINEBlockHandler(LINEOperationHandler):
-    pass
+    def handle(self):
+        return HttpResponse()
 
 
 def LINE_message_factory(client, req_content):

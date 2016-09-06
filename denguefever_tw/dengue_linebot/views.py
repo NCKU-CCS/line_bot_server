@@ -6,7 +6,6 @@ import logging
 from pprint import pformat
 
 import ujson
-import requests
 from linebot.client import LineBotClient
 
 from .LINEBotHandler import LINE_operation_factory
@@ -45,7 +44,7 @@ def reply(request):
         handler = LINE_message_factory(client, req_content)
     logger.debug('{handler} is created.'.format(handler=handler.__class__.__name__))
     resp = handler.handle()
-    if resp.status_code == requests.codes.ok:
+    if resp.status_code == 200:
         logger.debug(('Successfully handled\n'
                       'Response after handled:\n{resp}').format(resp=pformat(resp.text)))
     else:
