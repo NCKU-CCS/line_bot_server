@@ -56,6 +56,14 @@ class LINEOperationHandler(LINEBotHandler):
         self.revision = req_content['revision']
         self.op_type = req_content['opType']
         self.params = req_content['params']
+        self.req_seq = req_content['reqSeq']
+        self.message = req_content['message']
+
+        self.user_mid = self.params[0]
+        user_profile = self._client.get_user_profile(self.user_mid)[0]
+        self.name = user_profile['display_name']
+        self.picture_url = user_profile['picture_url']
+        self.status_msg = user_profile['status_message']
 
 
 class LINEAddFriendHandler(LINEOperationHandler):
@@ -67,11 +75,6 @@ class LINEAddFriendHandler(LINEOperationHandler):
 
     def _load_content(self, req_content):
         super()._load_content(req_content)
-        self.user_mid = self.params[0]
-        user_profile = self._client.get_user_profile(self.user_mid)[0]
-        self.name = user_profile['display_name']
-        self.picture_url = user_profile['picture_url']
-        self.status_msg = user_profile['status_message']
 
     def handle(self):
         line_user, created = LINEUser.objects.update_or_create(

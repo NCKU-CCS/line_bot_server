@@ -44,11 +44,13 @@ def reply(request):
         handler = LINE_message_factory(client, req_content)
     logger.debug('{handler} is created.'.format(handler=handler.__class__.__name__))
     resp = handler.handle()
-    if resp.status_code == 200:
-        logger.debug(('Successfully handled\n'
-                      'Response after handled:\n{resp}').format(resp=pformat(resp.text)))
-    else:
-        logger.debug(('Failed to handle\n'
-                      'Response after handled:\n{resp}').format(resp=pformat(resp.text)))
-
+    try:
+        if resp.status_code == 200:
+            logger.debug(('Successfully handled\n'
+                          'Response after handled:\n{resp}').format(resp=pformat(resp.text)))
+        else:
+            logger.debug(('Failed to handle\n'
+                          'Response after handled:\n{resp}').format(resp=pformat(resp.text)))
+    except AttributeError:
+        logger.debug('No response needed after handling.')
     return HttpResponse()
