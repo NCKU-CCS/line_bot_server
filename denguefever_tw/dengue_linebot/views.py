@@ -1,6 +1,8 @@
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
 
 import logging
 from pprint import pformat
@@ -9,11 +11,14 @@ import ujson
 import requests
 from linebot.client import LineBotClient
 
+from .models import LINEUser
 from .LINEBotHandler import LINE_operation_factory
 from .LINEBotHandler import LINE_message_factory
 
 client = LineBotClient(**settings.LINE_BOT_SETTINGS)
 logger = logging.getLogger('django')
+# Maximum mid to sent in single request
+MAXIMUM_COUNT = 150
 
 
 @csrf_exempt
@@ -53,3 +58,30 @@ def reply(request):
                       'Response after handled:\n{resp}').format(resp=pformat(resp.text)))
 
     return HttpResponse()
+
+
+@login_required
+@csrf_exempt
+def broadcast(request):
+    if request.method == 'POST':
+        content = request.POST['content']
+        try:
+            mids = ujson.loads(request.POST['mids'])
+        except (KeyError, ValueError):
+            mids = [user.user_mid for user in LINEUser.objects.all()]
+
+        resp = client.send_text(
+            to_mid=mids,
+            text=content
+        )
+        logger.info(('Broadcast Receivers: {mids}\n'
+                     'Broadcase Content {content}\n'
+                     'Response after broadcast: {resp}').format(
+                         mids=mids,
+                         content=content,
+                         resp=resp))
+        return HttpResponse()
+    elif request.method == 'GET':
+        line_users = LINEUser.objects.all()
+        context = {'line_user': line_users}
+        return render(request, 'dengue_linebot/broadcast.html', context)

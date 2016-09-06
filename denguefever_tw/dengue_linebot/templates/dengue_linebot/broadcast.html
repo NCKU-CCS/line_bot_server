@@ -1,0 +1,18 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>broadcast</title>
+  </head>
+  <body>
+    <form method="POST">
+      <label>Users</label><br>
+      {% for user in line_user %}
+        <input type="checkbox" name="mids" value="{{user.user_mid}}" checked>{{user.name}}
+        <br>
+      {% endfor %}
+      content:<br>
+      <input type="text" name="content"><br><br>
+      <input type="submit" value="Submit">
+    </form>
+  </body>
+</html>
