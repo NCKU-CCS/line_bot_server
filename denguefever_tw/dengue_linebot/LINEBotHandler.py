@@ -94,8 +94,8 @@ class LINEAddFriendHandler(LINEOperationHandler):
 
 
 class LINEBlockHandler(LINEOperationHandler):
-    pass
-
+    def handle(self):
+        pass
 
 def LINE_message_factory(client, req_content):
     content_type = req_content['contentType']
