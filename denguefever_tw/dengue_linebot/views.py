@@ -66,10 +66,11 @@ def broadcast(request):
     if request.method == 'POST':
         content = request.POST['content']
         try:
-            mids = ujson.loads(request.POST['mids'])
-        except (KeyError, ValueError):
+            mids = request.POST.getlist('mids')
+        except (KeyError, ValueError) as e:
+            logger.exception(("Exception happends. Broadcast to all users\n"
+                              "{exp}\n").format(exp=e))
             mids = [user.user_mid for user in LINEUser.objects.all()]
-
         spilt_mids = [mids[i:i+MAXIMUM_COUNT]
                       for i in range(0, len(mids), MAXIMUM_COUNT)]
         for m in spilt_mids:
