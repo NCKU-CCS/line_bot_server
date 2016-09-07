@@ -70,16 +70,19 @@ def broadcast(request):
         except (KeyError, ValueError):
             mids = [user.user_mid for user in LINEUser.objects.all()]
 
-        resp = client.send_text(
-            to_mid=mids,
-            text=content
-        )
-        logger.info(('Broadcast Receivers: {mids}\n'
-                     'Broadcase Content {content}\n'
-                     'Response after broadcast: {resp}').format(
-                         mids=mids,
-                         content=content,
-                         resp=resp))
+        spilt_mids = [mids[i:i+MAXIMUM_COUNT]
+                      for i in range(0, len(mids), MAXIMUM_COUNT)]
+        for m in spilt_mids:
+            resp = client.send_text(
+                to_mid=mids,
+                text=content
+            )
+            logger.info(('Broadcast Receivers: {mids}\n'
+                         'Broadcase Content {content}\n'
+                         'Response after broadcast: {resp}').format(
+                             mids=mids,
+                             content=content,
+                             resp=resp))
         return HttpResponse()
     elif request.method == 'GET':
         line_users = LINEUser.objects.all()
