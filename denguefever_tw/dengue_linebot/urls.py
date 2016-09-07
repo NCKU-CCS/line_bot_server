@@ -3,5 +3,5 @@ from .views import *
 
 urlpatterns = [
     url('^reply/', reply),
-    url('^broadcast', broadcast),
+    url('^broadcast/', broadcast),
 ]
