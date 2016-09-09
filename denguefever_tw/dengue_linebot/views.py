@@ -1,6 +1,8 @@
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
 
 import logging
 from pprint import pformat
@@ -8,11 +10,14 @@ from pprint import pformat
 import ujson
 from linebot.client import LineBotClient
 
+from .models import LINEUser
 from .LINEBotHandler import LINE_operation_factory
 from .LINEBotHandler import LINE_message_factory
 
 client = LineBotClient(**settings.LINE_BOT_SETTINGS)
 logger = logging.getLogger('django')
+# Maximum mid to sent in single request
+MAXIMUM_COUNT = 150
 
 
 @csrf_exempt
@@ -54,3 +59,34 @@ def reply(request):
     except AttributeError:
         logger.debug('No response needed after handling.')
     return HttpResponse()
+
+
+@login_required
+@csrf_exempt
+def broadcast(request):
+    if request.method == 'POST':
+        content = request.POST['content']
+        try:
+            mids = request.POST.getlist('mids')
+        except (KeyError, ValueError) as e:
+            logger.exception(("Exception happends. Broadcast to all users\n"
+                              "{exp}\n").format(exp=e))
+            mids = [user.user_mid for user in LINEUser.objects.all()]
+        spilt_mids = [mids[i:i+MAXIMUM_COUNT]
+                      for i in range(0, len(mids), MAXIMUM_COUNT)]
+        for m in spilt_mids:
+            resp = client.send_text(
+                to_mid=mids,
+                text=content
+            )
+            logger.info(('Broadcast Receivers: {mids}\n'
+                         'Broadcase Content {content}\n'
+                         'Response after broadcast: {resp}').format(
+                             mids=mids,
+                             content=content,
+                             resp=resp))
+        return HttpResponse()
+    elif request.method == 'GET':
+        line_users = LINEUser.objects.all()
+        context = {'line_user': line_users}
+        return render(request, 'dengue_linebot/broadcast.html', context)
