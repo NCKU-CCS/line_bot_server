@@ -4,3 +4,4 @@ uWSGI==2.0.13.1
 requests==2.11.1
 psycopg2==2.6.2
 ujson==1.35
+transitions==0.4.1
