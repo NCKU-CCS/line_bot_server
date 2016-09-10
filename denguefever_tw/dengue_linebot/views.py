@@ -10,9 +10,11 @@ from pprint import pformat
 import ujson
 from linebot.client import LineBotClient
 
+
 from .models import LINEUser
 from .LINEBotHandler import LINE_operation_factory
 from .LINEBotHandler import LINE_message_factory
+from .DengueBotFSM import DengueBotMachine
 
 client = LineBotClient(**settings.LINE_BOT_SETTINGS)
 logger = logging.getLogger('django')
@@ -90,3 +92,12 @@ def broadcast(request):
         line_users = LINEUser.objects.all()
         context = {'line_user': line_users}
         return render(request, 'dengue_linebot/broadcast.html', context)
+
+
+@login_required
+def show_fsm(request):
+    resp = HttpResponse(content_type="image/png")
+    resp.name = 'state.png'
+    machine = DengueBotMachine()
+    machine.draw_graph(resp, prog='dot')
+    return resp
