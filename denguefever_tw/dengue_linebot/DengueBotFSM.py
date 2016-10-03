@@ -14,8 +14,9 @@ TRANSITION_TO_UNRECONGNIZED = 'receive_unrecognized_msg'
 class DengueBotMachine:
     states = list()
     dengue_transitions = list()
+    reply_msgs = dict()
 
-    def __init__(self, initial_state='user'):
+    def __init__(self, client=None, initial_state='user'):
         self.machine = GraphMachine(
             model=self,
             states=DengueBotMachine.states,
@@ -24,10 +25,7 @@ class DengueBotMachine:
             auto_transitions=False,
             show_conditions=True
         )
-
-    @property
-    def graph(self):
-        return self.machine.graph
+        self._client = client
 
     def draw_graph(self, filename, prog='dot'):
         self.graph.draw(filename, prog=prog)
@@ -41,6 +39,7 @@ class DengueBotMachine:
         DengueBotMachine.states = data['states']
         DengueBotMachine.dengue_transitions = data['transitions']
         DengueBotMachine._add_unrecognized_traistion()
+        DengueBotMachine.load_msg()
 
     @staticmethod
     def _add_unrecognized_traistion():
@@ -61,5 +60,11 @@ class DengueBotMachine:
             }
         ])
 
+    @staticmethod
+    def load_msg(filename='dengue_msg.json'):
+        path = os.path.join(CONFIG_BASE_PATH, filename)
+        with open(path) as msg_file:
+            msgs = ujson.load(msg_file)
+            DengueBotMachine.reply_msgs = msgs['reply_msgs']
 
 DengueBotMachine.load_config()
