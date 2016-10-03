@@ -96,6 +96,7 @@ def broadcast(request):
 
 @login_required
 def show_fsm(request):
+    DengueBotMachine.load_config()
     resp = HttpResponse(content_type="image/png")
     resp.name = 'state.png'
     machine = DengueBotMachine()
