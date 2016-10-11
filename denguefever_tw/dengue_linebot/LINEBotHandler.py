@@ -1,3 +1,4 @@
+from django.core.cache import cache
 from django.http import HttpResponse
 
 from abc import ABCMeta, abstractmethod
@@ -6,9 +7,14 @@ from enum import IntEnum
 import logging
 
 from .models import LINEUser
+from .DengueBotFSM import DengueBotMachine
 
 
 logger = logging.getLogger(__name__)
+
+
+DengueBotMachine.load_config()
+machine = DengueBotMachine()
 
 
 class LINEOperationType(IntEnum):
@@ -68,8 +74,11 @@ class LINEOperationHandler(LINEBotHandler):
 
 class LINEAddFriendHandler(LINEOperationHandler):
     welcome_msg = ("哈囉~ {name}\n"
-                   "很開心你加我為好友\n"
-                   "我可以為你......\n")
+                   "我是掌蚊人\n"
+                   "想知道登革熱的相關資訊，就快來和我聊天吧!\n"
+                   "如果不知道怎麼聊的話\n"
+                   "可以輸入: 聊什麼")
+
     rejoin_msg = ("{name} 很開心你回來了~\n"
                   "我可以為你...")
 
@@ -91,6 +100,7 @@ class LINEAddFriendHandler(LINEOperationHandler):
             logger.info('{name} ({mid}) unblock linebot'.format(name=self.name,
                                                                 mid=self.user_mid))
 
+        cache.set(self.user_mid, None)
         resp = self._client.send_text(
             to_mid=self.user_mid,
             text=msg
@@ -139,7 +149,11 @@ class LINEMessageHandler(LINEBotHandler):
         self.location = req_content['location']
 
     def handle(self):
-        return self.inform_message_not_supported()
+        state = cache.get(self.user_mid) or 'user'
+        machine.set_state(state)
+        resp = machine.advance()
+        cache.set(self.user_mid, machine.state)
+        return resp
 
     def inform_message_not_supported(self):
         resp = self._client.send_text(
@@ -150,12 +164,7 @@ class LINEMessageHandler(LINEBotHandler):
 
 
 class LINETextHandler(LINEMessageHandler):
-    def handle(self):
-        resp = self._client.send_text(
-            to_mid=self.user_mid,
-            text=self.text
-        )
-        return resp
+    pass
 
 
 class LINEImageHandler(LINEMessageHandler):

@@ -50,7 +50,9 @@ def reply(request):
     elif 'contentType' in req_content.keys():
         handler = LINE_message_factory(client, req_content)
     logger.debug('{handler} is created.'.format(handler=handler.__class__.__name__))
+
     resp = handler.handle()
+
     try:
         if resp.status_code == 200:
             logger.debug(('Successfully handled\n'
