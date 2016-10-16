@@ -1,5 +1,5 @@
 from django.conf.urls import url
-from .views import reply
+from .views import *
 
 urlpatterns = [
     url('^reply/', reply),
