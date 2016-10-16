@@ -1,6 +1,6 @@
 Django==1.10
-linebot==0.3.2
 uWSGI==2.0.13.1
 requests==2.11.1
 psycopg2==2.6.2
 ujson==1.35
+line-bot-sdk==1.0.0
