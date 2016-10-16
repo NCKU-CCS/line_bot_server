@@ -1,11 +1,6 @@
 from django.core.exceptions import ImproperlyConfigured
 
 import os
-import logging
-from pprint import pformat
-
-import ujson
-
 
 def get_env_variable(var_name):
     try:
@@ -104,17 +99,3 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, "static")
-
-
-# Load LINE API key
-try:
-    with open('denguefever_tw/.api_key.json') as api_key_file:
-        LINE_BOT_SETTINGS = ujson.load(api_key_file)
-except FileNotFoundError as e:
-    logging.debug('.api_key.json does not exist. Load env variables')
-    LINE_BOT_SETTINGS = {
-        'channel_id': get_env_variable('CHANNEL_ID'),
-        'channel_secret': get_env_variable('CHANNEL_SECRET'),
-        'channel_mid': get_env_variable('CHANNEL_MID')
-    }
-logging.debug('API data is set to\n'+pformat(LINE_BOT_SETTINGS))
