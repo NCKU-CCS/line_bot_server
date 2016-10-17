@@ -1,6 +1,7 @@
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import login_required
 
 import logging
 from pprint import pformat
@@ -8,6 +9,9 @@ from pprint import pformat
 from linebot import LineBotApi, WebhookParser
 from linebot.exceptions import InvalidSignatureError, LineBotApiError
 from linebot.models import MessageEvent, TextSendMessage
+
+from .DengueBotFSM import DengueBotMachine
+
 
 logger = logging.getLogger('django')
 
@@ -56,3 +60,13 @@ def reply(request):
             return HttpResponse()
     else:
         return HttpResponseBadRequest()
+
+
+@login_required
+def show_fsm(request):
+    DengueBotMachine.load_config()
+    resp = HttpResponse(content_type="image/png")
+    resp.name = 'state.png'
+    machine = DengueBotMachine()
+    machine.draw_graph(resp, prog='dot')
+    return resp
