@@ -5,7 +5,7 @@ from transitions.extensions import GraphMachine
 from linebot.models import (
     MessageEvent, FollowEvent, UnfollowEvent, JoinEvent, LeaveEvent, PostbackEvent, BeaconEvent,
     TextMessage, StickerMessage, ImageMessage, VideoMessage, AudioMessage, LocationMessage,
-    TextSendMessage
+    # TextSendMessage
 )
 
 from .models import LineUser
@@ -123,6 +123,129 @@ class DengueBotMachine:
 
     def is_beacon_event(self, event):
         return isinstance(event, BeaconEvent)
+
+    def is_asking_dengue_fever(self, event):
+        msg = event.message.text
+        if any(m in msg for m in ["登革熱", "什麼是登革熱", "登革熱是什麼"]):
+            return True
+        return False
+
+    def is_asking_who_we_are(self, event):
+        msg = event.message.text
+        if msg.strip() in ["你是誰", "掌蚊人是誰", "誰是掌蚊人", "掌蚊人"]:
+            return True
+        return False
+
+    def is_asking_breeding_source(self, event):
+        msg = event.message.text
+        if (
+            all(m in msg for m in ["登革熱", "孳生源"]) or
+            (all(m in msg for m in ["孳生源", "是"]) and any(m in msg for m in ["什麼", "啥"]))
+        ):
+            return True
+        return False
+
+    def is_greeting(self, event):
+        msg = event.message.text
+        if any(m in msg.strip().lower() for m in ["哈囉", "你好", "嗨", "安安", "hello", "hi"]):
+            return True
+        return False
+
+    def is_asking_prevetion(self, event):
+        msg = event.message.text
+        if (
+            msg.strip() == "如何防範" or
+            (any(m in msg for m in ["怎樣", "怎麼", "如何"]) and ("防疫" in msg)) or
+            any(m in msg for m in ["防範", "預防"])
+        ):
+            return True
+        return False
+
+    def is_asking_self_prevetion(self, event):
+        return '自身' in event.message.text
+
+    def is_asking_env_prevetion(self, event):
+        return '環境' in event.message.text
+
+    def is_asking_hospital(self, event):
+        msg = event.message.text
+        if (
+            msg.strip() in ["快篩檢驗", "快篩"] or
+            (any(m in msg for m in ["最近", "附近", "去哪", "去那", "哪裡", "那裡", "在哪", "在那"]) and
+             any(m in msg for m in ["快篩", "篩檢",  "檢查", "檢驗", "診所", "醫院"])) or
+            all(m in msg for m in ["快篩", "診所"])
+        ):
+            return True
+        return False
+
+    def is_asking_symptom(self, event):
+        msg = event.message.text
+        if (
+            msg.strip() in ["症狀", "登革熱症狀"] or
+            all(m in msg for m in ["登革熱", "症狀"]) or
+            all(m in msg for m in ["症狀", "是"])
+        ):
+            return True
+        return False
+
+    def is_asking_realtime_epidemic(self, event):
+        msg = event.message.text
+        if (
+            msg.strip() in ["即時疫情", "疫情"] or
+            (any(m in msg for m in ["最近", "本週", "這週"]) and ("疫情" in msg)) or
+            ("疫情資訊" in msg)
+        ):
+            return True
+        return False
+
+    def is_giving_suggestion(self, event):
+        return '建議' in event.message.text
+
+    def is_asking_usage(self, event):
+        msg = event.message.text
+        if (
+            msg.strip() in ["聊什麼", "翻譯蒟蒻"] or
+            any(m in msg for m in ["使用說明", "功能"]) or
+            (any(m in msg for m in ["可以", "能", "會"]) and
+             any(m in msg for m in ["做啥", "幹麻", "幹嘛", "幹啥", "什麼", "幹什麼", "做什麼"])) or
+            all(m in msg for m in ["有", "功能"]) or
+            ("怎麼" in msg and any(m in msg for m in ["使用", "用"]))
+        ):
+            return True
+        return False
+
+    def is_selecting_ask_dengue_fever(self, event):
+        return '1' in event.message.text
+
+    def is_selecting_ask_symptom(self, event):
+        return '2' in event.message.text
+
+    def is_selecting_ask_prevention(self, event):
+        return '3' in event.message.text
+
+    def is_selecting_ask_hopital(self, event):
+        return '4' in event.message.text
+
+    def is_selecting_ask_realtime_epidemic(self, event):
+        return '5' in event.message.text
+
+    def is_selecting_give_suggestion(self, event):
+        return '6' in event.message.text
+
+    def on_enter_user_join(self, event):
+        user_id = event.source.user_id
+        try:
+            LineUser.objects.get(user_id)
+        except LineUser.DoesNotExist:
+            profile = self.line_bot_api.get_profile()
+            user = LineUser(
+                user_id=profile.user_id,
+                name=profile.display_name,
+                picture_url=profile.picture_url,
+                status_message=profile.status_message
+            )
+            user.save()
+        self.finish()
 
 
 DengueBotMachine.load_config()
