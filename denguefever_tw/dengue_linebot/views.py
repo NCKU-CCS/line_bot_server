@@ -10,6 +10,7 @@ from pprint import pformat
 
 from linebot import LineBotApi, WebhookParser
 from linebot.exceptions import InvalidSignatureError, LineBotApiError
+from linebot.models import MessageEvent
 
 from .DengueBotFSM import DengueBotMachine
 
@@ -61,6 +62,19 @@ def reply(request):
             user_id = event.source.user_id
             state = cache.get(user_id) or 'user'
 
+            logger.info(
+                ('Receive Event\n'
+                 'Event Type: {event_type}\n'
+                 'User state: {state}').format(
+                     event_type=event.type,
+                     state=state)
+            )
+            if isinstance(event, MessageEvent):
+                logger.info(
+                    'Message type: {message_type}'.format(
+                        message_type=event.message.type
+                    )
+                )
             machine.set_state(state)
             machine.advance(event)
         except LineBotApiError as e:
@@ -74,6 +88,6 @@ def show_fsm(request):
     DengueBotMachine.load_config()
     resp = HttpResponse(content_type="image/png")
     resp.name = 'state.png'
-    machine = DengueBotMachine()
+    machine = DengueBotMachine(line_bot_api)
     machine.draw_graph(resp, prog='dot')
     return resp
