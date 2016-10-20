@@ -5,7 +5,7 @@ from transitions.extensions import GraphMachine
 from linebot.models import (
     MessageEvent, FollowEvent, UnfollowEvent, JoinEvent, LeaveEvent, PostbackEvent, BeaconEvent,
     TextMessage, StickerMessage, ImageMessage, VideoMessage, AudioMessage, LocationMessage,
-    # TextSendMessage
+    TextSendMessage, ImageSendMessage, LocationSendMessage
 )
 
 from .models import LineUser
@@ -124,9 +124,25 @@ class DengueBotMachine:
     def is_beacon_event(self, event):
         return isinstance(event, BeaconEvent)
 
+    def is_asking_prevention(self, event):
+        msg = event.message.text
+        if (
+            msg.strip() == "如何防範" or
+            (any(m in msg for m in ["怎樣", "怎麼", "如何"]) and ("防疫" in msg)) or
+            any(m in msg for m in ["防範", "預防"])
+        ):
+            return True
+        return False
+
+    def is_asking_self_prevention(self, event):
+        return '自身' in event.message.text
+
+    def is_asking_env_prevention(self, event):
+        return '環境' in event.message.text
+
     def is_asking_dengue_fever(self, event):
         msg = event.message.text
-        if any(m in msg for m in ["登革熱", "什麼是登革熱", "登革熱是什麼"]):
+        if any(m in msg for m in ["什麼是登革熱", "登革熱是什麼", "登革熱"]):
             return True
         return False
 
@@ -151,22 +167,6 @@ class DengueBotMachine:
             return True
         return False
 
-    def is_asking_prevetion(self, event):
-        msg = event.message.text
-        if (
-            msg.strip() == "如何防範" or
-            (any(m in msg for m in ["怎樣", "怎麼", "如何"]) and ("防疫" in msg)) or
-            any(m in msg for m in ["防範", "預防"])
-        ):
-            return True
-        return False
-
-    def is_asking_self_prevetion(self, event):
-        return '自身' in event.message.text
-
-    def is_asking_env_prevetion(self, event):
-        return '環境' in event.message.text
-
     def is_asking_hospital(self, event):
         msg = event.message.text
         if (
@@ -176,6 +176,10 @@ class DengueBotMachine:
             all(m in msg for m in ["快篩", "診所"])
         ):
             return True
+        return False
+
+    def is_wrong_location(self, event):
+        # TODO: implement
         return False
 
     def is_asking_symptom(self, event):
@@ -233,6 +237,7 @@ class DengueBotMachine:
         return '6' in event.message.text
 
     def on_enter_user_join(self, event):
+        # TODO: implement update user data when user rejoin
         user_id = event.source.user_id
         try:
             LineUser.objects.get(user_id)
@@ -246,6 +251,153 @@ class DengueBotMachine:
             )
             user.save()
         self.finish()
+
+    def _send_text_in_rule(self, event, key):
+        resp = self.line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(
+                text=DengueBotMachine.reply_msgs[key]
+            )
+        )
+        return resp
+
+    def on_enter_ask_prevention(self, event):
+        resp = self._send_text_in_rule(event, 'ask_prevent_type')
+        return resp
+
+    def on_enter_ask_self_prevention(self, event):
+        resp = self._send_text_in_rule(event, 'self_prevent')
+        self.finish_ans()
+        return resp
+
+    def on_enter_ask_env_prevention(self, event):
+        resp = self._send_text_in_rule(event, 'env_prevent')
+        self.finish_ans()
+        return resp
+
+    def on_enter_ask_dengue_fever(self, event):
+        resp = self._send_text_in_rule(event, 'dengue_fever_intro')
+        self.finish_ans()
+        return resp
+
+    def on_enter_ask_hospital(self, event):
+        resp = self._send_text_in_rule(event, 'ask_address')
+        self.advance()
+        return resp
+
+    def on_enter_receive_user_location(self, event):
+        # TODO: replace text with hospital location
+        resp = self.line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text='醫院')
+        )
+        # TODO: Implment hospital db
+        # hospital_list = hospital.views.get_nearby_hospital(event.longitude, event.latitude)
+        # if hospital_list:
+        #     sender = self._send_hospitals(event, hospital_lst)
+        #     msgs = self._create_hospitals_msgs(hospital_list)
+        # else:
+        #     msgs = [TextSendMessage(text="抱歉，你附近都沒有快篩診所\n")]
+        #
+        # msgs.append(
+        #     TextSendMessage(text=(
+        #         "想要查看地區所有快篩點，請點下面連結\n"
+        #         "(如果手機不能瀏覽，可用電腦查看，或將連結貼到 chrome 瀏覽器)\n\n"
+        #         "https://www.taiwanstat.com/realtime/dengue-vis-with-hospital/"))
+        # )
+        # resp = self.line_bot_api.reply_message(
+        #     event.reply_token,
+        #     msgs
+        # )
+        self.finish_ans()
+        return resp
+
+    # def _create_hospitals_msgs(self, hospital_list):
+    #     text = "您好,\n最近的三間快篩診所是:"
+    #     location_messages = list()
+    #     for index, hospital in enumerate(hospital_list, 1):
+    #         text += "\n\n{index}.{name}\n{address}\n{phone}".format(
+    #             index=index
+    #             name=hospital.get('name'),
+    #             address=hospital.get('address'),
+    #             phone=hospital.get('phone')
+    #         )
+    #
+    #         location_message = LocationSendMessage(
+    #             title="地圖 - {name}".format(name=hospital.get('name')),
+    #             latitude=hospital.get('lat'),
+    #             longitude=hospital.get('lng')
+    #         )
+    #
+    #     text_message = TextSendMessage(text=text)
+    #
+    #     hospital_messages = [text_message]
+    #     hospital_messages.extend(location_messages)
+    #     return hospital_messages
+
+    def on_enter_ask_symptom(self, event):
+        resp = self.line_bot_api.reply_message(
+            event.reply_token,
+            messages=[
+                ImageSendMessage(
+                    original_content_url=symptom_origin_img_url,
+                    preview_image_url=symptom_preview_img_url
+                ),
+                TextSendMessage(text=DengueBotMachine.reply_msgs['symptom_warning'])
+            ]
+        )
+        self.finish_ans()
+        return resp
+
+    def on_enter_ask_realtime_epidemic(self, event):
+        resp = self._send_text_in_rule(event, 'new_condition')
+        self.finish_ans()
+        return resp
+
+    def on_enter_greet(self, event):
+        resp = self._send_text_in_rule(event, 'greeting')
+        return resp
+    
+    def on_enter_ask_breeding_source(self, event):
+        resp = self._send_text_in_rule(event, 'breeding_source')
+        return resp
+
+    def on_enter_ask_who_we_are(self, event):
+        resp = self._send_text_in_rule(event, 'who_we_are')
+        return resp
+
+    def on_enter_wait_user_suggestion(self, event):
+        resp = self._send_text_in_rule(event, 'ask_advice')
+        return resp
+
+    def on_exit_wait_user_suggestion(self, event):
+        resp = self._send_text_in_rule(event, 'thank_advice')
+        # TODO: save suggestion
+        # advice = Advice(advice=event.text, user_mid=reply_channel)
+        # advice.save()
+        return resp
+
+    def on_enter_ask_usage(self, event):
+        resp = self._send_text_in_rule(event, 'manual')
+        return resp
+
+    def on_enter_unrecongnized_msg(self, event):
+        resp = self._send_text_in_rule(event, 'unknown_msg')
+        self.handle_unrecognized_msg()
+        return resp
+
+    def handle_unrecognized_msg(self, event):
+        # TODO: implement
+        # random msg
+        # 記錄不能辨別的訊息
+        # unrecognize_msg = UnRecognizeMsg(user_mid=reply_channel, msg=msg)
+        # unrecognize_msg.save()
+        #
+        # random.seed(time.time())
+        # random_reply = random.choice(random_reply_lst)
+        # reply_msg = random_reply['msg']
+        # cache.set(reply_channel, random_reply['state'], timeout=30)
+        pass
 
 
 DengueBotMachine.load_config()

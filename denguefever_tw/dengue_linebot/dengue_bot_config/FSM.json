@@ -1,7 +1,7 @@
 {
     "states": [
         "user",
-        "greeting",
+        "greet",
         "ask_usage",
         "ask_dengue_fever",
         "ask_prevention",
@@ -13,26 +13,28 @@
         "ask_env_prevention",
         "ask_hospital",
         "wait_user_location",
-        "wait_user_suggestion"
+        "receive_user_location",
+        "wait_user_suggestion",
+        "user_join"
     ],
     "transitions": [
         {
             "trigger": "advance",
             "source": "user",
             "dest": "ask_prevention",
-            "conditions": "is_asking_prevetion"
+            "conditions": "is_asking_prevention"
         },
         {
             "trigger": "advance",
             "source": "ask_prevention",
             "dest": "ask_self_prevention",
-            "conditions": "is_asking_self_prevetion"
+            "conditions": "is_asking_self_prevention"
         },
         {
             "trigger": "advance",
             "source": "ask_prevention",
             "dest": "ask_env_prevention",
-            "conditions": "is_asking_env_prevetion"
+            "conditions": "is_asking_env_prevention"
         },
         {
             "trigger": "finish_ans",
@@ -48,13 +50,13 @@
             "trigger": "advance",
             "source": "user",
             "dest": "ask_self_prevention",
-            "conditions": "is_asking_self_prevetion"
+            "conditions": "is_asking_self_prevention"
         },
         {
             "trigger": "advance",
             "source": "user",
             "dest": "ask_env_prevention",
-            "conditions": "is_asking_env_prevetion"
+            "conditions": "is_asking_env_prevention"
         },
 
         {
@@ -79,11 +81,16 @@
             "trigger": "advance",
             "source": "ask_hospital",
             "dest": "wait_user_location",
-            "conditions": "is_user_cur_location"
+        },
+        {
+            "trigger": "advance",
+            "source": "wait_user_location",
+            "dest": "receive_user_location",
+            "conditions": "is_location_message"
         },
         {
             "trigger": "finish_ans",
-            "source": "wait_user_location",
+            "source": "receive_user_location",
             "dest": "user"
         },
         {
@@ -120,12 +127,12 @@
         {
             "trigger": "advance",
             "source": "user",
-            "dest": "greeting",
+            "dest": "greet",
             "conditions": "is_greeting"
         },
         {
             "trigger": "finish_ans",
-            "source": "greeting",
+            "source": "greet",
             "dest": "user"
         },
 
@@ -182,7 +189,7 @@
             "trigger": "advance",
             "source": "ask_usage",
             "dest": "ask_hospital",
-            "conditions": "is_selecting_ask_hopital"
+            "conditions": "is_selecting_ask_hospital"
         },
         {
             "trigger": "advance",
@@ -201,6 +208,18 @@
             "source": "ask_usage",
             "dest": "wait_user_suggestion",
             "conditions": "is_selecting_give_suggestion"
+        },
+
+        {
+            "trigger": "advance",
+            "source": "user",
+            "dest": "user_join",
+            "conditions": "is_follow_event"
+        },
+        {
+            "trigger": "finish",
+            "source": "user_join",
+            "dest": "user",
         }
     ]
 }
