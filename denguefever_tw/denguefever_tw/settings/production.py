@@ -2,7 +2,7 @@ from .base import *
 
 DEBUG = False
 
-SECRET_KEY = get_env_variable('SECRET_KEY')
+SECRET_KEY = get_env_variable('DJANGO_SECRET_KEY')
 LINE_CHANNEL_SECRET = get_env_variable('LINE_CHANNEL_SECRET')
 LINE_CHANNEL_ACCESS_TOKEN = get_env_variable('LINE_CHANNEL_ACCESS_TOKEN')
 
