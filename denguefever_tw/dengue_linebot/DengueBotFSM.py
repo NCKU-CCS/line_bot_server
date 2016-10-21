@@ -14,7 +14,6 @@ CONFIG_BASE_PATH = 'dengue_linebot/dengue_bot_config/'
 
 INITIAL_STATE = 'user'
 UNRECONGNIZED_STATE = 'unrecongnized_msg'
-TRANSITION_TO_UNRECONGNIZED = 'receive_unrecognized_msg'
 
 symptom_preview_img_url = 'https://i.imgur.com/oydmUva.jpg'
 symptom_origin_img_url = 'https://i.imgur.com/fs6wzor.jpg'
@@ -55,9 +54,10 @@ class DengueBotMachine:
         other_states = list(set(DengueBotMachine.states) - set([INITIAL_STATE]))
         DengueBotMachine.states.append(UNRECONGNIZED_STATE)
         back_transitions = [
-            {'trigger': TRANSITION_TO_UNRECONGNIZED,
+            {'trigger': 'advance',
              'source': state,
-             'dest': UNRECONGNIZED_STATE}
+             'dest': UNRECONGNIZED_STATE,
+             'conditions': 'is_pass'}
             for state in other_states
         ]
         DengueBotMachine.dengue_transitions.extend(back_transitions)
@@ -65,7 +65,7 @@ class DengueBotMachine:
             {
                 'trigger': "handle_unrecognized_msg",
                 'source': UNRECONGNIZED_STATE,
-                'dest': 'user'
+                'dest': 'user',
             }
         ])
 
