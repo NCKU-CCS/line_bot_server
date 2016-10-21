@@ -77,6 +77,7 @@ def reply(request):
                 )
             machine.set_state(state)
             machine.advance(event)
+            cache.set(user_id, machine.state)
         except LineBotApiError as e:
             _log_line_api_error(e)
 
