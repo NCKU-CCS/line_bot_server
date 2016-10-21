@@ -249,41 +249,35 @@ class DengueBotMachine:
         self.finish()
 
     def _send_text_in_rule(self, event, key):
-        resp = self.line_bot_api.reply_message(
+        self.line_bot_api.reply_message(
             event.reply_token,
             TextSendMessage(
                 text=DengueBotMachine.reply_msgs[key]
             )
         )
-        return resp
 
     def on_enter_ask_prevention(self, event):
-        resp = self._send_text_in_rule(event, 'ask_prevent_type')
-        return resp
+        self._send_text_in_rule(event, 'ask_prevent_type')
 
     def on_enter_ask_self_prevention(self, event):
-        resp = self._send_text_in_rule(event, 'self_prevent')
+        self._send_text_in_rule(event, 'self_prevent')
         self.finish_ans()
-        return resp
 
     def on_enter_ask_env_prevention(self, event):
-        resp = self._send_text_in_rule(event, 'env_prevent')
+        self._send_text_in_rule(event, 'env_prevent')
         self.finish_ans()
-        return resp
 
     def on_enter_ask_dengue_fever(self, event):
-        resp = self._send_text_in_rule(event, 'dengue_fever_intro')
+        self._send_text_in_rule(event, 'dengue_fever_intro')
         self.finish_ans()
-        return resp
 
     def on_enter_ask_hospital(self, event):
-        resp = self._send_text_in_rule(event, 'ask_address')
+        self._send_text_in_rule(event, 'ask_address')
         self.advance()
-        return resp
 
     def on_enter_receive_user_location(self, event):
         # TODO: replace text with hospital location
-        resp = self.line_bot_api.reply_message(
+        self.line_bot_api.reply_message(
             event.reply_token,
             TextSendMessage(text='醫院')
         )
@@ -301,12 +295,11 @@ class DengueBotMachine:
         #         "(如果手機不能瀏覽，可用電腦查看，或將連結貼到 chrome 瀏覽器)\n\n"
         #         "https://www.taiwanstat.com/realtime/dengue-vis-with-hospital/"))
         # )
-        # resp = self.line_bot_api.reply_message(
+        # self.line_bot_api.reply_message(
         #     event.reply_token,
         #     msgs
         # )
         self.finish_ans()
-        return resp
 
     # def _create_hospitals_msgs(self, hospital_list):
     #     text = "您好,\n最近的三間快篩診所是:"
@@ -332,7 +325,7 @@ class DengueBotMachine:
     #     return hospital_messages
 
     def on_enter_ask_symptom(self, event):
-        resp = self.line_bot_api.reply_message(
+        self.line_bot_api.reply_message(
             event.reply_token,
             messages=[
                 ImageSendMessage(
@@ -343,46 +336,37 @@ class DengueBotMachine:
             ]
         )
         self.finish_ans()
-        return resp
 
     def on_enter_ask_realtime_epidemic(self, event):
-        resp = self._send_text_in_rule(event, 'new_condition')
+        self._send_text_in_rule(event, 'new_condition')
         self.finish_ans()
-        return resp
 
     def on_enter_greet(self, event):
-        resp = self._send_text_in_rule(event, 'greeting')
+        self._send_text_in_rule(event, 'greeting')
         self.finish_ans()
-        return resp
 
     def on_enter_ask_breeding_source(self, event):
-        resp = self._send_text_in_rule(event, 'breeding_source')
-        return resp
+        self._send_text_in_rule(event, 'breeding_source')
 
     def on_enter_ask_who_we_are(self, event):
-        resp = self._send_text_in_rule(event, 'who_we_are')
-        return resp
+        self._send_text_in_rule(event, 'who_we_are')
 
     def on_enter_wait_user_suggestion(self, event):
-        resp = self._send_text_in_rule(event, 'ask_advice')
-        return resp
+        self._send_text_in_rule(event, 'ask_advice')
 
     def on_exit_wait_user_suggestion(self, event):
-        resp = self._send_text_in_rule(event, 'thank_advice')
+        self._send_text_in_rule(event, 'thank_advice')
         # TODO: save suggestion
         # advice = Advice(advice=event.text, user_mid=reply_channel)
         # advice.save()
-        return resp
 
     def on_enter_ask_usage(self, event):
-        resp = self._send_text_in_rule(event, 'manual')
-        return resp
+        self._send_text_in_rule(event, 'manual')
 
     def on_enter_unrecongnized_msg(self, event):
         if getattr(event, 'reply_token', None):
-            resp = self._send_text_in_rule(event, 'unknown_msg')
+            self._send_text_in_rule(event, 'unknown_msg')
         self.handle_unrecognized_msg()
-        return resp
 
     def handle_unrecognized_msg(self, event):
         # TODO: implement
