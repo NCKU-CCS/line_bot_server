@@ -142,7 +142,7 @@ class DengueBotMachine:
 
     def is_asking_dengue_fever(self, event):
         msg = event.message.text
-        if any(m in msg for m in ["什麼是登革熱", "登革熱是什麼", "登革熱"]):
+        if any(m in msg for m in ["什麼是登革熱", "登革熱是什麼"]) or msg.strip() == "登革熱":
             return True
         return False
 
