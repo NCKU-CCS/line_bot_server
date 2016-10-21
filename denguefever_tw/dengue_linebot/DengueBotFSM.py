@@ -12,9 +12,6 @@ from .models import LineUser
 
 CONFIG_BASE_PATH = 'dengue_linebot/dengue_bot_config/'
 
-INITIAL_STATE = 'user'
-UNRECONGNIZED_STATE = 'unrecongnized_msg'
-
 symptom_preview_img_url = 'https://i.imgur.com/oydmUva.jpg'
 symptom_origin_img_url = 'https://i.imgur.com/fs6wzor.jpg'
 
@@ -46,28 +43,27 @@ class DengueBotMachine:
 
         DengueBotMachine.states = data['states']
         DengueBotMachine.dengue_transitions = data['transitions']
-        DengueBotMachine._add_unrecognized_traistion()
+        DengueBotMachine._add_unrecognized_traistion(data['states_needed_handle_unrecog_msg'])
         DengueBotMachine.load_msg()
 
     @staticmethod
-    def _add_unrecognized_traistion():
-        other_states = list(set(DengueBotMachine.states) - set([INITIAL_STATE]))
+    def _add_unrecognized_traistion(states):
+        UNRECONGNIZED_STATE = 'unrecongnized_msg'
         DengueBotMachine.states.append(UNRECONGNIZED_STATE)
-        back_transitions = [
+        DengueBotMachine.dengue_transitions.extend([
             {'trigger': 'advance',
              'source': state,
              'dest': UNRECONGNIZED_STATE,
              'conditions': 'is_pass'}
-            for state in other_states
-        ]
-        DengueBotMachine.dengue_transitions.extend(back_transitions)
-        DengueBotMachine.dengue_transitions.extend([
+            for state in states
+        ])
+        DengueBotMachine.dengue_transitions.append(
             {
                 'trigger': "handle_unrecognized_msg",
                 'source': UNRECONGNIZED_STATE,
                 'dest': 'user',
             }
-        ])
+        )
 
     @staticmethod
     def load_msg(filename='dengue_msg.json'):

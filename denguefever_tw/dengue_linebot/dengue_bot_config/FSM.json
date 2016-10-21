@@ -236,7 +236,7 @@
             "dest": "ask_prevention",
             "conditions": [
                 "is_text_message",
-            "   is_selecting_ask_prevention"
+                "is_selecting_ask_prevention"
             ]
         },
         {
@@ -287,5 +287,11 @@
             "source": "user_join",
             "dest": "user",
         }
+    ],
+    "states_needed_handle_unrecog_msg": [
+        "user",
+        "ask_usage",
+        "ask_prevention",
+        "wait_user_location"
     ]
 }
