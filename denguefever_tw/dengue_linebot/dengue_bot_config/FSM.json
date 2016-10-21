@@ -182,6 +182,12 @@
         {
             "trigger": "advance",
             "source": "ask_usage",
+            "dest": "ask_dengue_fever",
+            "conditions": "is_selecting_ask_dengue_fever"
+        },
+        {
+            "trigger": "advance",
+            "source": "ask_usage",
             "dest": "ask_prevention",
             "conditions": "is_selecting_ask_prevention"
         },
