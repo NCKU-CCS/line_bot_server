@@ -227,7 +227,7 @@ class DengueBotMachine:
     def is_selecting_ask_prevention(self, event):
         return '3' in event.message.text
 
-    def is_selecting_ask_hopital(self, event):
+    def is_selecting_ask_hospital(self, event):
         return '4' in event.message.text
 
     def is_selecting_ask_realtime_epidemic(self, event):
@@ -356,8 +356,9 @@ class DengueBotMachine:
 
     def on_enter_greet(self, event):
         resp = self._send_text_in_rule(event, 'greeting')
+        self.finish_ans()
         return resp
-    
+
     def on_enter_ask_breeding_source(self, event):
         resp = self._send_text_in_rule(event, 'breeding_source')
         return resp
