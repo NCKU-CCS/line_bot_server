@@ -379,7 +379,8 @@ class DengueBotMachine:
         return resp
 
     def on_enter_unrecongnized_msg(self, event):
-        resp = self._send_text_in_rule(event, 'unknown_msg')
+        if getattr(event, 'reply_token', None):
+            resp = self._send_text_in_rule(event, 'unknown_msg')
         self.handle_unrecognized_msg()
         return resp
 
