@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import LINEUser
+from .models import LineUser
 
 
-admin.site.register(LINEUser)
+admin.site.register(LineUser)
