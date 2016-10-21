@@ -64,8 +64,10 @@ def reply(request):
 
             logger.info(
                 ('Receive Event\n'
+                 'User ID: {user_id}\n'
                  'Event Type: {event_type}\n'
                  'User state: {state}').format(
+                     user_id=user_id,
                      event_type=event.type,
                      state=state)
             )
@@ -78,6 +80,14 @@ def reply(request):
             machine.set_state(state)
             machine.advance(event)
             cache.set(user_id, machine.state)
+
+            logger.info(
+                ('After Advance\n'
+                 'User ID: {user_id}\n'
+                 'User State: {state}').format(
+                     user_id=user_id,
+                     state=state)
+            )
         except LineBotApiError as e:
             _log_line_api_error(e)
 
