@@ -242,8 +242,8 @@ class DengueBotMachine:
             user = LineUser(
                 user_id=profile.user_id,
                 name=profile.display_name,
-                picture_url=profile.picture_url,
-                status_message=profile.status_message
+                picture_url=profile.picture_url or '',
+                status_message=profile.status_message or ''
             )
             user.save()
         self.finish()
