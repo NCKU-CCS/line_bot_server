@@ -236,9 +236,9 @@ class DengueBotMachine:
         # TODO: implement update user data when user rejoin
         user_id = event.source.user_id
         try:
-            LineUser.objects.get(user_id)
+            LineUser.objects.get(user_id=user_id)
         except LineUser.DoesNotExist:
-            profile = self.line_bot_api.get_profile()
+            profile = self.line_bot_api.get_profile(user_id)
             user = LineUser(
                 user_id=profile.user_id,
                 name=profile.display_name,
