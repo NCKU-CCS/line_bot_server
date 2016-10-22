@@ -16,12 +16,24 @@ symptom_preview_img_url = 'https://i.imgur.com/oydmUva.jpg'
 symptom_origin_img_url = 'https://i.imgur.com/fs6wzor.jpg'
 
 
-class DengueBotMachine:
+class Signleton(type):
+    def __init__(self, *args, **kwargs):
+        self.__instance = None
+        super().__init__(*args, **kwargs)
+
+    def __call__(self, *args, **kwargs):
+        if self.__instance is None:
+            self.__instance = super().__call__(*args, **kwargs)
+        return self.__instance
+
+
+class DengueBotMachine(metaclass=Signleton):
     states = list()
     dengue_transitions = list()
     reply_msgs = dict()
 
     def __init__(self, line_bot_api, initial_state='user'):
+        self.load_config()
         self.machine = GraphMachine(
             model=self,
             states=DengueBotMachine.states,
@@ -380,6 +392,3 @@ class DengueBotMachine:
         # reply_msg = random_reply['msg']
         # cache.set(reply_channel, random_reply['state'], timeout=30)
         pass
-
-
-DengueBotMachine.load_config()

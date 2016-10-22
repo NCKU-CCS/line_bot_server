@@ -19,8 +19,6 @@ logger = logging.getLogger('django')
 
 line_bot_api = LineBotApi(settings.LINE_CHANNEL_ACCESS_TOKEN)
 line_parser = WebhookParser(settings.LINE_CHANNEL_SECRET)
-
-DengueBotMachine.load_config()
 machine = DengueBotMachine(line_bot_api)
 
 
@@ -100,9 +98,13 @@ def reply(request):
 
 @login_required
 def show_fsm(request):
-    DengueBotMachine.load_config()
     resp = HttpResponse(content_type="image/png")
     resp.name = 'state.png'
-    machine = DengueBotMachine(line_bot_api)
     machine.draw_graph(resp, prog='dot')
     return resp
+
+
+@login_required
+def reload_fsm(request):
+    machine.load_config()
+    return HttpResponse()
