@@ -3,7 +3,7 @@
 
 # Setup
 ## Use Different Setting Files
-Currently tracks only `denguefever_tw/denguefever_tw/settings/productions.py`  
+Currently this repo tracks only `denguefever_tw/denguefever_tw/settings/productions.py`  
 All other setting files should be defined under `denguefever_tw/denguefever_tw/settings`
 
 Use the following command to setup or change django settings
@@ -20,14 +20,16 @@ Change `your_setting_file` to corresponding file
 All the sensitive data are not versioned and should be configured by environment variable.  
 The variables needed including
 
-- `DJANGO_SECRET_KEY`
+- `DJANGO_SECRET_KEY` (loaded as `SECRET_KEY`)
+- `LINE_CHANNEL_SECRET`
+- `LINE_CHANNEL_ACCESS_TOKEN`
 - `POSTGRESQL_NAME`
 - `POSTGRESQL_USER`
 - `POSTGRESQL_PASSWORD`
 - `POSTGRESQL_HOST`
 - `POSTGRESQL_PORT`
 
-[Setup LINE API Key](#line-api-key)
+
 
 ### Develop
 When developing, you should define your own `local.py` under `settings`.  
@@ -43,13 +45,17 @@ Then, set up the following variables
 
 - `SECRET_KEY`
 - `DATABASES`
+- `LINE_CHANNEL_SECRET`
+- `LINE_CHANNEL_ACCESS_TOKEN`
 
 e.g.
 
 ```python
 from .base import *
 
-SECRET_KEY = 'this is secret key'
+SECRET_KEY = 'This is secret key'
+LINE_CHANNEL_SECRET = 'This is Line channel secret'
+LINE_CHANNEL_ACCESS_TOKEN = 'This is Line access token'
 
 DATABASES = {
     'default': {
@@ -63,34 +69,36 @@ DATABASES = {
 }
 ```
 
+## Database
+Currrently postgresql is used
 
-[Setup LINE API Key](#line-api-key)
+### Start postgresql
+```sh
+pg_ctl -D /usr/local/var/postgres -l /usr/local/var/postgres/server.log start
+```
 
+## Cache
+Cache is used to store user state.  
 
-## <a name="line-api-key"></a>Setup LINE API Key
-The following two methods is used to setup LINE api key.  
-If the setting file doesn't exist, the environment variable will be loaded.
+Currently database cache is used  
+This lines should be added to setting file.
 
-### By File
-Create `denguefever_tw/denguefever_tw/.api_key.json`  
-Then, enter your api information in the following format.
-
-```json
-{
-    "channel_id": "",
-    "channel_secret": "",
-    "channel_mid": ""
+```python
+CACHES = {
+	'default': {
+		'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+		'LOCATION': 'my_cache_table',
+	}
 }
 ```
 
-### By Environment Variable
-Add these line to `~/.bashrc` or run the following lines every time you run this server.
+After setting file is set, execute the following commad
 
 ```sh
-export CHANNEL_ID=""
-export CHANNEL_SECRET=""
-export CHANNEL_MID=""
+ python manage.py createcachetable
 ```
+
+
 
 # Pre requirements
 Python 3
@@ -113,5 +121,8 @@ uwsgi --ini server-setting/linebot.ini --touch-reload=`pwd`/server-setting/lineb
 sudo killall -s INT uwsgi
 ```
 
+pg_ctl -D /usr/local/var/postgres -l /usr/local/var/postgres/server.log start
+
+
 # Setup callback URL on LINE
-Add **https://`Your Domain Name`:443/callback/** to `Callback URL` on your LINE Developer page.
+Add **https://`Your Domain Name`/callback/** to `Webhook URL` on your LINE Developer page.
