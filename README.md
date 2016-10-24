@@ -1,8 +1,29 @@
 # LINE BOT SERVER
 ---
+- [Pre requirements](#prereq)
+- [Setup](#setup)
+- [Usage](#usage)
+- [Config](#config)
+- [Setup callback URL on LINE](#callback-url)
 
-# Setup
-## Use Different Setting Files
+# <a name="prereq"></a> Pre requirements
+Python 3
+
+## Install Dependency
+
+```sh
+pip install -r requirements.txt
+```
+
+
+# <a name="setup"></a> Setup
+- [Use Different Setting Files](#setting-file)
+- [Database](#db)
+- [Cache](#cache)
+- [Logger (Optional But Recommended)](#logger)
+
+
+## <a name='setting-file'></a> Use Different Setting Files
 Currently this repo tracks only `denguefever_tw/denguefever_tw/settings/productions.py`  
 All other setting files should be defined under `denguefever_tw/denguefever_tw/settings`
 
@@ -69,7 +90,7 @@ DATABASES = {
 }
 ```
 
-## Database
+## <a name='db'></a> Database
 Currrently postgresql is used
 
 ### Start postgresql
@@ -77,7 +98,7 @@ Currrently postgresql is used
 pg_ctl -D /usr/local/var/postgres -l /usr/local/var/postgres/server.log start
 ```
 
-## Cache
+## <a name='cache'></a> Cache
 Cache is used to store user state.  
 
 Currently database cache is used  
@@ -97,19 +118,45 @@ After setting file is set, execute the following commad
 ```sh
  python manage.py createcachetable
 ```
+## <a name='logger'></a> Logger (Optional But Recommended)
+- loggers
+	- `django`: global logging
+	- `dengue_linebot.DengueBotFSM`: FSM logging including all the conditional judgements and operation processes 
 
+e.g.
 
-
-# Pre requirements
-Python 3
-
-## Install Dependency
-
-```sh
-pip install -r requirements.txt
+```python
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '%(levelname)s:%(asctime)s:%(module)s:%(process)d:%(thread)d\n%(message)s'
+        },
+        'simple': {
+            'format': '%(levelname)s\n%(message)s'
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+        },
+        'dengue_linebot.DengueBotFSM': {
+            'handlers': ['console'],
+            'level': 'INFO',
+        }
+    },
+}
 ```
 
-# Usage
+# <a name="usage"></a> Usage
 ## Run uwsgi
 ### Start
 ```sh
@@ -121,8 +168,12 @@ uwsgi --ini server-setting/linebot.ini --touch-reload=`pwd`/server-setting/lineb
 sudo killall -s INT uwsgi
 ```
 
-pg_ctl -D /usr/local/var/postgres -l /usr/local/var/postgres/server.log start
+# <a name="config"></a> Config
+Under `denguefever_tw/dengue_linebot/dengue_bot_config`
+
+- `FSM.json`: Finite state machine 
+- `dengue_msg.json`: Static Messages
 
 
-# Setup callback URL on LINE
+# <a name="callback-url"></a> Setup callback URL on LINE
 Add **https://`Your Domain Name`/callback/** to `Webhook URL` on your LINE Developer page.
