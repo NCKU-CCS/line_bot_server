@@ -1,4 +1,6 @@
 import os
+from functools import wraps
+import logging
 
 import ujson
 from transitions.extensions import GraphMachine
@@ -16,6 +18,9 @@ symptom_preview_img_url = 'https://i.imgur.com/oydmUva.jpg'
 symptom_origin_img_url = 'https://i.imgur.com/fs6wzor.jpg'
 
 
+logger = logging.getLogger(__name__)
+
+
 class Signleton(type):
     def __init__(self, *args, **kwargs):
         self.__instance = None
@@ -25,6 +30,38 @@ class Signleton(type):
         if self.__instance is None:
             self.__instance = super().__call__(*args, **kwargs)
         return self.__instance
+
+
+def log_fsm_condition(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        result = func(*args, **kwargs)
+        logger.info(
+            '{condition} is {result}\n'.format(
+                condition=func.__name__,
+                result=result)
+        )
+        return result
+    return wrapper
+
+
+def log_fsm_operation(func):
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+        pre_state = self.state
+        result = func(self, *args, **kwargs)
+        post_state = self.state
+        logger.info(
+            ('FSM Opertion\n'
+             'Beforce Advance: {pre_state}\n'
+             'Triggered Function: {func}\n'
+             'After Advance: {post_state}\n').format(
+                 pre_state=pre_state,
+                 func=func.__name__,
+                 post_state=post_state)
+        )
+        return result
+    return wrapper
 
 
 class DengueBotMachine(metaclass=Signleton):
@@ -87,51 +124,66 @@ class DengueBotMachine(metaclass=Signleton):
     def set_state(self, state):
         self.machine.set_state(state)
 
+    @log_fsm_condition
     def is_pass(self, event):
         return True
 
+    @log_fsm_condition
     def is_failed(self, event):
         return False
 
     def _is_this_message_event(self, event, event_type):
         return isinstance(event, MessageEvent) and isinstance(event.message, event_type)
 
+    @log_fsm_condition
     def is_text_message(self, event):
         return self._is_this_message_event(event, TextMessage)
 
+    @log_fsm_condition
     def is_sticker_message(self, event):
         return self._is_this_message_event(event, StickerMessage)
 
+    @log_fsm_condition
     def is_image_message(self, event):
         return self._is_this_message_event(event, ImageMessage)
 
+    @log_fsm_condition
     def is_video_message(self, event):
         return self._is_this_message_event(event, VideoMessage)
 
+    @log_fsm_condition
     def is_audio_message(self, event):
         return self._is_this_message_event(event, AudioMessage)
 
+    @log_fsm_condition
     def is_location_message(self, event):
         return self._is_this_message_event(event, LocationMessage)
 
+    @log_fsm_condition
     def is_follow_event(self, event):
         return isinstance(event, FollowEvent)
 
+    @log_fsm_condition
     def is_unfollow_event(self, event):
         return isinstance(event, UnfollowEvent)
 
+    @log_fsm_condition
     def is_join_event(self, event):
         return isinstance(event, JoinEvent)
 
+    @log_fsm_condition
     def is_leave_event(self, event):
         return isinstance(event, LeaveEvent)
 
+    @log_fsm_condition
     def is_postback_event(self, event):
         return isinstance(event, PostbackEvent)
 
+    @log_fsm_condition
     def is_beacon_event(self, event):
         return isinstance(event, BeaconEvent)
 
+    @log_fsm_condition
     def is_asking_prevention(self, event):
         msg = event.message.text
         if (
@@ -142,24 +194,29 @@ class DengueBotMachine(metaclass=Signleton):
             return True
         return False
 
+    @log_fsm_condition
     def is_asking_self_prevention(self, event):
         return '自身' in event.message.text
 
+    @log_fsm_condition
     def is_asking_env_prevention(self, event):
         return '環境' in event.message.text
 
+    @log_fsm_condition
     def is_asking_dengue_fever(self, event):
         msg = event.message.text
         if any(m in msg for m in ["什麼是登革熱", "登革熱是什麼"]) or msg.strip() == "登革熱":
             return True
         return False
 
+    @log_fsm_condition
     def is_asking_who_we_are(self, event):
         msg = event.message.text
         if msg.strip() in ["你是誰", "掌蚊人是誰", "誰是掌蚊人", "掌蚊人"]:
             return True
         return False
 
+    @log_fsm_condition
     def is_asking_breeding_source(self, event):
         msg = event.message.text
         if (
@@ -169,12 +226,14 @@ class DengueBotMachine(metaclass=Signleton):
             return True
         return False
 
+    @log_fsm_condition
     def is_greeting(self, event):
         msg = event.message.text
         if any(m in msg.strip().lower() for m in ["哈囉", "你好", "嗨", "安安", "hello", "hi"]):
             return True
         return False
 
+    @log_fsm_condition
     def is_asking_hospital(self, event):
         msg = event.message.text
         if (
@@ -186,10 +245,12 @@ class DengueBotMachine(metaclass=Signleton):
             return True
         return False
 
+    @log_fsm_condition
     def is_wrong_location(self, event):
         # TODO: implement
         return False
 
+    @log_fsm_condition
     def is_asking_symptom(self, event):
         msg = event.message.text
         if (
@@ -200,6 +261,7 @@ class DengueBotMachine(metaclass=Signleton):
             return True
         return False
 
+    @log_fsm_condition
     def is_asking_realtime_epidemic(self, event):
         msg = event.message.text
         if (
@@ -210,9 +272,11 @@ class DengueBotMachine(metaclass=Signleton):
             return True
         return False
 
+    @log_fsm_condition
     def is_giving_suggestion(self, event):
         return '建議' in event.message.text
 
+    @log_fsm_condition
     def is_asking_usage(self, event):
         msg = event.message.text
         if (
@@ -226,24 +290,31 @@ class DengueBotMachine(metaclass=Signleton):
             return True
         return False
 
+    @log_fsm_condition
     def is_selecting_ask_dengue_fever(self, event):
         return '1' in event.message.text
 
+    @log_fsm_condition
     def is_selecting_ask_symptom(self, event):
         return '2' in event.message.text
 
+    @log_fsm_condition
     def is_selecting_ask_prevention(self, event):
         return '3' in event.message.text
 
+    @log_fsm_condition
     def is_selecting_ask_hospital(self, event):
         return '4' in event.message.text
 
+    @log_fsm_condition
     def is_selecting_ask_realtime_epidemic(self, event):
         return '5' in event.message.text
 
+    @log_fsm_condition
     def is_selecting_give_suggestion(self, event):
         return '6' in event.message.text
 
+    @log_fsm_operation
     def on_enter_user_join(self, event):
         # TODO: implement update user data when user rejoin
         user_id = event.source.user_id
@@ -268,25 +339,31 @@ class DengueBotMachine(metaclass=Signleton):
             )
         )
 
+    @log_fsm_operation
     def on_enter_ask_prevention(self, event):
         self._send_text_in_rule(event, 'ask_prevent_type')
 
+    @log_fsm_operation
     def on_enter_ask_self_prevention(self, event):
         self._send_text_in_rule(event, 'self_prevent')
         self.finish_ans()
 
+    @log_fsm_operation
     def on_enter_ask_env_prevention(self, event):
         self._send_text_in_rule(event, 'env_prevent')
         self.finish_ans()
 
+    @log_fsm_operation
     def on_enter_ask_dengue_fever(self, event):
         self._send_text_in_rule(event, 'dengue_fever_intro')
         self.finish_ans()
 
+    @log_fsm_operation
     def on_enter_ask_hospital(self, event):
         self._send_text_in_rule(event, 'ask_address')
         self.advance()
 
+    @log_fsm_operation
     def on_enter_receive_user_location(self, event):
         # TODO: replace text with hospital location
         self.line_bot_api.reply_message(
@@ -336,6 +413,7 @@ class DengueBotMachine(metaclass=Signleton):
     #     hospital_messages.extend(location_messages)
     #     return hospital_messages
 
+    @log_fsm_operation
     def on_enter_ask_symptom(self, event):
         self.line_bot_api.reply_message(
             event.reply_token,
@@ -349,37 +427,46 @@ class DengueBotMachine(metaclass=Signleton):
         )
         self.finish_ans()
 
+    @log_fsm_operation
     def on_enter_ask_realtime_epidemic(self, event):
         self._send_text_in_rule(event, 'new_condition')
         self.finish_ans()
 
+    @log_fsm_operation
     def on_enter_greet(self, event):
         self._send_text_in_rule(event, 'greeting')
         self.finish_ans()
 
+    @log_fsm_operation
     def on_enter_ask_breeding_source(self, event):
         self._send_text_in_rule(event, 'breeding_source')
 
+    @log_fsm_operation
     def on_enter_ask_who_we_are(self, event):
         self._send_text_in_rule(event, 'who_we_are')
 
+    @log_fsm_operation
     def on_enter_wait_user_suggestion(self, event):
         self._send_text_in_rule(event, 'ask_advice')
 
+    @log_fsm_operation
     def on_exit_wait_user_suggestion(self, event):
         self._send_text_in_rule(event, 'thank_advice')
         # TODO: save suggestion
         # advice = Advice(advice=event.text, user_mid=reply_channel)
         # advice.save()
 
+    @log_fsm_operation
     def on_enter_ask_usage(self, event):
         self._send_text_in_rule(event, 'manual')
 
+    @log_fsm_operation
     def on_enter_unrecongnized_msg(self, event):
         if getattr(event, 'reply_token', None):
             self._send_text_in_rule(event, 'unknown_msg')
         self.handle_unrecognized_msg()
 
+    @log_fsm_operation
     def handle_unrecognized_msg(self, event):
         # TODO: implement
         # random msg

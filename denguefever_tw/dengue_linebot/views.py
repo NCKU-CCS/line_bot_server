@@ -61,17 +61,17 @@ def reply(request):
             state = cache.get(user_id) or 'user'
 
             logger.info(
-                ('\nReceive Event\n'
+                ('Receive Event\n'
                  'User ID: {user_id}\n'
                  'Event Type: {event_type}\n'
-                 'User state: {state}').format(
+                 'User state: {state}\n').format(
                      user_id=user_id,
                      event_type=event.type,
                      state=state)
             )
             if isinstance(event, MessageEvent):
                 logger.info(
-                    'Message type: {message_type}'.format(
+                    'Message type: {message_type}\n'.format(
                         message_type=event.message.type
                     )
                 )
@@ -80,11 +80,11 @@ def reply(request):
             cache.set(user_id, machine.state)
 
             logger.info(
-                ('\nAfter Advance\n'
+                ('After Advance\n'
                  'Advance Status: {status}\n'
                  'User ID: {user_id}\n'
                  'Macinhe State: {m_state}\n'
-                 'User State: {u_state}').format(
+                 'User State: {u_state}\n').format(
                      status=advance_statue,
                      user_id=user_id,
                      m_state=machine.state,
