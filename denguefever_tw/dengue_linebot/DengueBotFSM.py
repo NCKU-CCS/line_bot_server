@@ -10,7 +10,7 @@ from linebot.models import (
     TextSendMessage, ImageSendMessage, LocationSendMessage
 )
 
-from .models import LineUser
+from .models import LineUser, Advice, UnrecognizedMsg
 
 CONFIG_BASE_PATH = 'dengue_linebot/dengue_bot_config/'
 
@@ -97,7 +97,7 @@ class DengueBotMachine(metaclass=Signleton):
 
     @staticmethod
     def _add_unrecognized_traistion(states):
-        UNRECONGNIZED_STATE = 'unrecongnized_msg'
+        UNRECONGNIZED_STATE = 'unrecognized_msg'
         DengueBotMachine.states.append(UNRECONGNIZED_STATE)
         DengueBotMachine.dengue_transitions.extend([
             {'trigger': 'advance',
@@ -452,30 +452,21 @@ class DengueBotMachine(metaclass=Signleton):
     @log_fsm_operation
     def on_exit_wait_user_suggestion(self, event):
         self._send_text_in_rule(event, 'thank_advice')
-        # TODO: save suggestion
-        # advice = Advice(advice=event.text, user_mid=reply_channel)
-        # advice.save()
+        advice = Advice(content=event.message.text, user_id=event.source.user_id)
+        advice.save()
 
     @log_fsm_operation
     def on_enter_ask_usage(self, event):
         self._send_text_in_rule(event, 'manual')
 
     @log_fsm_operation
-    def on_enter_unrecongnized_msg(self, event):
+    def on_enter_unrecognized_msg(self, event):
         if getattr(event, 'reply_token', None):
             self._send_text_in_rule(event, 'unknown_msg')
-        self.handle_unrecognized_msg()
+        self.handle_unrecognized_msg(event)
 
     @log_fsm_operation
-    def handle_unrecognized_msg(self, event):
-        # TODO: implement
-        # random msg
-        # 記錄不能辨別的訊息
-        # unrecognize_msg = UnRecognizeMsg(user_mid=reply_channel, msg=msg)
-        # unrecognize_msg.save()
-        #
-        # random.seed(time.time())
-        # random_reply = random.choice(random_reply_lst)
-        # reply_msg = random_reply['msg']
-        # cache.set(reply_channel, random_reply['state'], timeout=30)
-        pass
+    def on_exit_unrecognized_msg(self, event):
+        unrecognized_msg = UnrecognizedMsg(user_id=event.source.user_id,
+                                           message=event.message.text)
+        unrecognized_msg.save()
