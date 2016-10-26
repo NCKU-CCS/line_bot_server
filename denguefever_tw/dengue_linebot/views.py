@@ -10,7 +10,7 @@ from pprint import pformat
 
 from linebot import LineBotApi, WebhookParser
 from linebot.exceptions import InvalidSignatureError, LineBotApiError
-from linebot.models import MessageEvent
+from linebot.models import MessageEvent, TextMessage
 
 from .DengueBotFSM import DengueBotMachine
 
@@ -72,9 +72,14 @@ def reply(request):
             if isinstance(event, MessageEvent):
                 logger.info(
                     'Message type: {message_type}\n'.format(
-                        message_type=event.message.type
-                    )
+                        message_type=event.message.type)
                 )
+                if isinstance(event.message, TextMessage):
+                    logger.info(
+                        'Text: {text}\n'.format(
+                            text=event.message.text)
+                    )
+
             machine.set_state(state)
             advance_statue = machine.advance(event)
             cache.set(user_id, machine.state)
