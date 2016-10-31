@@ -34,3 +34,10 @@ class UnrecognizedMsg(models.Model):
             user_id=self.user_id,
             message=self.message
         )
+
+
+class MessageLog(models.Model):
+    speaker = models.TextField()
+    speak_time = models.DateTimeField()
+    message_type = models.TextField()
+    content = models.TextField(null=True, blank=True)
