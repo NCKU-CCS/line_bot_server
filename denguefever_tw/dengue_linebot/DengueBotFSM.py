@@ -1,5 +1,6 @@
 import os
 from functools import wraps
+from datetime import datetime
 import logging
 
 import ujson
@@ -10,7 +11,7 @@ from linebot.models import (
     TextSendMessage, ImageSendMessage, LocationSendMessage
 )
 
-from .models import LineUser, Advice, UnrecognizedMsg
+from .models import LineUser, Advice, UnrecognizedMsg, MessageLog
 
 CONFIG_BASE_PATH = 'dengue_linebot/dengue_bot_config/'
 
@@ -64,6 +65,35 @@ def log_fsm_operation(func):
     return wrapper
 
 
+def save_bot_reply(func):
+    def save_message(msg):
+        try:
+            content = msg.text
+        except AttributeError:
+            content = None
+
+        message_log = MessageLog(speaker='bot',
+                                 speak_time=datetime.now(),
+                                 message_type=msg.type,
+                                 content=content)
+        message_log.save()
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        print(args, kwargs)
+        try:
+            messages = args[1]
+        except IndexError:
+            messages = kwargs.get('messages')
+        if not isinstance(messages, (list, tuple)):
+            messages = [messages]
+            for m in messages:
+                save_message(m)
+        result = func(*args, **kwargs)
+        return result
+    return wrapper
+
+
 class DengueBotMachine(metaclass=Signleton):
     states = list()
     dengue_transitions = list()
@@ -80,6 +110,7 @@ class DengueBotMachine(metaclass=Signleton):
             show_conditions=True
         )
         self.line_bot_api = line_bot_api
+        self.line_bot_api.reply_message = save_bot_reply(self.line_bot_api.reply_message)
 
     def draw_graph(self, filename, prog='dot'):
         self.graph.draw(filename, prog=prog)
