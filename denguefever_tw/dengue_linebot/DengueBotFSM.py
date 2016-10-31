@@ -17,6 +17,10 @@ CONFIG_BASE_PATH = 'dengue_linebot/dengue_bot_config/'
 
 symptom_preview_img_url = 'https://i.imgur.com/oydmUva.jpg'
 symptom_origin_img_url = 'https://i.imgur.com/fs6wzor.jpg'
+loc_step1_preview_img_url = 'https://i.imgur.com/8fdg2G2.jpg'
+loc_step1_origin_img_url = 'https://i.imgur.com/NAQFUgk.jpg'
+loc_step2_preview_img_url = 'https://i.imgur.com/3HEfVb7.jpg'
+loc_step2_origin_img_url = 'https://i.imgur.com/4mwZjtG.jpg'
 
 
 logger = logging.getLogger(__name__)
@@ -391,7 +395,23 @@ class DengueBotMachine(metaclass=Signleton):
 
     @log_fsm_operation
     def on_enter_ask_hospital(self, event):
-        self._send_text_in_rule(event, 'ask_address')
+        messages = [
+            TextSendMessage(
+                text=DengueBotMachine.reply_msgs['ask_address']
+            ),
+            ImageSendMessage(
+                original_content_url=loc_step1_origin_img_url,
+                preview_image_url=loc_step1_preview_img_url
+            ),
+            ImageSendMessage(
+                original_content_url=loc_step2_origin_img_url,
+                preview_image_url=loc_step2_preview_img_url
+            ),
+        ]
+        self.line_bot_api.reply_message(
+            event.reply_token,
+            messages=messages
+        )
         self.advance()
 
     @log_fsm_operation
