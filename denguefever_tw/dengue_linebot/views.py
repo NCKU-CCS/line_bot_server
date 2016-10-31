@@ -79,11 +79,11 @@ def reply(request):
                 if isinstance(event.message, TextMessage):
                     content = event.message.text
                     logger.info('Text: {text}\n'.format(text=content))
-            message_log = MessageLog(speaker=user_id,
-                                     speak_time=datetime.fromtimestamp(event.timestamp/1000),
-                                     message_type=event.type,
-                                     content=content)
-            message_log.save()
+                message_log = MessageLog(speaker=user_id,
+                                        speak_time=datetime.fromtimestamp(event.timestamp/1000),
+                                        message_type=event.message.type,
+                                        content=content)
+                message_log.save()
 
             machine.set_state(state)
             advance_statue = machine.advance(event)
