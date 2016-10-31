@@ -8,4 +8,36 @@ class LineUser(models.Model):
     status_message = models.TextField(blank=True)
 
     def __str__(self):
-        return '{} ({})'.format(self.name, self.user_id)
+        return '{name} ({user_id})'.format(
+            name=self.name,
+            user_id=self.user_id
+        )
+
+
+class Advice(models.Model):
+    content = models.TextField()
+    user_id = models.TextField()
+
+    def __str__(self):
+        return '{user_id}: {content}'.format(
+            user_id=self.user_id,
+            content=self.content
+        )
+
+
+class UnrecognizedMsg(models.Model):
+    message = models.TextField()
+    user_id = models.TextField()
+
+    def __str__(self):
+        return '{user_id} ({message})'.format(
+            user_id=self.user_id,
+            message=self.message
+        )
+
+
+class MessageLog(models.Model):
+    speaker = models.TextField()
+    speak_time = models.DateTimeField()
+    message_type = models.TextField()
+    content = models.TextField(null=True, blank=True)

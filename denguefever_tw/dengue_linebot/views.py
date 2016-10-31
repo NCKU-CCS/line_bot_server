@@ -6,6 +6,7 @@ from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
 
 import logging
+from datetime import datetime
 from pprint import pformat
 
 from linebot import LineBotApi, WebhookParser
@@ -13,7 +14,7 @@ from linebot.exceptions import InvalidSignatureError, LineBotApiError
 from linebot.models import MessageEvent, TextMessage
 
 from .DengueBotFSM import DengueBotMachine
-
+from .models import MessageLog
 
 logger = logging.getLogger('django')
 
@@ -69,16 +70,20 @@ def reply(request):
                      event_type=event.type,
                      state=state)
             )
+            content = None
             if isinstance(event, MessageEvent):
                 logger.info(
                     'Message type: {message_type}\n'.format(
                         message_type=event.message.type)
                 )
                 if isinstance(event.message, TextMessage):
-                    logger.info(
-                        'Text: {text}\n'.format(
-                            text=event.message.text)
-                    )
+                    content = event.message.text
+                    logger.info('Text: {text}\n'.format(text=content))
+            message_log = MessageLog(speaker=user_id,
+                                     speak_time=datetime.fromtimestamp(event.timestamp/1000),
+                                     message_type=event.type,
+                                     content=content)
+            message_log.save()
 
             machine.set_state(state)
             advance_statue = machine.advance(event)

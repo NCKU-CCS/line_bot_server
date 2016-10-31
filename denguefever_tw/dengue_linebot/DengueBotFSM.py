@@ -1,5 +1,6 @@
 import os
 from functools import wraps
+from datetime import datetime
 import logging
 
 import ujson
@@ -10,7 +11,7 @@ from linebot.models import (
     TextSendMessage, ImageSendMessage, LocationSendMessage
 )
 
-from .models import LineUser
+from .models import LineUser, Advice, UnrecognizedMsg, MessageLog
 
 CONFIG_BASE_PATH = 'dengue_linebot/dengue_bot_config/'
 
@@ -64,6 +65,35 @@ def log_fsm_operation(func):
     return wrapper
 
 
+def save_bot_reply(func):
+    def save_message(msg):
+        try:
+            content = msg.text
+        except AttributeError:
+            content = None
+
+        message_log = MessageLog(speaker='bot',
+                                 speak_time=datetime.now(),
+                                 message_type=msg.type,
+                                 content=content)
+        message_log.save()
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        print(args, kwargs)
+        try:
+            messages = args[1]
+        except IndexError:
+            messages = kwargs.get('messages')
+        if not isinstance(messages, (list, tuple)):
+            messages = [messages]
+            for m in messages:
+                save_message(m)
+        result = func(*args, **kwargs)
+        return result
+    return wrapper
+
+
 class DengueBotMachine(metaclass=Signleton):
     states = list()
     dengue_transitions = list()
@@ -80,6 +110,7 @@ class DengueBotMachine(metaclass=Signleton):
             show_conditions=True
         )
         self.line_bot_api = line_bot_api
+        self.line_bot_api.reply_message = save_bot_reply(self.line_bot_api.reply_message)
 
     def draw_graph(self, filename, prog='dot'):
         self.graph.draw(filename, prog=prog)
@@ -97,7 +128,7 @@ class DengueBotMachine(metaclass=Signleton):
 
     @staticmethod
     def _add_unrecognized_traistion(states):
-        UNRECONGNIZED_STATE = 'unrecongnized_msg'
+        UNRECONGNIZED_STATE = 'unrecognized_msg'
         DengueBotMachine.states.append(UNRECONGNIZED_STATE)
         DengueBotMachine.dengue_transitions.extend([
             {'trigger': 'advance',
@@ -452,30 +483,21 @@ class DengueBotMachine(metaclass=Signleton):
     @log_fsm_operation
     def on_exit_wait_user_suggestion(self, event):
         self._send_text_in_rule(event, 'thank_advice')
-        # TODO: save suggestion
-        # advice = Advice(advice=event.text, user_mid=reply_channel)
-        # advice.save()
+        advice = Advice(content=event.message.text, user_id=event.source.user_id)
+        advice.save()
 
     @log_fsm_operation
     def on_enter_ask_usage(self, event):
         self._send_text_in_rule(event, 'manual')
 
     @log_fsm_operation
-    def on_enter_unrecongnized_msg(self, event):
+    def on_enter_unrecognized_msg(self, event):
         if getattr(event, 'reply_token', None):
             self._send_text_in_rule(event, 'unknown_msg')
-        self.handle_unrecognized_msg()
+        self.handle_unrecognized_msg(event)
 
     @log_fsm_operation
-    def handle_unrecognized_msg(self, event):
-        # TODO: implement
-        # random msg
-        # 記錄不能辨別的訊息
-        # unrecognize_msg = UnRecognizeMsg(user_mid=reply_channel, msg=msg)
-        # unrecognize_msg.save()
-        #
-        # random.seed(time.time())
-        # random_reply = random.choice(random_reply_lst)
-        # reply_msg = random_reply['msg']
-        # cache.set(reply_channel, random_reply['state'], timeout=30)
-        pass
+    def on_exit_unrecognized_msg(self, event):
+        unrecognized_msg = UnrecognizedMsg(user_id=event.source.user_id,
+                                           message=event.message.text)
+        unrecognized_msg.save()
