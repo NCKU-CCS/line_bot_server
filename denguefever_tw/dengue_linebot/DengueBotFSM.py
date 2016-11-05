@@ -12,6 +12,7 @@ from linebot.models import (
 )
 
 from .models import LineUser, Advice, UnrecognizedMsg, MessageLog
+import hospital
 
 CONFIG_BASE_PATH = 'dengue_linebot/dengue_bot_config/'
 
@@ -416,53 +417,48 @@ class DengueBotMachine(metaclass=Signleton):
 
     @log_fsm_operation
     def on_enter_receive_user_location(self, event):
-        # TODO: replace text with hospital location
+        hospital_list = hospital.views.get_nearby_hospital(event.message.longitude,
+                                                           event.message.latitude)
+        if hospital_list:
+            msgs = self._create_hospitals_msgs(hospital_list)
+        else:
+            msgs = [TextSendMessage(text="抱歉，你附近都沒有快篩診所\n")]
+
+        msgs.append(
+            TextSendMessage(text=(
+                "想要查看地區所有快篩點，請點下面連結\n"
+                "(如果手機不能瀏覽，可用電腦查看，或將連結貼到 chrome 瀏覽器)\n\n"
+                "https://www.taiwanstat.com/realtime/dengue-vis-with-hospital/"))
+        )
         self.line_bot_api.reply_message(
             event.reply_token,
-            TextSendMessage(text='醫院')
+            msgs
         )
-        # TODO: Implment hospital db
-        # hospital_list = hospital.views.get_nearby_hospital(event.longitude, event.latitude)
-        # if hospital_list:
-        #     sender = self._send_hospitals(event, hospital_lst)
-        #     msgs = self._create_hospitals_msgs(hospital_list)
-        # else:
-        #     msgs = [TextSendMessage(text="抱歉，你附近都沒有快篩診所\n")]
-        #
-        # msgs.append(
-        #     TextSendMessage(text=(
-        #         "想要查看地區所有快篩點，請點下面連結\n"
-        #         "(如果手機不能瀏覽，可用電腦查看，或將連結貼到 chrome 瀏覽器)\n\n"
-        #         "https://www.taiwanstat.com/realtime/dengue-vis-with-hospital/"))
-        # )
-        # self.line_bot_api.reply_message(
-        #     event.reply_token,
-        #     msgs
-        # )
         self.finish_ans()
 
-    # def _create_hospitals_msgs(self, hospital_list):
-    #     text = "您好,\n最近的三間快篩診所是:"
-    #     location_messages = list()
-    #     for index, hospital in enumerate(hospital_list, 1):
-    #         text += "\n\n{index}.{name}\n{address}\n{phone}".format(
-    #             index=index
-    #             name=hospital.get('name'),
-    #             address=hospital.get('address'),
-    #             phone=hospital.get('phone')
-    #         )
-    #
-    #         location_message = LocationSendMessage(
-    #             title="地圖 - {name}".format(name=hospital.get('name')),
-    #             latitude=hospital.get('lat'),
-    #             longitude=hospital.get('lng')
-    #         )
-    #
-    #     text_message = TextSendMessage(text=text)
-    #
-    #     hospital_messages = [text_message]
-    #     hospital_messages.extend(location_messages)
-    #     return hospital_messages
+    def _create_hospitals_msgs(self, hospital_list):
+        text = "您好,\n最近的三間快篩診所是:"
+        location_messages = list()
+        for index, hospital in enumerate(hospital_list, 1):
+            text += "\n\n{index}.{name}\n{address}\n{phone}".format(
+                index=index,
+                name=hospital.get('name'),
+                address=hospital.get('address'),
+                phone=hospital.get('phone')
+            )
+
+            location_messages.append(LocationSendMessage(
+                title="地圖 - {name}".format(name=hospital.get('name')),
+                address=hospital.get('address'),
+                latitude=hospital.get('lat'),
+                longitude=hospital.get('lng')
+            ))
+
+        text_message = TextSendMessage(text=text)
+
+        hospital_messages = [text_message]
+        hospital_messages.extend(location_messages)
+        return hospital_messages
 
     @log_fsm_operation
     def on_enter_ask_symptom(self, event):

@@ -2,6 +2,7 @@ from django.core.exceptions import ImproperlyConfigured
 
 import os
 
+
 def get_env_variable(var_name):
     try:
         return os.environ[var_name]
@@ -28,7 +29,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     # app
-    'dengue_linebot.apps.DengueLinebotConfig'
+    'dengue_linebot.apps.DengueLinebotConfig',
+    'hospital.apps.HospitalConfig'
 ]
 
 MIDDLEWARE_CLASSES = [
