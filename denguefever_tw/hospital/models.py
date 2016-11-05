@@ -1,7 +1,7 @@
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import Point
 
-# Create your models here.
+
 class Hospital(models.Model):
     hospital_id = models.TextField(primary_key=True)
     name = models.TextField()
@@ -10,7 +10,6 @@ class Hospital(models.Model):
     opening_hours = models.TextField()
     lng = models.FloatField()
     lat = models.FloatField()
-
     location = models.PointField(geography=True, srid=4326, default='POINT(0.0 0.0)')
 
     def __str__(self):
