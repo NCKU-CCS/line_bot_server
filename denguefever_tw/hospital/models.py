@@ -12,6 +12,9 @@ class Hospital(models.Model):
     lat = models.FloatField()
     location = models.PointField(geography=True, srid=4326, default='POINT(0.0 0.0)')
 
+    class Meta:
+        unique_together = ('name', 'address', 'location')
+
     def __str__(self):
         return self.hospital_id
 
