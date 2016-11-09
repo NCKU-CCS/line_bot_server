@@ -32,7 +32,6 @@
             "source": "ask_prevention",
             "dest": "ask_self_prevention",
             "conditions": [
-                "is_text_message",
                 "is_asking_self_prevention"
             ]
         },
@@ -41,7 +40,6 @@
             "source": "ask_prevention",
             "dest": "ask_env_prevention",
             "conditions": [
-                "is_text_message",
                 "is_asking_env_prevention"
             ]
         },
@@ -60,7 +58,6 @@
             "source": "user",
             "dest": "ask_self_prevention",
             "conditions": [
-                "is_text_message",
                 "is_asking_self_prevention"
             ]
         },
@@ -69,7 +66,6 @@
             "source": "user",
             "dest": "ask_env_prevention",
             "conditions": [
-                "is_text_message",
                 "is_asking_env_prevention"
             ]
         },

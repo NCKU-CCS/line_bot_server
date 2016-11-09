@@ -8,7 +8,8 @@ from transitions.extensions import GraphMachine
 from linebot.models import (
     MessageEvent, FollowEvent, UnfollowEvent, JoinEvent, LeaveEvent, PostbackEvent, BeaconEvent,
     TextMessage, StickerMessage, ImageMessage, VideoMessage, AudioMessage, LocationMessage,
-    TextSendMessage, ImageSendMessage, LocationSendMessage
+    TextSendMessage, ImageSendMessage, LocationSendMessage, TemplateSendMessage,
+    ButtonsTemplate, PostbackTemplateAction
 )
 
 from .models import LineUser, Advice, UnrecognizedMsg, MessageLog
@@ -232,11 +233,21 @@ class DengueBotMachine(metaclass=Signleton):
 
     @log_fsm_condition
     def is_asking_self_prevention(self, event):
-        return '自身' in event.message.text
+        text = ''
+        if self.is_postback_event(event):
+            text = event.postback.data
+        elif self.is_text_message(event):
+            text = event.message.text
+        return '自身' in text
 
     @log_fsm_condition
     def is_asking_env_prevention(self, event):
-        return '環境' in event.message.text
+        text = ''
+        if self.is_postback_event(event):
+            text = event.postback.data
+        elif self.is_text_message(event):
+            text = event.message.text
+        return '環境' in text
 
     @log_fsm_condition
     def is_asking_dengue_fever(self, event):
@@ -377,7 +388,26 @@ class DengueBotMachine(metaclass=Signleton):
 
     @log_fsm_operation
     def on_enter_ask_prevention(self, event):
-        self._send_text_in_rule(event, 'ask_prevent_type')
+        # self._send_text_in_rule(event, 'ask_prevent_type')
+        self.line_bot_api.reply_message(
+            event.reply_token,
+            TemplateSendMessage(
+                alt_text=DengueBotMachine.reply_msgs['ask_prevent_type'],
+                template=ButtonsTemplate(
+                    text='請問是自身防疫還是環境防疫呢？',
+                    actions=[
+                        PostbackTemplateAction(
+                            label='自身',
+                            data='自身'
+                        ),
+                        PostbackTemplateAction(
+                            label='環境',
+                            data='環境'
+                        ),
+                    ]
+                )
+            )
+        )
 
     @log_fsm_operation
     def on_enter_ask_self_prevention(self, event):
