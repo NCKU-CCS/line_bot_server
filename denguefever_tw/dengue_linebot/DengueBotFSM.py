@@ -339,27 +339,27 @@ class DengueBotMachine(metaclass=Signleton):
 
     @log_fsm_condition
     def is_selecting_ask_dengue_fever(self, event):
-        return '1' in event.message.text or self.is_asking_dengue_fever(event)
+        return '1' == event.message.text or self.is_asking_dengue_fever(event)
 
     @log_fsm_condition
     def is_selecting_ask_symptom(self, event):
-        return '2' in event.message.text or self.is_asking_symptom(event)
+        return '2' == event.message.text or self.is_asking_symptom(event)
 
     @log_fsm_condition
     def is_selecting_ask_prevention(self, event):
-        return '3' in event.message.text or self.is_asking_prevention(event)
+        return '3' == event.message.text or self.is_asking_prevention(event)
 
     @log_fsm_condition
     def is_selecting_ask_hospital(self, event):
-        return '4' in event.message.text or self.is_asking_hospital(event)
+        return '4' == event.message.text or self.is_asking_hospital(event)
 
     @log_fsm_condition
     def is_selecting_ask_realtime_epidemic(self, event):
-        return '5' in event.message.text or self.is_asking_realtime_epidemic(event)
+        return '5' == event.message.text or self.is_asking_realtime_epidemic(event)
 
     @log_fsm_condition
     def is_selecting_give_suggestion(self, event):
-        return '6' in event.message.text or self.is_giving_suggestion(event)
+        return '6' == event.message.text or self.is_giving_suggestion(event)
 
     @log_fsm_operation
     def on_enter_user_join(self, event):
