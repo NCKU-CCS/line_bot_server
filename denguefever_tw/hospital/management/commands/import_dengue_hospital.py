@@ -1,9 +1,13 @@
+from django.db.utils import IntegrityError
 from django.core.management.base import BaseCommand
 
-import time
 import csv
+import shortuuid
+import logging
 
-import requests
+from ...models import Hospital
+
+logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
@@ -14,16 +18,30 @@ class Command(BaseCommand):
             '--path',
             default='hospital/data/tainan_hospitals.tsv'
         )
+        parser.add_argument(
+            '--database',
+            default='tainan'
+        )
 
     def handle(self, *args, **options):
         with open(options['path'], 'r') as input_data:
             data = csv.reader(input_data, delimiter='\t')
             for row in data:
                 name, address, phone, lat, lng = row
+                logger.info(row)
 
-                payload = {"database": "tainan", "name": name, "address": address, "phone": phone, "opening_hours": "", "lng": lng, "lat": lat}
-                print(payload)
-                req = requests.post('http://localhost:8000/hospital/insert/', data=payload)
-                print(req)
+                try:
 
-                time.sleep(1.5)
+                    hospital = Hospital(
+                        hospital_id=shortuuid.uuid(),
+                        name=name,
+                        address=address,
+                        phone=phone,
+                        opening_hours='',
+                        lng=lng,
+                        lat=lat
+                    )
+                    hospital.save(using=options['database'])
+                except IntegrityError:
+                    print('data have already been imported')
+                    break
