@@ -10,7 +10,7 @@ from linebot.models import (
     MessageEvent, FollowEvent, UnfollowEvent, JoinEvent, LeaveEvent, PostbackEvent, BeaconEvent,
     TextMessage, StickerMessage, ImageMessage, VideoMessage, AudioMessage, LocationMessage,
     TextSendMessage, ImageSendMessage, LocationSendMessage, TemplateSendMessage, CarouselTemplate,
-    CarouselColumn, MessageTemplateAction,
+    CarouselColumn, MessageTemplateAction, URITemplateAction,
     ButtonsTemplate, PostbackTemplateAction
 )
 
@@ -459,13 +459,12 @@ class DengueBotMachine(metaclass=Signleton):
             msgs = self._create_hospitals_msgs(hospital_list)
         else:
             msgs = [TextSendMessage(text="抱歉，你附近都沒有快篩診所\n")]
-
-        msgs.append(
-            TextSendMessage(text=(
-                "想要查看地區所有快篩點，請點下面連結\n"
-                "(如果手機不能瀏覽，可用電腦查看，或將連結貼到 chrome 瀏覽器)\n\n"
-                "https://www.taiwanstat.com/realtime/dengue-vis-with-hospital/"))
-        )
+            msgs.append(
+                TextSendMessage(text=(
+                    "想要查看地區所有快篩點，請點下面連結\n"
+                    "(如果手機不能瀏覽，可用電腦查看，或將連結貼到 chrome 瀏覽器)\n\n"
+                    "https://www.taiwanstat.com/realtime/dengue-vis-with-hospital/"))
+            )
         self.line_bot_api.reply_message(
             event.reply_token,
             msgs
@@ -503,6 +502,22 @@ class DengueBotMachine(metaclass=Signleton):
                     ]
                 )
             )
+
+        carousel_messages.append(
+            CarouselColumn(
+                text='想要查看地區所有快篩點\n請點下面連結',
+                actions=[
+                    MessageTemplateAction(
+                        label='  ',
+                        text='  '
+                    ),
+                    URITemplateAction(
+                        label='鄰近快篩診所',
+                        uri='https://www.taiwanstat.com/realtime/dengue-vis-with-hospital/',
+                    )
+                ]
+            )
+        )
 
         template_message = TemplateSendMessage(
             alt_text=text,
