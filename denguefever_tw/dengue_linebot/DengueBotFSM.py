@@ -1,6 +1,7 @@
 import os
 from functools import wraps
 from datetime import datetime
+from urllib.parse import parse_qs
 import logging
 
 import ujson
@@ -8,7 +9,8 @@ from transitions.extensions import GraphMachine
 from linebot.models import (
     MessageEvent, FollowEvent, UnfollowEvent, JoinEvent, LeaveEvent, PostbackEvent, BeaconEvent,
     TextMessage, StickerMessage, ImageMessage, VideoMessage, AudioMessage, LocationMessage,
-    TextSendMessage, ImageSendMessage, LocationSendMessage, TemplateSendMessage,
+    TextSendMessage, ImageSendMessage, LocationSendMessage, TemplateSendMessage, CarouselTemplate,
+    CarouselColumn, MessageTemplateAction, URITemplateAction,
     ButtonsTemplate, PostbackTemplateAction
 )
 
@@ -361,6 +363,10 @@ class DengueBotMachine(metaclass=Signleton):
     def is_selecting_give_suggestion(self, event):
         return '6' in event.message.text or self.is_giving_suggestion(event)
 
+    @log_fsm_condition
+    def is_hospital_address(self, event):
+        return 'hosptial_address' in parse_qs(event.postback.data)
+
     @log_fsm_operation
     def on_enter_user_join(self, event):
         # TODO: implement update user data when user rejoin
@@ -453,13 +459,12 @@ class DengueBotMachine(metaclass=Signleton):
             msgs = self._create_hospitals_msgs(hospital_list)
         else:
             msgs = [TextSendMessage(text="抱歉，你附近都沒有快篩診所\n")]
-
-        msgs.append(
-            TextSendMessage(text=(
-                "想要查看地區所有快篩點，請點下面連結\n"
-                "(如果手機不能瀏覽，可用電腦查看，或將連結貼到 chrome 瀏覽器)\n\n"
-                "https://www.taiwanstat.com/realtime/dengue-vis-with-hospital/"))
-        )
+            msgs.append(
+                TextSendMessage(text=(
+                    "想要查看地區所有快篩點，請點下面連結\n"
+                    "(如果手機不能瀏覽，可用電腦查看，或將連結貼到 chrome 瀏覽器)\n\n"
+                    "https://www.taiwanstat.com/realtime/dengue-vis-with-hospital/"))
+            )
         self.line_bot_api.reply_message(
             event.reply_token,
             msgs
@@ -468,26 +473,60 @@ class DengueBotMachine(metaclass=Signleton):
 
     def _create_hospitals_msgs(self, hospital_list):
         text = "您好,\n最近的三間快篩診所是:"
-        location_messages = list()
+        carousel_messages = list()
         for index, hospital in enumerate(hospital_list, 1):
+            name = hospital.get('name')
+            address = hospital.get('address')
+            phone = hospital.get('phone')
+
             text += "\n\n{index}.{name}\n{address}\n{phone}".format(
                 index=index,
-                name=hospital.get('name'),
-                address=hospital.get('address'),
-                phone=hospital.get('phone')
+                name=name,
+                address=address,
+                phone=phone
             )
 
-            location_messages.append(LocationSendMessage(
-                title="地圖 - {name}".format(name=hospital.get('name')),
-                address=hospital.get('address'),
-                latitude=hospital.get('lat'),
-                longitude=hospital.get('lng')
-            ))
+            carousel_messages.append(
+                CarouselColumn(
+                    text=name,
+                    actions=[
+                        PostbackTemplateAction(
+                            label=address,
+                            text='  ',
+                            data='hosptial_address='+address,
+                        ),
+                        MessageTemplateAction(
+                            label=phone,
+                            text='  '
+                        ),
+                    ]
+                )
+            )
 
-        text_message = TextSendMessage(text=text)
+        carousel_messages.append(
+            CarouselColumn(
+                text='想要查看地區所有快篩點\n請點下面連結',
+                actions=[
+                    MessageTemplateAction(
+                        label='  ',
+                        text='  '
+                    ),
+                    URITemplateAction(
+                        label='鄰近快篩診所',
+                        uri='https://www.taiwanstat.com/realtime/dengue-vis-with-hospital/',
+                    )
+                ]
+            )
+        )
 
-        hospital_messages = [text_message]
-        hospital_messages.extend(location_messages)
+        template_message = TemplateSendMessage(
+            alt_text=text,
+            template=CarouselTemplate(
+                columns=carousel_messages
+            )
+        )
+
+        hospital_messages = [template_message]
         return hospital_messages
 
     @log_fsm_operation
@@ -547,3 +586,18 @@ class DengueBotMachine(metaclass=Signleton):
         unrecognized_msg = UnrecognizedMsg(user_id=event.source.user_id,
                                            message=event.message.text)
         unrecognized_msg.save()
+
+    @log_fsm_operation
+    def on_enter_ask_hospital_map(self, event):
+        address = parse_qs(event.postback.data)['hosptial_address'][0]
+        hosp = hospital.models.Hospital.objects.using('tainan').get(address=address)
+        self.line_bot_api.reply_message(
+            event.reply_token,
+            messages=LocationSendMessage(
+                title="地圖 - {name}".format(name=hosp.name),
+                address=hosp.address,
+                latitude=hosp.lat,
+                longitude=hosp.lng
+            )
+        )
+        self.finish_ans()

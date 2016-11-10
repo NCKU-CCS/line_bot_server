@@ -15,6 +15,7 @@
         "wait_user_location",
         "receive_user_location",
         "wait_user_suggestion",
+        "ask_hospital_map",
         "user_join"
     ],
     "transitions": [
@@ -281,6 +282,21 @@
         {
             "trigger": "finish",
             "source": "user_join",
+            "dest": "user",
+        },
+
+        {
+            "trigger": "advance",
+            "source": "user",
+            "dest": "ask_hospital_map",
+            "conditions": [
+                "is_postback_event",
+                "is_hospital_address"
+            ]
+        },
+        {
+            "trigger": "finish_ans",
+            "source": "ask_hospital_map",
             "dest": "user",
         }
     ],
