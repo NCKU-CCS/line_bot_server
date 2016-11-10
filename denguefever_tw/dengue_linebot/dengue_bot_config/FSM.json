@@ -272,6 +272,60 @@
                 "is_selecting_give_suggestion"
             ]
         },
+        {
+            "trigger": "advance",
+            "source": "user",
+            "dest": "ask_dengue_fever",
+            "conditions": [
+                "is_text_message",
+                "is_selecting_ask_dengue_fever"
+            ]
+        },
+        {
+            "trigger": "advance",
+            "source": "user",
+            "dest": "ask_prevention",
+            "conditions": [
+                "is_text_message",
+                "is_selecting_ask_prevention"
+            ]
+        },
+        {
+            "trigger": "advance",
+            "source": "user",
+            "dest": "ask_hospital",
+            "conditions": [
+                "is_text_message",
+                "is_selecting_ask_hospital"
+            ]
+        },
+        {
+            "trigger": "advance",
+            "source": "user",
+            "dest": "ask_symptom",
+            "conditions": [
+                "is_text_message",
+                "is_selecting_ask_symptom"
+            ]
+        },
+        {
+            "trigger": "advance",
+            "source": "user",
+            "dest": "ask_realtime_epidemic",
+            "conditions": [
+                "is_text_message",
+                "is_selecting_ask_realtime_epidemic"
+            ]
+        },
+        {
+            "trigger": "advance",
+            "source": "user",
+            "dest": "wait_user_suggestion",
+            "conditions": [
+                "is_text_message",
+                "is_selecting_give_suggestion"
+            ]
+        },
 
         {
             "trigger": "advance",
