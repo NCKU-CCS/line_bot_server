@@ -1,6 +1,7 @@
 import os
 from functools import wraps
 from datetime import datetime
+from urllib.parse import parse_qs
 import logging
 
 import ujson
@@ -364,11 +365,7 @@ class DengueBotMachine(metaclass=Signleton):
 
     @log_fsm_condition
     def is_hospital_address(self, event):
-        try:
-            hospital.models.Hospital.objects.using('tainan').get(address=event.message.text)
-            return True
-        except hospital.models.Hospital.DoesNotExist:
-            return False
+        return 'hosptial_address' in parse_qs(event.postback.data)
 
     @log_fsm_operation
     def on_enter_user_join(self, event):
@@ -494,9 +491,10 @@ class DengueBotMachine(metaclass=Signleton):
                 CarouselColumn(
                     text=name,
                     actions=[
-                        MessageTemplateAction(
+                        PostbackTemplateAction(
                             label=address,
-                            text=address
+                            text='  ',
+                            data='hosptial_address='+address,
                         ),
                         MessageTemplateAction(
                             label=phone,
@@ -576,7 +574,8 @@ class DengueBotMachine(metaclass=Signleton):
 
     @log_fsm_operation
     def on_enter_ask_hospital_map(self, event):
-        hosp = hospital.models.Hospital.objects.using('tainan').get(address=event.message.text)
+        address = parse_qs(event.postback.data)['hosptial_address'][0]
+        hosp = hospital.models.Hospital.objects.using('tainan').get(address=address)
         self.line_bot_api.reply_message(
             event.reply_token,
             messages=LocationSendMessage(

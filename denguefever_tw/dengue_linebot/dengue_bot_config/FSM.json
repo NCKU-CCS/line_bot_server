@@ -287,10 +287,10 @@
 
         {
             "trigger": "advance",
-            "source": "*",
+            "source": "user",
             "dest": "ask_hospital_map",
             "conditions": [
-                "is_text_message",
+                "is_postback_event",
                 "is_hospital_address"
             ]
         },
