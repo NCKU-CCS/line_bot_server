@@ -560,6 +560,7 @@ class DengueBotMachine(metaclass=Signleton):
     @log_fsm_operation
     def on_enter_ask_who_we_are(self, event):
         self._send_text_in_rule(event, 'who_we_are')
+        self.finish_ans()
 
     @log_fsm_operation
     def on_enter_wait_user_suggestion(self, event):
