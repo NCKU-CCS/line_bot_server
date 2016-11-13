@@ -584,8 +584,10 @@ class DengueBotMachine(metaclass=Signleton):
 
     @log_fsm_operation
     def on_exit_unrecognized_msg(self, event):
-        unrecognized_msg = UnrecognizedMsg(user_id=event.source.user_id,
-                                           message=event.message.text)
+        msg_log = MessageLog.objects.get(speaker=event.source.user_id,
+                                         speak_time=datetime.fromtimestamp(event.timestamp/1000),
+                                         content=event.message.text)
+        unrecognized_msg = UnrecognizedMsg(message_log=msg_log)
         unrecognized_msg.save()
 
     @log_fsm_operation
