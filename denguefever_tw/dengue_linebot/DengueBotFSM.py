@@ -6,6 +6,7 @@ import logging
 
 import ujson
 from transitions.extensions import GraphMachine
+from geopy.geocoders import GoogleV3
 from linebot.models import (
     MessageEvent, FollowEvent, UnfollowEvent, JoinEvent, LeaveEvent, PostbackEvent, BeaconEvent,
     TextMessage, StickerMessage, ImageMessage, VideoMessage, AudioMessage, LocationMessage,
@@ -295,9 +296,11 @@ class DengueBotMachine(metaclass=Signleton):
         return False
 
     @log_fsm_condition
-    def is_wrong_location(self, event):
-        # TODO: implement
-        return False
+    def is_valid_address(self, event):
+        coder = GoogleV3()
+        address = event.message.text
+        geocode = coder.geocode(address)
+        return geocode is not None
 
     @log_fsm_condition
     def is_asking_symptom(self, event):
@@ -455,6 +458,19 @@ class DengueBotMachine(metaclass=Signleton):
     def on_enter_receive_user_location(self, event):
         hospital_list = hospital.views.get_nearby_hospital(event.message.longitude,
                                                            event.message.latitude)
+        self._send_hospital_msgs(hospital_list, event.reply_token)
+        self.finish_ans()
+
+    @log_fsm_condition
+    def on_enter_receive_user_address(self, event):
+        coder = GoogleV3()
+        address = event.message.text
+        geocode = coder.geocode(address)
+        hospital_list = hospital.views.get_nearby_hospital(geocode.longitude, geocode.latitude)
+        self._send_hospital_msgs(hospital_list, event.reply_token)
+        self.finish_ans()
+
+    def _send_hospital_msgs(self, hospital_list, reply_token):
         if hospital_list:
             msgs = self._create_hospitals_msgs(hospital_list)
         else:
@@ -466,10 +482,9 @@ class DengueBotMachine(metaclass=Signleton):
                     "https://www.taiwanstat.com/realtime/dengue-vis-with-hospital/"))
             )
         self.line_bot_api.reply_message(
-            event.reply_token,
+            reply_token,
             msgs
         )
-        self.finish_ans()
 
     def _create_hospitals_msgs(self, hospital_list):
         text = "您好,\n最近的三間快篩診所是:"
@@ -491,13 +506,13 @@ class DengueBotMachine(metaclass=Signleton):
                     text=name,
                     actions=[
                         PostbackTemplateAction(
-                            label=address,
-                            text='  ',
+                            label=address[:20],
+                            text=' ',
                             data='hosptial_address='+address,
                         ),
                         MessageTemplateAction(
-                            label=phone,
-                            text='  '
+                            label=phone[:20],
+                            text=' '
                         ),
                     ]
                 )
@@ -508,8 +523,8 @@ class DengueBotMachine(metaclass=Signleton):
                 text='想要查看地區所有快篩點\n請點下面連結',
                 actions=[
                     MessageTemplateAction(
-                        label='  ',
-                        text='  '
+                        label=' ',
+                        text=' '
                     ),
                     URITemplateAction(
                         label='鄰近快篩診所',

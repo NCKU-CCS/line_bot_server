@@ -14,6 +14,7 @@
         "ask_hospital",
         "wait_user_location",
         "receive_user_location",
+        "receive_user_address",
         "wait_user_suggestion",
         "ask_hospital_map",
         "user_join"
@@ -107,15 +108,21 @@
             "conditions": "is_location_message"
         },
         {
-            "trigger": "finish_ans",
-            "source": "receive_user_location",
-            "dest": "user"
+            "trigger": "advance",
+            "source": "wait_user_location",
+            "dest": "receive_user_address",
+            "conditions": [
+                "is_text_message",
+                "is_valid_address"
+            ]
         },
         {
-            "trigger": "advance",
-            "source": "ask_hospital",
-            "dest": "ask_hospital",
-            "conditions": "is_wrong_location"
+            "trigger": "finish_ans",
+            "source": [
+                "receive_user_location",
+                "receive_user_address"
+            ],
+            "dest": "user"
         },
 
         {
