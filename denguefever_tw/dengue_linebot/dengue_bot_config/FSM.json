@@ -14,6 +14,7 @@
         "ask_hospital",
         "wait_user_location",
         "receive_user_location",
+        "receive_user_address",
         "wait_user_suggestion",
         "ask_hospital_map",
         "user_join"
@@ -107,8 +108,20 @@
             "conditions": "is_location_message"
         },
         {
+            "trigger": "advance",
+            "source": "wait_user_location",
+            "dest": "receive_user_address",
+            "conditions": [
+                "is_text_message",
+                "is_valid_address"
+            ]
+        },
+        {
             "trigger": "finish_ans",
-            "source": "receive_user_location",
+            "source": [
+                "receive_user_location",
+                "receive_user_address"
+            ],
             "dest": "user"
         },
         {
