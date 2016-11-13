@@ -17,7 +17,8 @@
         "receive_user_address",
         "wait_user_suggestion",
         "ask_hospital_map",
-        "user_join"
+        "user_join",
+        "unrecognized_msg"
     ],
     "transitions": [
         {
@@ -324,12 +325,23 @@
                 "ask_who_we_are"
             ],
             "dest": "user"
+        },
+
+        {
+            "trigger": "advance",
+            "source": [
+                "user",
+                "ask_usage",
+                "ask_prevention",
+                "wait_user_location"
+            ],
+            "dest": "unrecognized_msg",
+            "conditions": "is_pass"
+        },
+        {
+            "trigger": "handle_unrecognized_msg",
+            "source": "unrecognized_msg",
+            "dest": "user"
         }
-    ],
-    "states_needed_handle_unrecog_msg": [
-        "user",
-        "ask_usage",
-        "ask_prevention",
-        "wait_user_location"
     ]
 }
