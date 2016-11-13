@@ -124,12 +124,6 @@
             ],
             "dest": "user"
         },
-        {
-            "trigger": "advance",
-            "source": "ask_hospital",
-            "dest": "ask_hospital",
-            "conditions": "is_wrong_location"
-        },
 
         {
             "trigger": "advance",

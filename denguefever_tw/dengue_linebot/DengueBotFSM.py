@@ -296,11 +296,6 @@ class DengueBotMachine(metaclass=Signleton):
         return False
 
     @log_fsm_condition
-    def is_wrong_location(self, event):
-        # TODO: implement
-        return False
-
-    @log_fsm_condition
     def is_valid_address(self, event):
         coder = GoogleV3()
         address = event.message.text
@@ -512,12 +507,12 @@ class DengueBotMachine(metaclass=Signleton):
                     actions=[
                         PostbackTemplateAction(
                             label=address,
-                            text='  ',
+                            text=' ',
                             data='hosptial_address='+address,
                         ),
                         MessageTemplateAction(
                             label=phone,
-                            text='  '
+                            text=' '
                         ),
                     ]
                 )
@@ -528,8 +523,8 @@ class DengueBotMachine(metaclass=Signleton):
                 text='想要查看地區所有快篩點\n請點下面連結',
                 actions=[
                     MessageTemplateAction(
-                        label='  ',
-                        text='  '
+                        label=' ',
+                        text=' '
                     ),
                     URITemplateAction(
                         label='鄰近快篩診所',
