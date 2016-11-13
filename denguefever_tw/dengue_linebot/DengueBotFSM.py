@@ -506,12 +506,12 @@ class DengueBotMachine(metaclass=Signleton):
                     text=name,
                     actions=[
                         PostbackTemplateAction(
-                            label=address,
+                            label=address[:20],
                             text=' ',
                             data='hosptial_address='+address,
                         ),
                         MessageTemplateAction(
-                            label=phone,
+                            label=phone[:20],
                             text=' '
                         ),
                     ]
