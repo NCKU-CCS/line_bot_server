@@ -7,7 +7,13 @@
 - [Setup callback URL on LINE](#callback-url)
 
 # <a name="prereq"></a> Pre requirements
-Python 3
+- Python 3
+- postgis
+	- [Setup Postgis on Ubuntu](http://askubuntu.com/questions/650168/enable-postgis-extension-on-ubuntu-14-04-2)
+
+- pygraphviz
+	- [Setup pygraphviz on Ubuntu](http://www.jianshu.com/p/a3da7ecc5303)
+
 
 ## Install Dependency
 
@@ -168,6 +174,11 @@ uwsgi --ini server-setting/linebot.ini --touch-reload=`pwd`/server-setting/lineb
 sudo killall -s INT uwsgi
 ```
 
+### View Log
+```sh
+sudo tail -f /var/log/bot_denguefever_daemon.log
+```
+
 # <a name="config"></a> Config
 Under `denguefever_tw/dengue_linebot/dengue_bot_config`
 
@@ -177,3 +188,6 @@ Under `denguefever_tw/dengue_linebot/dengue_bot_config`
 
 # <a name="callback-url"></a> Setup callback URL on LINE
 Add **https://`Your Domain Name`/callback/** to `Webhook URL` on your LINE Developer page.
+
+# TODO
+- Setup static file path
