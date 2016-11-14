@@ -144,6 +144,9 @@ class DengueBotMachine(metaclass=Signleton):
     def set_state(self, state):
         self.machine.set_state(state)
 
+    def reset_state(self):
+        self.set_state('user')
+
     @log_fsm_condition
     def is_pass(self, event):
         return True
