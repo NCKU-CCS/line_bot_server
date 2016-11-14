@@ -104,7 +104,7 @@ def reply(request):
             _log_line_api_error(e)
             machine.reset_state()
         except Exception as e:
-            logger.exceptions('Exception when recevie event.\n{}', str(e))
+            logger.exception('Exception when recevie event.\n{}', str(e))
             machine.reset_state()
 
     return HttpResponse()
