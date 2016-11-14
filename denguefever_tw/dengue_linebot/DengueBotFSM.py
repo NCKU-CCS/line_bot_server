@@ -5,6 +5,7 @@ from urllib.parse import parse_qs
 import logging
 
 import ujson
+from jsmin import jsmin
 from transitions.extensions import GraphMachine
 from geopy.geocoders import GoogleV3
 from linebot.models import (
@@ -128,7 +129,7 @@ class DengueBotMachine(metaclass=Signleton):
     def load_config(filename='FSM.json'):
         path = os.path.join(CONFIG_BASE_PATH, filename)
         with open(path) as FSM_file:
-            data = ujson.load(FSM_file)
+            data = ujson.loads(jsmin(FSM_file.read()))
 
         DengueBotMachine.states = data['states']
         DengueBotMachine.dengue_transitions = data['transitions']
@@ -138,7 +139,7 @@ class DengueBotMachine(metaclass=Signleton):
     def load_msg(filename='dengue_msg.json'):
         path = os.path.join(CONFIG_BASE_PATH, filename)
         with open(path) as msg_file:
-            msgs = ujson.load(msg_file)
+            msgs = ujson.loads(jsmin(msg_file.read()))
             DengueBotMachine.reply_msgs = msgs['reply_msgs']
 
     def set_state(self, state):
