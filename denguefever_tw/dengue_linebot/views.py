@@ -5,23 +5,24 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
 
+import os
 import logging
+from datetime import datetime
 from pprint import pformat
 
 from linebot import LineBotApi, WebhookParser
 from linebot.exceptions import InvalidSignatureError, LineBotApiError
-from linebot.models import MessageEvent
+from linebot.models import MessageEvent, TextMessage
 
 from .DengueBotFSM import DengueBotMachine
-
+from .models import MessageLog
 
 logger = logging.getLogger('django')
 
 line_bot_api = LineBotApi(settings.LINE_CHANNEL_ACCESS_TOKEN)
 line_parser = WebhookParser(settings.LINE_CHANNEL_SECRET)
-
-DengueBotMachine.load_config()
-machine = DengueBotMachine(line_bot_api)
+config_path = os.path.join(settings.STATIC_ROOT, 'dengue_linebot/dengue_bot_config/')
+machine = DengueBotMachine(line_bot_api, root_path=config_path)
 
 
 def _log_line_api_error(e):
@@ -63,30 +64,39 @@ def reply(request):
             state = cache.get(user_id) or 'user'
 
             logger.info(
-                ('\nReceive Event\n'
+                ('Receive Event\n'
                  'User ID: {user_id}\n'
                  'Event Type: {event_type}\n'
-                 'User state: {state}').format(
+                 'User state: {state}\n').format(
                      user_id=user_id,
                      event_type=event.type,
                      state=state)
             )
+            content = None
             if isinstance(event, MessageEvent):
                 logger.info(
-                    'Message type: {message_type}'.format(
-                        message_type=event.message.type
-                    )
+                    'Message type: {message_type}\n'.format(
+                        message_type=event.message.type)
                 )
+                if isinstance(event.message, TextMessage):
+                    content = event.message.text
+                    logger.info('Text: {text}\n'.format(text=content))
+                message_log = MessageLog(speaker=user_id,
+                                         speak_time=datetime.fromtimestamp(event.timestamp/1000),
+                                         message_type=event.message.type,
+                                         content=content)
+                message_log.save()
+
             machine.set_state(state)
             advance_statue = machine.advance(event)
             cache.set(user_id, machine.state)
 
             logger.info(
-                ('\nAfter Advance\n'
+                ('After Advance\n'
                  'Advance Status: {status}\n'
                  'User ID: {user_id}\n'
                  'Macinhe State: {m_state}\n'
-                 'User State: {u_state}').format(
+                 'User State: {u_state}\n').format(
                      status=advance_statue,
                      user_id=user_id,
                      m_state=machine.state,
@@ -94,15 +104,23 @@ def reply(request):
             )
         except LineBotApiError as e:
             _log_line_api_error(e)
+            machine.reset_state()
+        except Exception as e:
+            logger.exception('Exception when recevie event.\n{}'.format(str(e)))
+            machine.reset_state()
 
     return HttpResponse()
 
 
 @login_required
 def show_fsm(request):
-    DengueBotMachine.load_config()
     resp = HttpResponse(content_type="image/png")
     resp.name = 'state.png'
-    machine = DengueBotMachine(line_bot_api)
     machine.draw_graph(resp, prog='dot')
     return resp
+
+
+@login_required
+def reload_fsm(request):
+    machine.load_config()
+    return HttpResponse()

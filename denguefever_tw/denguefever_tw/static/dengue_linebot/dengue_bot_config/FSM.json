@@ -1,4 +1,5 @@
 {
+    /* All the state must be definied here*/
     "states": [
         "user",
         "greet",
@@ -14,8 +15,11 @@
         "ask_hospital",
         "wait_user_location",
         "receive_user_location",
+        "receive_user_address",
         "wait_user_suggestion",
-        "user_join"
+        "ask_hospital_map",
+        "user_join",
+        "unrecognized_msg"
     ],
     "transitions": [
         {
@@ -32,7 +36,6 @@
             "source": "ask_prevention",
             "dest": "ask_self_prevention",
             "conditions": [
-                "is_text_message",
                 "is_asking_self_prevention"
             ]
         },
@@ -41,26 +44,14 @@
             "source": "ask_prevention",
             "dest": "ask_env_prevention",
             "conditions": [
-                "is_text_message",
                 "is_asking_env_prevention"
             ]
-        },
-        {
-            "trigger": "finish_ans",
-            "source": "ask_self_prevention",
-            "dest": "user"
-        },
-        {
-            "trigger": "finish_ans",
-            "source": "ask_env_prevention",
-            "dest": "user"
         },
         {
             "trigger": "advance",
             "source": "user",
             "dest": "ask_self_prevention",
             "conditions": [
-                "is_text_message",
                 "is_asking_self_prevention"
             ]
         },
@@ -69,7 +60,6 @@
             "source": "user",
             "dest": "ask_env_prevention",
             "conditions": [
-                "is_text_message",
                 "is_asking_env_prevention"
             ]
         },
@@ -82,11 +72,6 @@
                 "is_text_message",
                 "is_asking_dengue_fever"
             ]
-        },
-        {
-            "trigger": "finish_ans",
-            "source": "ask_dengue_fever",
-            "dest": "user"
         },
 
         {
@@ -110,15 +95,13 @@
             "conditions": "is_location_message"
         },
         {
-            "trigger": "finish_ans",
-            "source": "receive_user_location",
-            "dest": "user"
-        },
-        {
             "trigger": "advance",
-            "source": "ask_hospital",
-            "dest": "ask_hospital",
-            "conditions": "is_wrong_location"
+            "source": "wait_user_location",
+            "dest": "receive_user_address",
+            "conditions": [
+                "is_text_message",
+                "is_valid_address"
+            ]
         },
 
         {
@@ -130,11 +113,6 @@
                 "is_asking_symptom"
             ]
         },
-        {
-            "trigger": "finish_ans",
-            "source": "ask_symptom",
-            "dest": "user"
-        },
 
         {
             "trigger": "advance",
@@ -144,11 +122,6 @@
                 "is_text_message",
                 "is_asking_realtime_epidemic"
             ]
-        },
-        {
-            "trigger": "finish_ans",
-            "source": "ask_realtime_epidemic",
-            "dest": "user"
         },
 
         {
@@ -160,11 +133,6 @@
                 "is_greeting"
             ]
         },
-        {
-            "trigger": "finish_ans",
-            "source": "greet",
-            "dest": "user"
-        },
 
         {
             "trigger": "advance",
@@ -175,11 +143,6 @@
                 "is_asking_breeding_source"
             ]
         },
-        {
-            "trigger": "finish_ans",
-            "source": "ask_breeding_source",
-            "dest": "user"
-        },
 
         {
             "trigger": "advance",
@@ -189,11 +152,6 @@
                 "is_text_message",
                 "is_asking_who_we_are"
             ]
-        },
-        {
-            "trigger": "finish_ans",
-            "source": "ask_who_we_are",
-            "dest": "user"
         },
 
         {
@@ -275,6 +233,60 @@
                 "is_selecting_give_suggestion"
             ]
         },
+        {
+            "trigger": "advance",
+            "source": "user",
+            "dest": "ask_dengue_fever",
+            "conditions": [
+                "is_text_message",
+                "is_selecting_ask_dengue_fever"
+            ]
+        },
+        {
+            "trigger": "advance",
+            "source": "user",
+            "dest": "ask_prevention",
+            "conditions": [
+                "is_text_message",
+                "is_selecting_ask_prevention"
+            ]
+        },
+        {
+            "trigger": "advance",
+            "source": "user",
+            "dest": "ask_hospital",
+            "conditions": [
+                "is_text_message",
+                "is_selecting_ask_hospital"
+            ]
+        },
+        {
+            "trigger": "advance",
+            "source": "user",
+            "dest": "ask_symptom",
+            "conditions": [
+                "is_text_message",
+                "is_selecting_ask_symptom"
+            ]
+        },
+        {
+            "trigger": "advance",
+            "source": "user",
+            "dest": "ask_realtime_epidemic",
+            "conditions": [
+                "is_text_message",
+                "is_selecting_ask_realtime_epidemic"
+            ]
+        },
+        {
+            "trigger": "advance",
+            "source": "user",
+            "dest": "wait_user_suggestion",
+            "conditions": [
+                "is_text_message",
+                "is_selecting_give_suggestion"
+            ]
+        },
 
         {
             "trigger": "advance",
@@ -286,12 +298,51 @@
             "trigger": "finish",
             "source": "user_join",
             "dest": "user",
+        },
+
+        {
+            "trigger": "advance",
+            "source": "user",
+            "dest": "ask_hospital_map",
+            "conditions": [
+                "is_postback_event",
+                "is_hospital_address"
+            ]
+        },
+
+        {
+            "trigger": "finish_ans",
+            "source": [
+                "ask_hospital_map",
+                "ask_self_prevention",
+                "ask_env_prevention",
+                "ask_dengue_fever",
+                "receive_user_location",
+                "receive_user_address",
+                "ask_symptom",
+                "ask_realtime_epidemic",
+                "greet",
+                "ask_breeding_source",
+                "ask_who_we_are"
+            ],
+            "dest": "user"
+        },
+
+        {
+            "trigger": "advance",
+            "source": [
+                "user",
+                "ask_usage",
+                "ask_prevention",
+                "wait_user_location"
+            ],
+            "dest": "unrecognized_msg",
+            "conditions": "is_pass"
+        },
+        {
+            "trigger": "handle_unrecognized_msg",
+            "source": "unrecognized_msg",
+            "dest": "user"
         }
-    ],
-    "states_needed_handle_unrecog_msg": [
-        "user",
-        "ask_usage",
-        "ask_prevention",
-        "wait_user_location"
     ]
 }

@@ -1,10 +1,60 @@
 # LINE BOT SERVER
 ---
+- [Pre Requirements](#prereq)
+- [Setup](#setup)
+- [Usage](#usage)
+- [Configration](#config)
+- [Setup callback URL on LINE](#callback-url)
 
-# Setup
-## Use Different Setting Files
-Currently tracks only `denguefever_tw/denguefever_tw/settings/productions.py`  
+# <a name="prereq"></a> Pre requirements
+- Python 3
+
+- pygraphviz
+	- [Setup pygraphviz on Ubuntu](http://www.jianshu.com/p/a3da7ecc5303)
+
+- postgres
+
+```
+# mac
+brew install postgresql
+
+# ubuntu
+sudo apt-get install postgresql postgresql-contrib
+```
+
+- postgis
+	- [Setup Postgis on Ubuntu](http://askubuntu.com/questions/650168/enable-postgis-extension-on-ubuntu-14-04-2)
+
+- redis
+
+```sh
+# mac
+brew install redis
+
+# ubuntu
+sudo apt-get install redis-server
+```
+
+
+
+## Install Dependency
+
+```sh
+pip install -r requirements.txt
+```
+
+
+# <a name="setup"></a> Setup
+- [Use Different Setting Files](#setting-file)
+- [Database](#db)
+- [Cache](#cache)
+- [Logger (Optional But Recommended)](#logger)
+
+
+## <a name='setting-file'></a> Use Different Setting Files
+Currently this repo tracks only `denguefever_tw/denguefever_tw/settings/productions.py`  
 All other setting files should be defined under `denguefever_tw/denguefever_tw/settings`
+
 
 Use the following command to setup or change django settings
 
@@ -20,14 +70,14 @@ Change `your_setting_file` to corresponding file
 All the sensitive data are not versioned and should be configured by environment variable.  
 The variables needed including
 
-- `DJANGO_SECRET_KEY`
+- `DJANGO_SECRET_KEY` (loaded as `SECRET_KEY`)
+- `LINE_CHANNEL_SECRET`
+- `LINE_CHANNEL_ACCESS_TOKEN`
 - `POSTGRESQL_NAME`
 - `POSTGRESQL_USER`
 - `POSTGRESQL_PASSWORD`
 - `POSTGRESQL_HOST`
 - `POSTGRESQL_PORT`
-
-[Setup LINE API Key](#line-api-key)
 
 ### Develop
 When developing, you should define your own `local.py` under `settings`.  
@@ -43,13 +93,17 @@ Then, set up the following variables
 
 - `SECRET_KEY`
 - `DATABASES`
+- `LINE_CHANNEL_SECRET`
+- `LINE_CHANNEL_ACCESS_TOKEN`
 
 e.g.
 
 ```python
 from .base import *
 
-SECRET_KEY = 'this is secret key'
+SECRET_KEY = 'This is secret key'
+LINE_CHANNEL_SECRET = 'This is Line channel secret'
+LINE_CHANNEL_ACCESS_TOKEN = 'This is Line access token'
 
 DATABASES = {
     'default': {
@@ -59,53 +113,78 @@ DATABASES = {
         'PASSWORD': 'db_pwd',
         'HOST': 'localhost',
         'PORT': '',
-    }
+    },
+    'tainan': {
+        'NAME': 'db_name',
+        'USER': 'db_user',
+        'PASSWORD': 'db_pwd',
+        'HOST': 'localhost',
+        'PORT': '',
+    },    
 }
 ```
 
+## <a name='db'></a> Database
+Currently `postgis` is used
 
-[Setup LINE API Key](#line-api-key)
+### Start postgresql
+```sh
+# mac
+pg_ctl -D /usr/local/var/postgres -l /usr/local/var/postgres/server.log start
+```
 
+## <a name='cache'></a> Cache
+Cache is used to store user state.  
+Currently `redis` is used  
 
-## <a name="line-api-key"></a>Setup LINE API Key
-The following two methods is used to setup LINE api key.  
-If the setting file doesn't exist, the environment variable will be loaded.
+### Start Redis
+```sh
+redis-server
+``` 
 
-### By File
-Create `denguefever_tw/denguefever_tw/.api_key.json`  
-Then, enter your api information in the following format.
+## <a name='logger'></a> Logger (Optional But Recommended)
+- loggers
+	- `django`: global logging
+	- `dengue_linebot.DengueBotFSM`: FSM logging including all the conditional judgements and operation processes 
 
-```json
-{
-    "channel_id": "",
-    "channel_secret": "",
-    "channel_mid": ""
+e.g.
+
+```python
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '%(levelname)s:%(asctime)s:%(module)s:%(process)d:%(thread)d\n%(message)s'
+        },
+        'simple': {
+            'format': '%(levelname)s\n%(message)s'
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+        },
+        'dengue_linebot.DengueBotFSM': {
+            'handlers': ['console'],
+            'level': 'INFO',
+        }
+    },
 }
 ```
 
-### By Environment Variable
-Add these line to `~/.bashrc` or run the following lines every time you run this server.
-
-```sh
-export CHANNEL_ID=""
-export CHANNEL_SECRET=""
-export CHANNEL_MID=""
-```
-
-# Pre requirements
-Python 3
-
-## Install Dependency
-
-```sh
-pip install -r requirements.txt
-```
-
-# Usage
+# <a name="usage"></a> Usage
 ## Run uwsgi
 ### Start
 ```sh
-uwsgi --ini server-setting/linebot.ini --touch-reload=`pwd`/server-setting/linebot.ini
+sudo uwsgi --ini server-setting/linebot.ini --touch-reload=`pwd`/server-setting/linebot.ini
 ```
 
 ### Stop
@@ -113,5 +192,22 @@ uwsgi --ini server-setting/linebot.ini --touch-reload=`pwd`/server-setting/lineb
 sudo killall -s INT uwsgi
 ```
 
-# Setup callback URL on LINE
-Add **https://`Your Domain Name`:443/callback/** to `Callback URL` on your LINE Developer page.
+### Realod
+```sh
+touch server-setting/linebot.ini
+```
+
+### View Log
+```sh
+sudo tail -f /var/log/bot_denguefever_daemon.log
+```
+
+# <a name="config"></a> Configration
+Under `denguefever_tw/denguefever_tw/static/dengue_bot_config`
+
+- `FSM.json`: Finite state machine 
+- `dengue_msg.json`: Static Messages
+
+
+# <a name="callback-url"></a> Setup callback URL on LINE
+Add **https://`Your Domain Name`/callback/** to `Webhook URL` on your LINE Developer page.
