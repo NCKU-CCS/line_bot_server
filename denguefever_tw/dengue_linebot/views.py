@@ -5,6 +5,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
 
+import os
 import logging
 from datetime import datetime
 from pprint import pformat
@@ -20,7 +21,8 @@ logger = logging.getLogger('django')
 
 line_bot_api = LineBotApi(settings.LINE_CHANNEL_ACCESS_TOKEN)
 line_parser = WebhookParser(settings.LINE_CHANNEL_SECRET)
-machine = DengueBotMachine(line_bot_api)
+config_path = os.path.join(settings.STATIC_ROOT, 'dengue_linebot/dengue_bot_config/')
+machine = DengueBotMachine(line_bot_api, root_path=config_path)
 
 
 def _log_line_api_error(e):

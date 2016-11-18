@@ -19,7 +19,6 @@ from linebot.models import (
 from .models import LineUser, Advice, UnrecognizedMsg, MessageLog
 import hospital
 
-CONFIG_BASE_PATH = 'dengue_linebot/dengue_bot_config/'
 
 symptom_preview_img_url = 'https://i.imgur.com/oydmUva.jpg'
 symptom_origin_img_url = 'https://i.imgur.com/fs6wzor.jpg'
@@ -105,11 +104,13 @@ def save_bot_reply(func):
 
 
 class DengueBotMachine(metaclass=Signleton):
+
     states = list()
     dengue_transitions = list()
     reply_msgs = dict()
 
-    def __init__(self, line_bot_api, initial_state='user'):
+    def __init__(self, line_bot_api, initial_state='user', *, root_path):
+        self.config_path_base = root_path if root_path else ''
         self.load_config()
         self.machine = GraphMachine(
             model=self,
@@ -125,19 +126,17 @@ class DengueBotMachine(metaclass=Signleton):
     def draw_graph(self, filename, prog='dot'):
         self.graph.draw(filename, prog=prog)
 
-    @staticmethod
-    def load_config(filename='FSM.json'):
-        path = os.path.join(CONFIG_BASE_PATH, filename)
+    def load_config(self, filename='FSM.json'):
+        path = os.path.join(self.config_path_base, filename)
         with open(path) as FSM_file:
             data = ujson.loads(jsmin(FSM_file.read()))
 
         DengueBotMachine.states = data['states']
         DengueBotMachine.dengue_transitions = data['transitions']
-        DengueBotMachine.load_msg()
+        self._load_msg()
 
-    @staticmethod
-    def load_msg(filename='dengue_msg.json'):
-        path = os.path.join(CONFIG_BASE_PATH, filename)
+    def _load_msg(self, filename='dengue_msg.json'):
+        path = os.path.join(self.config_path_base, filename)
         with open(path) as msg_file:
             msgs = ujson.loads(jsmin(msg_file.read()))
             DengueBotMachine.reply_msgs = msgs['reply_msgs']
