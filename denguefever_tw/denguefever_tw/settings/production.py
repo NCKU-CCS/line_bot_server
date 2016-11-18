@@ -8,11 +8,26 @@ LINE_CHANNEL_ACCESS_TOKEN = get_env_variable('LINE_CHANNEL_ACCESS_TOKEN')
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'ENGINE': 'django.contrib.gis.db.backends.postgis',
+        'NAME': get_env_variable('POSTGRESQL_NAME'),
+        'USER': get_env_variable('POSTGRESQL_USER'),
+        'PASSWORD': get_env_variable('POSTGRESQL_PASSWORD'),
+        'HOST': get_env_variable('POSTGRESQL_HOST'),
+        'PORT':  get_env_variable('POSTGRESQL_PORT'),
+    },
+    'tainan': {
+        'ENGINE': 'django.contrib.gis.db.backends.postgis',
         'NAME': get_env_variable('POSTGRESQL_NAME'),
         'USER': get_env_variable('POSTGRESQL_USER'),
         'PASSWORD': get_env_variable('POSTGRESQL_PASSWORD'),
         'HOST': get_env_variable('POSTGRESQL_HOST'),
         'PORT':  get_env_variable('POSTGRESQL_PORT'),
     }
+}
+
+CACHES = {
+    'default': {
+        'BACKEND': 'redis_cache.RedisCache',
+        'LOCATION': 'localhost:6379',
+    },
 }
