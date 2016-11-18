@@ -1,18 +1,40 @@
 # LINE BOT SERVER
 ---
-- [Pre requirements](#prereq)
+- [Pre Requirements](#prereq)
 - [Setup](#setup)
 - [Usage](#usage)
-- [Config](#config)
+- [Configration](#config)
 - [Setup callback URL on LINE](#callback-url)
 
 # <a name="prereq"></a> Pre requirements
 - Python 3
-- postgis
-	- [Setup Postgis on Ubuntu](http://askubuntu.com/questions/650168/enable-postgis-extension-on-ubuntu-14-04-2)
 
 - pygraphviz
 	- [Setup pygraphviz on Ubuntu](http://www.jianshu.com/p/a3da7ecc5303)
+
+- postgres
+
+```
+# mac
+brew install postgresql
+
+# ubuntu
+sudo apt-get install postgresql postgresql-contrib
+```
+
+- postgis
+	- [Setup Postgis on Ubuntu](http://askubuntu.com/questions/650168/enable-postgis-extension-on-ubuntu-14-04-2)
+
+- redis
+
+```sh
+# mac
+brew install redis
+
+# ubuntu
+sudo apt-get install redis-server
+```
+
 
 
 ## Install Dependency
@@ -32,6 +54,7 @@ pip install -r requirements.txt
 ## <a name='setting-file'></a> Use Different Setting Files
 Currently this repo tracks only `denguefever_tw/denguefever_tw/settings/productions.py`  
 All other setting files should be defined under `denguefever_tw/denguefever_tw/settings`
+
 
 Use the following command to setup or change django settings
 
@@ -55,8 +78,6 @@ The variables needed including
 - `POSTGRESQL_PASSWORD`
 - `POSTGRESQL_HOST`
 - `POSTGRESQL_PORT`
-
-
 
 ### Develop
 When developing, you should define your own `local.py` under `settings`.  
@@ -92,38 +113,35 @@ DATABASES = {
         'PASSWORD': 'db_pwd',
         'HOST': 'localhost',
         'PORT': '',
-    }
+    },
+    'tainan': {
+        'NAME': 'db_name',
+        'USER': 'db_user',
+        'PASSWORD': 'db_pwd',
+        'HOST': 'localhost',
+        'PORT': '',
+    },    
 }
 ```
 
 ## <a name='db'></a> Database
-Currrently postgresql is used
+Currently `postgis` is used
 
 ### Start postgresql
 ```sh
+# mac
 pg_ctl -D /usr/local/var/postgres -l /usr/local/var/postgres/server.log start
 ```
 
 ## <a name='cache'></a> Cache
 Cache is used to store user state.  
+Currently `redis` is used  
 
-Currently database cache is used  
-This lines should be added to setting file.
-
-```python
-CACHES = {
-	'default': {
-		'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
-		'LOCATION': 'my_cache_table',
-	}
-}
-```
-
-After setting file is set, execute the following commad
-
+### Start Redis
 ```sh
- python manage.py createcachetable
-```
+redis-server
+``` 
+
 ## <a name='logger'></a> Logger (Optional But Recommended)
 - loggers
 	- `django`: global logging
@@ -166,7 +184,7 @@ LOGGING = {
 ## Run uwsgi
 ### Start
 ```sh
-uwsgi --ini server-setting/linebot.ini --touch-reload=`pwd`/server-setting/linebot.ini
+sudo uwsgi --ini server-setting/linebot.ini --touch-reload=`pwd`/server-setting/linebot.ini
 ```
 
 ### Stop
@@ -174,13 +192,18 @@ uwsgi --ini server-setting/linebot.ini --touch-reload=`pwd`/server-setting/lineb
 sudo killall -s INT uwsgi
 ```
 
+### Realod
+```sh
+touch server-setting/linebot.ini
+```
+
 ### View Log
 ```sh
 sudo tail -f /var/log/bot_denguefever_daemon.log
 ```
 
-# <a name="config"></a> Config
-Under `denguefever_tw/dengue_linebot/dengue_bot_config`
+# <a name="config"></a> Configration
+Under `denguefever_tw/denguefever_tw/static/dengue_bot_config`
 
 - `FSM.json`: Finite state machine 
 - `dengue_msg.json`: Static Messages
@@ -188,6 +211,3 @@ Under `denguefever_tw/dengue_linebot/dengue_bot_config`
 
 # <a name="callback-url"></a> Setup callback URL on LINE
 Add **https://`Your Domain Name`/callback/** to `Webhook URL` on your LINE Developer page.
-
-# TODO
-- Setup static file path
