@@ -125,12 +125,18 @@ DATABASES = {
 ```
 
 ## <a name='db'></a> Database
-Currently `postgis` is used
+Currently `postgis` is used with one `default` db and one `tainan` db.  
 
 ### Start postgresql
 ```sh
 # mac
 pg_ctl -D /usr/local/var/postgres -l /usr/local/var/postgres/server.log start
+```
+
+### Import Hospital Data
+Import tainan hosptial data
+```sh
+python manage.py import_dengue_hospital
 ```
 
 ## <a name='cache'></a> Cache
