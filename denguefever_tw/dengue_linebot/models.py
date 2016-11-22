@@ -26,7 +26,8 @@ class Advice(models.Model):
 
 
 class MessageLog(models.Model):
-    speaker = models.TextField()
+    speaker = models.ForeignKey(LineUser,
+                                related_name='message_log')
     speak_time = models.DateTimeField()
     message_type = models.TextField()
     content = models.TextField(null=True, blank=True)

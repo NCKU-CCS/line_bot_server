@@ -1,0 +1,15 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Message Log List</title>
+  </head>
+  <body>
+    <label>Message Log</label><br>
+    <ul>
+    {% for msg_log in msg_logs %}
+      {{msg_log.speaker.name}} - {{msg_log.content}}
+      <br />
+    {% endfor %}
+    </ul>
+  </body>
+</html>

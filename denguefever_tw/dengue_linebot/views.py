@@ -131,3 +131,15 @@ def reload_fsm(request):
 def user_list(request):
     context = {'users': LineUser.objects.all()}
     return render(request, 'dengue_linebot/user_list.html', context)
+
+
+@login_required
+def msg_log_list(request):
+    context = {'users': LineUser.objects.all()}
+    return render(request, 'dengue_linebot/msg_log_list.html', context)
+
+
+@login_required
+def msg_log_detail(request, uid):
+    context = {'msg_logs': MessageLog.objects.filter(speaker=uid)}
+    return render(request, 'dengue_linebot/msg_log_detail.html', context)
