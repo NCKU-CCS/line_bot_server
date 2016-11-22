@@ -1,7 +1,9 @@
 from django.conf.urls import url
 from .views import *
 
+
 urlpatterns = [
-    url('^reply/', reply),
-    url('^show_fsm/', show_fsm)
+    url(r'^reply/', reply),
+    url(r'^show_fsm/', show_fsm),
+    url(r'user_list/', user_list),
 ]

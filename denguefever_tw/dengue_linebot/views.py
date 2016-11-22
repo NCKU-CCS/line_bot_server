@@ -1,3 +1,4 @@
+from django.shortcuts import render
 from django.conf import settings
 from django.core.cache import cache
 from django.http import HttpResponse, HttpResponseBadRequest
@@ -15,7 +16,7 @@ from linebot.exceptions import InvalidSignatureError, LineBotApiError
 from linebot.models import MessageEvent, TextMessage
 
 from .DengueBotFSM import DengueBotMachine
-from .models import MessageLog
+from .models import MessageLog, LineUser
 
 logger = logging.getLogger('django')
 
@@ -124,3 +125,9 @@ def show_fsm(request):
 def reload_fsm(request):
     machine.load_config()
     return HttpResponse()
+
+
+@login_required
+def user_list(request):
+    context = {'users': LineUser.objects.all()}
+    return render(request, 'dengue_linebot/user_list.html', context)
