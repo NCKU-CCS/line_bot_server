@@ -1,0 +1,7 @@
+
+# Created by https://www.gitignore.io/api/redis
+
+### Redis ###
+# Ignore redis binary dump (dump.rdb) files
+
+*.rdb
