@@ -82,7 +82,8 @@ def reply(request):
                 if isinstance(event.message, TextMessage):
                     content = event.message.text
                     logger.info('Text: {text}\n'.format(text=content))
-                message_log = MessageLog(speaker=user_id,
+
+                message_log = MessageLog(speaker=LineUser.objects.get(user_id=user_id),
                                          speak_time=datetime.fromtimestamp(event.timestamp/1000),
                                          message_type=event.message.type,
                                          content=content)

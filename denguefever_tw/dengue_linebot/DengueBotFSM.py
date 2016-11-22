@@ -16,7 +16,7 @@ from linebot.models import (
     ButtonsTemplate, PostbackTemplateAction
 )
 
-from .models import LineUser, Advice, UnrecognizedMsg, MessageLog
+from .models import LineUser, Advice, UnrecognizedMsg, MessageLog, BotReplyLog
 import hospital
 
 
@@ -74,37 +74,7 @@ def log_fsm_operation(func):
     return wrapper
 
 
-def save_bot_reply(func):
-    def save_message(msg):
-        try:
-            content = msg.text
-        except AttributeError:
-            content = None
-
-        message_log = MessageLog(speaker='bot',
-                                 speak_time=datetime.now(),
-                                 message_type=msg.type,
-                                 content=content)
-        message_log.save()
-
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        print(args, kwargs)
-        try:
-            messages = args[1]
-        except IndexError:
-            messages = kwargs.get('messages')
-        if not isinstance(messages, (list, tuple)):
-            messages = [messages]
-            for m in messages:
-                save_message(m)
-        result = func(*args, **kwargs)
-        return result
-    return wrapper
-
-
 class DengueBotMachine(metaclass=Signleton):
-
     states = list()
     dengue_transitions = list()
     reply_msgs = dict()
@@ -121,7 +91,32 @@ class DengueBotMachine(metaclass=Signleton):
             show_conditions=True
         )
         self.line_bot_api = line_bot_api
-        self.line_bot_api.reply_message = save_bot_reply(self.line_bot_api.reply_message)
+
+    def reply_message_with_logging(self, reply_token, receiver_id, messages):
+        def save_message(msg):
+            try:
+                content = msg.text
+            except AttributeError:
+                content = None
+
+            bot_reply_log = BotReplyLog(
+                receiver=LineUser.objects.get(user_id=receiver_id),
+                speak_time=datetime.now(),
+                message_type=msg.type,
+                content=content
+            )
+            bot_reply_log.save()
+
+        self.line_bot_api.reply_message(
+            reply_token,
+            messages
+        )
+
+        if not isinstance(messages, (list, tuple)):
+            messages = [messages]
+        for m in messages:
+            save_message(m)
+
 
     def draw_graph(self, filename, prog='dot'):
         self.graph.draw(filename, prog=prog)
@@ -371,8 +366,9 @@ class DengueBotMachine(metaclass=Signleton):
         self.finish()
 
     def _send_text_in_rule(self, event, key):
-        self.line_bot_api.reply_message(
+        self.reply_message_with_logging(
             event.reply_token,
+            event.source.user_id,
             TextSendMessage(
                 text=DengueBotMachine.reply_msgs[key]
             )
@@ -380,9 +376,9 @@ class DengueBotMachine(metaclass=Signleton):
 
     @log_fsm_operation
     def on_enter_ask_prevention(self, event):
-        # self._send_text_in_rule(event, 'ask_prevent_type')
-        self.line_bot_api.reply_message(
+        self.reply_message_with_logging(
             event.reply_token,
+            event.source.user_id,
             TemplateSendMessage(
                 alt_text=DengueBotMachine.reply_msgs['ask_prevent_type'],
                 template=ButtonsTemplate(
@@ -431,8 +427,9 @@ class DengueBotMachine(metaclass=Signleton):
                 preview_image_url=loc_step2_preview_img_url
             ),
         ]
-        self.line_bot_api.reply_message(
+        self.reply_message_with_logging(
             event.reply_token,
+            event.source.user_id,
             messages=messages
         )
         self.advance()
@@ -464,8 +461,9 @@ class DengueBotMachine(metaclass=Signleton):
                     "(如果手機不能瀏覽，可用電腦查看，或將連結貼到 chrome 瀏覽器)\n\n"
                     "https://www.taiwanstat.com/realtime/dengue-vis-with-hospital/"))
             )
-        self.line_bot_api.reply_message(
-            reply_token,
+        self.reply_message_with_logging(
+            event.reply_token,
+            event.source.user_id,
             msgs
         )
 
@@ -529,8 +527,9 @@ class DengueBotMachine(metaclass=Signleton):
 
     @log_fsm_operation
     def on_enter_ask_symptom(self, event):
-        self.line_bot_api.reply_message(
+        self.reply_message_with_logging(
             event.reply_token,
+            event.source.user_id,
             messages=[
                 ImageSendMessage(
                     original_content_url=symptom_origin_img_url,
