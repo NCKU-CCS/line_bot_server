@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Unrecognized Message</title>
+  </head>
+  <body>
+    <ul>
+      {% for msg in unrecog_msgs %}
+      <li>
+        {{msg.message_log.speak_time}} - {{msg.message_log.speaker}} - {{msg.message_log.content}}
+      </li>
+      {% endfor %}
+    </ul>
+  </body>
+</html>

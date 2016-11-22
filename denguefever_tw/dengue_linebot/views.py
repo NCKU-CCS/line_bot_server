@@ -17,7 +17,7 @@ from linebot.exceptions import InvalidSignatureError, LineBotApiError
 from linebot.models import MessageEvent, TextMessage
 
 from .DengueBotFSM import DengueBotMachine
-from .models import MessageLog, LineUser, BotReplyLog
+from .models import MessageLog, LineUser, BotReplyLog, UnrecognizedMsg
 
 logger = logging.getLogger('django')
 
@@ -140,6 +140,7 @@ def user_detail(request, uid):
     context = {'user': LineUser.objects.get(user_id=uid)}
     return render(request, 'dengue_linebot/user_detail.html', context)
 
+
 @login_required
 def msg_log_list(request):
     context = {'users': LineUser.objects.all()}
@@ -157,3 +158,9 @@ def msg_log_detail(request, uid):
     )
     context = {'all_msg_logs': all_msg_logs}
     return render(request, 'dengue_linebot/msg_log_detail.html', context)
+
+
+@login_required
+def unrecognized_msg_list(request):
+    context = {'unrecog_msgs':  UnrecognizedMsg.objects.all()}
+    return render(request, 'dengue_linebot/unrecog_msgs.html', context)
