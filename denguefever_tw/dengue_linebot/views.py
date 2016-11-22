@@ -9,6 +9,7 @@ from django.contrib.auth.decorators import login_required
 import os
 import logging
 from datetime import datetime
+from itertools import chain
 from pprint import pformat
 
 from linebot import LineBotApi, WebhookParser
@@ -16,7 +17,7 @@ from linebot.exceptions import InvalidSignatureError, LineBotApiError
 from linebot.models import MessageEvent, TextMessage
 
 from .DengueBotFSM import DengueBotMachine
-from .models import MessageLog, LineUser
+from .models import MessageLog, LineUser, BotReplyLog
 
 logger = logging.getLogger('django')
 
@@ -82,7 +83,8 @@ def reply(request):
                 if isinstance(event.message, TextMessage):
                     content = event.message.text
                     logger.info('Text: {text}\n'.format(text=content))
-                message_log = MessageLog(speaker=user_id,
+
+                message_log = MessageLog(speaker=LineUser.objects.get(user_id=user_id),
                                          speak_time=datetime.fromtimestamp(event.timestamp/1000),
                                          message_type=event.message.type,
                                          content=content)
@@ -131,3 +133,22 @@ def reload_fsm(request):
 def user_list(request):
     context = {'users': LineUser.objects.all()}
     return render(request, 'dengue_linebot/user_list.html', context)
+
+
+@login_required
+def msg_log_list(request):
+    context = {'users': LineUser.objects.all()}
+    return render(request, 'dengue_linebot/msg_log_list.html', context)
+
+
+@login_required
+def msg_log_detail(request, uid):
+    all_msg_logs = sorted(
+        chain(
+            MessageLog.objects.filter(speaker=uid),
+            BotReplyLog.objects.filter(receiver=uid)
+        ),
+        key=lambda msg_log: msg_log.speak_time
+    )
+    context = {'all_msg_logs': all_msg_logs}
+    return render(request, 'dengue_linebot/msg_log_detail.html', context)

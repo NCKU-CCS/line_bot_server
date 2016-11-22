@@ -26,7 +26,7 @@ class Advice(models.Model):
 
 
 class MessageLog(models.Model):
-    speaker = models.TextField()
+    speaker = models.ForeignKey(LineUser, related_name='message_log')
     speak_time = models.DateTimeField()
     message_type = models.TextField()
     content = models.TextField(null=True, blank=True)
@@ -44,6 +44,24 @@ class MessageLog(models.Model):
             speak_time=self.speak_time,
             content=self.content
         )
+
+
+class BotReplyLog(models.Model):
+    receiver = models.ForeignKey(LineUser, related_name='bot_reply_log')
+    speak_time = models.DateTimeField()
+    message_type = models.TextField()
+    content = models.TextField(null=True, blank=True)
+
+    def __repr__(self):
+        return '{speak_time}\n{message_type}\n BOT (to {receiver}): {content}'.format(
+            receiver=self.receiver,
+            message_type=self.message_type,
+            speak_time=self.speak_time,
+            content=self.content
+        )
+
+    def __str__(self):
+        return self.__repr__()
 
 
 class UnrecognizedMsg(models.Model):
