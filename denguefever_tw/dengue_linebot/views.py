@@ -9,6 +9,7 @@ from django.contrib.auth.decorators import login_required
 import os
 import logging
 from datetime import datetime
+from itertools import chain
 from pprint import pformat
 
 from linebot import LineBotApi, WebhookParser
@@ -16,7 +17,7 @@ from linebot.exceptions import InvalidSignatureError, LineBotApiError
 from linebot.models import MessageEvent, TextMessage
 
 from .DengueBotFSM import DengueBotMachine
-from .models import MessageLog, LineUser
+from .models import MessageLog, LineUser, BotReplyLog
 
 logger = logging.getLogger('django')
 
@@ -142,5 +143,12 @@ def msg_log_list(request):
 
 @login_required
 def msg_log_detail(request, uid):
-    context = {'msg_logs': MessageLog.objects.filter(speaker=uid)}
+    all_msg_logs = sorted(
+        chain(
+            MessageLog.objects.filter(speaker=uid),
+            BotReplyLog.objects.filter(receiver=uid)
+        ),
+        key=lambda msg_log: msg_log.speak_time
+    )
+    context = {'all_msg_logs': all_msg_logs}
     return render(request, 'dengue_linebot/msg_log_detail.html', context)

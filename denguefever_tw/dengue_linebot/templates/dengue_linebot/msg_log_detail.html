@@ -6,9 +6,16 @@
   <body>
     <label>Message Log</label><br>
     <ul>
-    {% for msg_log in msg_logs %}
-      {{msg_log.speaker.name}} - {{msg_log.content}}
-      <br />
+    {% for msg_log in all_msg_logs %}
+      <li>
+        {{msg_log.speak_time}} -
+          {% if msg_log.speaker %}
+            {{msg_log.speaker.name}}
+          {% else %}
+            bot
+          {% endif %}
+        - {{msg_log.content}}
+      </li>
     {% endfor %}
     </ul>
   </body>
