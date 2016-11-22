@@ -136,6 +136,11 @@ def user_list(request):
 
 
 @login_required
+def user_detail(request, uid):
+    context = {'user': LineUser.objects.get(user_id=uid)}
+    return render(request, 'dengue_linebot/user_detail.html', context)
+
+@login_required
 def msg_log_list(request):
     context = {'users': LineUser.objects.all()}
     return render(request, 'dengue_linebot/msg_log_list.html', context)

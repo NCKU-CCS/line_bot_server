@@ -7,8 +7,9 @@
     <label>Users</label><br>
     <ul>
     {% for user in users %}
-      {{user.name}} - {{user.user_id}}
-      <br />
+      <li>
+        <a href="/dengue_linebot/{{user.user_id}}/user_detail/">{{user.name}}</a>
+      </li>
     {% endfor %}
     </ul>
   </body>
