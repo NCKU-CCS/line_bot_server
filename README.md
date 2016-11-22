@@ -1,4 +1,14 @@
-# LINE BOT SERVER
+# Dengue Line Bot Server
+
+Line Bot that provides information about dengue fever.  
+Including the following functionality  
+
+- Basic Dengue Fever Knowledge
+- Real Time Epidemic Information
+- Nearby Hospital
+
+The main logic of this bot is based on finite state machine.  
+
 ---
 - [Pre Requirements](#prereq)
 - [Setup](#setup)
@@ -8,11 +18,9 @@
 
 # <a name="prereq"></a> Pre requirements
 - Python 3
-
-- pygraphviz
-	- [Setup pygraphviz on Ubuntu](http://www.jianshu.com/p/a3da7ecc5303)
-
-- postgres
+- pygraphviz (For visualizing Finite State Machine) 
+    - [Setup pygraphviz on Ubuntu](http://www.jianshu.com/p/a3da7ecc5303)
+- postgres (Database)
 
 ```
 # mac
@@ -21,11 +29,9 @@ brew install postgresql
 # ubuntu
 sudo apt-get install postgresql postgresql-contrib
 ```
-
-- postgis
-	- [Setup Postgis on Ubuntu](http://askubuntu.com/questions/650168/enable-postgis-extension-on-ubuntu-14-04-2)
-
-- redis
+- postgis (Database)
+    - [Setup Postgis on Ubuntu](http://askubuntu.com/questions/650168/enable-postgis-extension-on-ubuntu-14-04-2)
+- redis (In Memeory Database)
 
 ```sh
 # mac
@@ -53,21 +59,21 @@ pip install -r requirements.txt
 
 ## <a name='setting-file'></a> Use Different Setting Files
 Currently this repo tracks only `denguefever_tw/denguefever_tw/settings/productions.py`  
-All other setting files should be defined under `denguefever_tw/denguefever_tw/settings`
+All other setting files should be defined under `denguefever_tw/denguefever_tw/settings/`
 
 
-Use the following command to setup or change django settings
+Use the following command to setup or change Django settings
 
 ```sh
 export DJANGO_SETTINGS_MODULE="denguefever_tw.settings.your_setting_file"
 ```
 
 Change `your_setting_file` to corresponding file  
-(e.g. `denguefever_tw.settings.production`)
+e.g. `export DJANGO_SETTINGS_MODULE="denguefever_tw.settings.production"`
 
 ### Prodcution
 
-All the sensitive data are not versioned and should be configured by environment variable.  
+All the sensitive data are not versioned and should be configured by the environment variables.  
 The variables needed including
 
 - `DJANGO_SECRET_KEY` (loaded as `SECRET_KEY`)
@@ -80,7 +86,7 @@ The variables needed including
 - `POSTGRESQL_PORT`
 
 ### Develop
-When developing, you should define your own `local.py` under `settings`.  
+When developing, you should define your own `local.py` under `settings/`.  
 This file will be and should be ignored by git.  
 
 You should import `base.py` first.
@@ -101,13 +107,13 @@ e.g.
 ```python
 from .base import *
 
-SECRET_KEY = 'This is secret key'
-LINE_CHANNEL_SECRET = 'This is Line channel secret'
-LINE_CHANNEL_ACCESS_TOKEN = 'This is Line access token'
+SECRET_KEY = 'This is the secret key'
+LINE_CHANNEL_SECRET = 'This is your Line channel secret'
+LINE_CHANNEL_ACCESS_TOKEN = 'This is your Line access token'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'ENGINE': 'django.contrib.gis.db.backends.postgis',
         'NAME': 'db_name',
         'USER': 'db_user',
         'PASSWORD': 'db_pwd',
@@ -115,17 +121,21 @@ DATABASES = {
         'PORT': '',
     },
     'tainan': {
+        'ENGINE': 'django.contrib.gis.db.backends.postgis',
         'NAME': 'db_name',
         'USER': 'db_user',
         'PASSWORD': 'db_pwd',
         'HOST': 'localhost',
         'PORT': '',
-    },    
+    },
 }
 ```
 
 ## <a name='db'></a> Database
 Currently `postgis` is used with one `default` db and one `tainan` db.  
+
+- `default`: Store all data other than Tainan hospital data
+- `tainan`: Store Tainan hospital data
 
 ### Start postgresql
 ```sh
@@ -135,6 +145,7 @@ pg_ctl -D /usr/local/var/postgres -l /usr/local/var/postgres/server.log start
 
 ### Import Hospital Data
 Import tainan hosptial data
+
 ```sh
 python manage.py import_dengue_hospital
 ```
@@ -150,8 +161,8 @@ redis-server
 
 ## <a name='logger'></a> Logger (Optional But Recommended)
 - loggers
-	- `django`: global logging
-	- `dengue_linebot.DengueBotFSM`: FSM logging including all the conditional judgements and operation processes 
+    - `django`: global logging
+    - `dengue_linebot.denguebot_fsm`: FSM logging including all the conditional judgements and operation processes 
 
 e.g.
 
@@ -178,13 +189,15 @@ LOGGING = {
             'handlers': ['console'],
             'level': 'INFO',
         },
-        'dengue_linebot.DengueBotFSM': {
+        'dengue_linebot.denguebot_fsm': {
             'handlers': ['console'],
             'level': 'INFO',
         }
     },
 }
 ```
+
+[More detail on Logging System in django](https://docs.djangoproject.com/en/1.10/topics/logging/)
 
 # <a name="usage"></a> Usage
 ## Run uwsgi
