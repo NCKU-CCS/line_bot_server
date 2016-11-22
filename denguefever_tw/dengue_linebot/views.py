@@ -16,7 +16,7 @@ from linebot import LineBotApi, WebhookParser
 from linebot.exceptions import InvalidSignatureError, LineBotApiError
 from linebot.models import MessageEvent, TextMessage
 
-from .DengueBotFSM import DengueBotMachine
+from .denguebot_fsm import DengueBotMachine
 from .models import MessageLog, LineUser, BotReplyLog, UnrecognizedMsg
 
 logger = logging.getLogger('django')
