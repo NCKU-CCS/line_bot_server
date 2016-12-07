@@ -70,3 +70,15 @@ class UnrecognizedMsg(models.Model):
 
     def __str__(self):
         return str(self.message_log)
+
+
+class ResponseToUnrecogMsg(models.Model):
+    unrecognized_msg = models.ForeignKey(UnrecognizedMsg,
+                                         related_name='proper_response')
+    content = models.TextField()
+
+    def __str__(self):
+        return 'Unrecognized Message: {unrecog_msg}\nResponse: {proper_response}'.format(
+            unrecog_msg=self.unrecognized_msg.content,
+            proper_response=self.content
+        )
