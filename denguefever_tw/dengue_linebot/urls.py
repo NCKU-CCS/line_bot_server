@@ -1,4 +1,5 @@
 from django.conf.urls import url
+
 from .views import *
 
 
@@ -9,5 +10,6 @@ urlpatterns = [
     url(r'^(?P<uid>\S+)/user_detail/', user_detail),
     url(r'^msg_log_list/', msg_log_list),
     url(r'^(?P<uid>\S+)/msg_log_detail/', msg_log_detail),
-    url(r'unrecog_msgs/', unrecognized_msg_list),
+    url(r'^unrecog_msgs/', unrecognized_msg_list),
+    url(r'^(?P<mid>\S+)/handle_unrecognized_msg/', handle_unrecognized_msg),
 ]

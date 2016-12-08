@@ -6,7 +6,10 @@
 <ul>
   {% for msg in unrecog_msgs %}
   <li>
-    {{msg.message_log.speak_time}} - {{msg.message_log.speaker}} - {{msg.message_log.content}}
+    <a href="/dengue_linebot/{{msg.id}}/handle_unrecognized_msg/">
+      {{msg.message_log.speak_time}} - {{msg.message_log.speaker}} - {{msg.message_log.content}}
+    </a>
+
   </li>
   {% endfor %}
 </ul>
