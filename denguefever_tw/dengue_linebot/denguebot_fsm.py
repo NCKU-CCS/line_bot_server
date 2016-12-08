@@ -16,7 +16,9 @@ from linebot.models import (
     ButtonsTemplate, PostbackTemplateAction
 )
 
-from .models import LineUser, Advice, UnrecognizedMsg, MessageLog, BotReplyLog
+from .models import (
+    LineUser, Advice, UnrecognizedMsg, MessageLog, BotReplyLog, ResponseToUnrecogMsg
+)
 import hospital
 
 
@@ -116,7 +118,6 @@ class DengueBotMachine(metaclass=Signleton):
             messages = [messages]
         for m in messages:
             save_message(m)
-
 
     def draw_graph(self, filename, prog='dot'):
         self.graph.draw(filename, prog=prog)
@@ -447,10 +448,10 @@ class DengueBotMachine(metaclass=Signleton):
         address = event.message.text
         geocode = coder.geocode(address)
         hospital_list = hospital.views.get_nearby_hospital(geocode.longitude, geocode.latitude)
-        self._send_hospital_msgs(hospital_list, event.reply_token)
+        self._send_hospital_msgs(hospital_list, event)
         self.finish_ans()
 
-    def _send_hospital_msgs(self, hospital_list, reply_token):
+    def _send_hospital_msgs(self, hospital_list, event):
         if hospital_list:
             msgs = self._create_hospitals_msgs(hospital_list)
         else:
@@ -576,16 +577,25 @@ class DengueBotMachine(metaclass=Signleton):
     @log_fsm_operation
     def on_enter_unrecognized_msg(self, event):
         if getattr(event, 'reply_token', None):
-            self._send_text_in_rule(event, 'unknown_msg')
-        self.handle_unrecognized_msg(event)
+            msg_log = MessageLog.objects.get(speaker=event.source.user_id,
+                                             speak_time=datetime.fromtimestamp(event.timestamp/1000),
+                                             content=event.message.text)
+            unrecognized_msg = UnrecognizedMsg(message_log=msg_log)
+            unrecognized_msg.save()
 
-    @log_fsm_operation
-    def on_exit_unrecognized_msg(self, event):
-        msg_log = MessageLog.objects.get(speaker=event.source.user_id,
-                                         speak_time=datetime.fromtimestamp(event.timestamp/1000),
-                                         content=event.message.text)
-        unrecognized_msg = UnrecognizedMsg(message_log=msg_log)
-        unrecognized_msg.save()
+            try:
+                response_to_unrecog_msg = ResponseToUnrecogMsg.objects.get(
+                    unrecognized_msg_content=unrecognized_msg.message_log.content
+                )
+            except ResponseToUnrecogMsg.DoesNotExist:
+                self._send_text_in_rule(event, 'unknown_msg')
+            else:
+                response_content = response_to_unrecog_msg.content
+                self.line_bot_api.reply_message(
+                    event.reply_token,
+                    TextSendMessage(text=response_content)
+                )
+        self.handle_unrecognized_msg(event)
 
     @log_fsm_operation
     def on_enter_ask_hospital_map(self, event):

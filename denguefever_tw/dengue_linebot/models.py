@@ -73,9 +73,7 @@ class UnrecognizedMsg(models.Model):
 
 
 class ResponseToUnrecogMsg(models.Model):
-    unrecognized_msg = models.OneToOneField(UnrecognizedMsg,
-                                            primary_key=True,
-                                            related_name='proper_response')
+    unrecognized_msg_content = models.TextField(unique=True)
     content = models.TextField()
 
     def __str__(self):

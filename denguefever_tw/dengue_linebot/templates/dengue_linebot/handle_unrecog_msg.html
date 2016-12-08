@@ -7,7 +7,7 @@
 <br />
 Message: {{msg_content}}
 <br />
-<form method="POST" action="/dengue_linebot/unrecog_msgs/">
+<form method="POST">
   {% csrf_token %}
   <input id="proper_response" type="text" name="proper_response"
          value="{{proper_response}}">

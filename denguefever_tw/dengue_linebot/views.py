@@ -51,12 +51,12 @@ def reply(request):
         events = line_parser.parse(body, signature)
     except KeyError:
         logger.warning(
-            'Not a Line request.\n{req}\n'.format(req=pformat(request.text))
+            'Not a Line request.\n{req}\n'.format(req=pformat(request))
         )
         return HttpResponseBadRequest()
     except InvalidSignatureError:
         logger.warning(
-            'Invalid Signature.\n{req}'.format(req=pformat(request.text))
+            'Invalid Signature.\n{req}'.format(req=pformat(request))
         )
         return HttpResponseBadRequest()
     except LineBotApiError as e:
@@ -177,7 +177,7 @@ def handle_unrecognized_msg(request, mid):
     if request.method == 'POST':
         response_content = request.POST['proper_response']
         response_to_unrecog_msg = ResponseToUnrecogMsg(
-            unrecognized_msg=unrecog_msg,
+            unrecognized_msg_content=msg_content,
             content=response_content
         )
         response_to_unrecog_msg.save()
@@ -187,10 +187,9 @@ def handle_unrecognized_msg(request, mid):
     else:
         try:
             response_to_unrecog_msg = ResponseToUnrecogMsg.objects.get(
-                unrecognized_msg=unrecog_msg
+                unrecognized_msg_content=msg_content
             )
             response_content = response_to_unrecog_msg.content
-            print(123123)
         except ResponseToUnrecogMsg.DoesNotExist:
             response_content = ''
 
