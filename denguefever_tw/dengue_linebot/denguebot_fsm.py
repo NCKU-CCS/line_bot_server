@@ -439,7 +439,7 @@ class DengueBotMachine(metaclass=Signleton):
     def on_enter_receive_user_location(self, event):
         hospital_list = hospital.views.get_nearby_hospital(event.message.longitude,
                                                            event.message.latitude)
-        self._send_hospital_msgs(hospital_list, event.reply_token)
+        self._send_hospital_msgs(hospital_list, event)
         self.finish_ans()
 
     @log_fsm_condition
