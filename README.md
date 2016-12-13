@@ -216,6 +216,13 @@ sudo killall -s INT uwsgi
 touch server-setting/linebot.ini
 ```
 
+### Restart 
+
+```sh
+sudo killall -s INT uwsgi
+sudo uwsgi --ini server-setting/linebot.ini --touch-reload=`pwd`/server-setting/linebot.ini
+```
+
 ### View Log
 ```sh
 sudo tail -f /var/log/bot_denguefever_daemon.log
