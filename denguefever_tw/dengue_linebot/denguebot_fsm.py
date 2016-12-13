@@ -82,6 +82,17 @@ class DengueBotMachine(metaclass=Signleton):
     dengue_transitions = list()
     reply_msgs = dict()
 
+    LOCATION_SEND_TUTOIRAL_MSG = [
+        ImageSendMessage(
+            original_content_url=loc_step1_origin_img_url,
+            preview_image_url=loc_step1_preview_img_url
+        ),
+        ImageSendMessage(
+            original_content_url=loc_step2_origin_img_url,
+            preview_image_url=loc_step2_preview_img_url
+        ),
+    ]
+
     def __init__(self, line_bot_api, initial_state='user', *, root_path):
         self.config_path_base = root_path if root_path else ''
         self.load_config()
@@ -421,18 +432,9 @@ class DengueBotMachine(metaclass=Signleton):
     @log_fsm_operation
     def on_enter_ask_hospital(self, event):
         messages = [
-            TextSendMessage(
-                text=DengueBotMachine.reply_msgs['ask_address']
-            ),
-            ImageSendMessage(
-                original_content_url=loc_step1_origin_img_url,
-                preview_image_url=loc_step1_preview_img_url
-            ),
-            ImageSendMessage(
-                original_content_url=loc_step2_origin_img_url,
-                preview_image_url=loc_step2_preview_img_url
-            ),
+            TextSendMessage(text=DengueBotMachine.reply_msgs['ask_address'])
         ]
+        messages.extend(self.LOCATION_SEND_TUTOIRAL_MSG)
         self.reply_message_with_logging(
             event.reply_token,
             event.source.user_id,
@@ -596,18 +598,9 @@ class DengueBotMachine(metaclass=Signleton):
     @log_fsm_operation
     def on_enter_wait_gov_location(self, event):
         messages = [
-            TextSendMessage(
-                text='請將目前地點傳給我'
-            ),
-            ImageSendMessage(
-                original_content_url=loc_step1_origin_img_url,
-                preview_image_url=loc_step1_preview_img_url
-            ),
-            ImageSendMessage(
-                original_content_url=loc_step2_origin_img_url,
-                preview_image_url=loc_step2_preview_img_url
-            ),
+            TextSendMessage(text=DengueBotMachine.reply_msgs['ask_gov_address'])
         ]
+        messages.extend(self.LOCATION_SEND_TUTOIRAL_MSG)
         self.reply_message_with_logging(
             event.reply_token,
             event.source.user_id,
@@ -633,7 +626,7 @@ class DengueBotMachine(metaclass=Signleton):
         self.reply_message_with_logging(
             event.reply_token,
             event.source.user_id,
-            messages=TextSendMessage(text='謝謝您的回報')
+            messages=TextSendMessage(text=DengueBotMachine.reply_msgs['thank_gov_report'])
         )
         self.finish_ans()
 
