@@ -610,24 +610,21 @@ class DengueBotMachine(metaclass=Signleton):
     @log_fsm_operation
     def on_enter_receive_gov_location(self, event):
         try:
-            gov_report = GovReport.objects.get(
+            gov_report = GovReport.objects.filter(
                 user_id=event.source.user_id,
-                report_time=datetime.fromtimestamp(event.timestamp/1000),
-                lat=0.0,
-                lng=0.0
-            )
+            ).order_by('-report_time')[0]
         except GovReport.DoesNotExist:
-            pass
+            logger.error('Gov Report Does Not Exist')
         else:
             gov_report.lat = event.message.latitude
             gov_report.lng = event.message.longitude
             gov_report.save()
 
-        self.reply_message_with_logging(
-            event.reply_token,
-            event.source.user_id,
-            messages=TextSendMessage(text=DengueBotMachine.reply_msgs['thank_gov_report'])
-        )
+            self.reply_message_with_logging(
+                event.reply_token,
+                event.source.user_id,
+                messages=TextSendMessage(text=DengueBotMachine.reply_msgs['thank_gov_report'])
+            )
         self.finish_ans()
 
     @log_fsm_operation
