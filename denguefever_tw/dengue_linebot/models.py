@@ -1,4 +1,5 @@
-from django.db import models
+from django.contrib.gis.db import models
+from django.contrib.gis.geos import Point
 
 
 class LineUser(models.Model):
@@ -81,3 +82,18 @@ class ResponseToUnrecogMsg(models.Model):
             unrecog_msg=self.unrecognized_msg.content,
             proper_response=self.content
         )
+
+
+class GovReport(models.Model):
+    user_id = models.ForeignKey(LineUser, related_name='gov_faculty')
+    action = models.TextField()
+    note = models.TextField()
+    report_time = models.DateTimeField()
+    lng = models.FloatField(default=0.0)
+    lat = models.FloatField(default=0.0)
+    location = models.PointField(geography=True, srid=4326, default='POINT(0.0 0.0)')
+
+    def save(self, **kwargs):
+        if self.lng and self.lat:
+            self.location = Point(float(self.lng), float(self.lat))
+        super(GovReport, self).save(**kwargs)
