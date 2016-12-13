@@ -17,7 +17,8 @@ from linebot.models import (
 )
 
 from .models import (
-    LineUser, Advice, UnrecognizedMsg, MessageLog, BotReplyLog, ResponseToUnrecogMsg
+    LineUser, Advice, GovReport,
+    UnrecognizedMsg, MessageLog, BotReplyLog, ResponseToUnrecogMsg
 )
 import hospital
 
@@ -80,6 +81,17 @@ class DengueBotMachine(metaclass=Signleton):
     states = list()
     dengue_transitions = list()
     reply_msgs = dict()
+
+    LOCATION_SEND_TUTOIRAL_MSG = [
+        ImageSendMessage(
+            original_content_url=loc_step1_origin_img_url,
+            preview_image_url=loc_step1_preview_img_url
+        ),
+        ImageSendMessage(
+            original_content_url=loc_step2_origin_img_url,
+            preview_image_url=loc_step2_preview_img_url
+        ),
+    ]
 
     def __init__(self, line_bot_api, initial_state='user', *, root_path):
         self.config_path_base = root_path if root_path else ''
@@ -350,6 +362,10 @@ class DengueBotMachine(metaclass=Signleton):
         return 'hosptial_address' in parse_qs(event.postback.data)
 
     @log_fsm_operation
+    def is_gov_report(self, event):
+        return '#2016' in event.message.text
+
+    @log_fsm_operation
     def on_enter_user_join(self, event):
         # TODO: implement update user data when user rejoin
         user_id = event.source.user_id
@@ -416,18 +432,9 @@ class DengueBotMachine(metaclass=Signleton):
     @log_fsm_operation
     def on_enter_ask_hospital(self, event):
         messages = [
-            TextSendMessage(
-                text=DengueBotMachine.reply_msgs['ask_address']
-            ),
-            ImageSendMessage(
-                original_content_url=loc_step1_origin_img_url,
-                preview_image_url=loc_step1_preview_img_url
-            ),
-            ImageSendMessage(
-                original_content_url=loc_step2_origin_img_url,
-                preview_image_url=loc_step2_preview_img_url
-            ),
+            TextSendMessage(text=DengueBotMachine.reply_msgs['ask_address'])
         ]
+        messages.extend(self.LOCATION_SEND_TUTOIRAL_MSG)
         self.reply_message_with_logging(
             event.reply_token,
             event.source.user_id,
@@ -573,6 +580,55 @@ class DengueBotMachine(metaclass=Signleton):
     @log_fsm_operation
     def on_enter_ask_usage(self, event):
         self._send_text_in_rule(event, 'manual')
+
+    @log_fsm_operation
+    def on_enter_gov_faculty_report(self, event):
+        text = event.message.text
+        _, _, action, note = text.split('#')
+
+        gov_report = GovReport(
+            user_id=LineUser.objects.get(user_id=event.source.user_id),
+            action=action,
+            note=note,
+            report_time=datetime.fromtimestamp(event.timestamp/1000),
+        )
+        gov_report.save()
+        self.advance(event)
+
+    @log_fsm_operation
+    def on_enter_wait_gov_location(self, event):
+        messages = [
+            TextSendMessage(text=DengueBotMachine.reply_msgs['ask_gov_address'])
+        ]
+        messages.extend(self.LOCATION_SEND_TUTOIRAL_MSG)
+        self.reply_message_with_logging(
+            event.reply_token,
+            event.source.user_id,
+            messages=messages
+        )
+
+    @log_fsm_operation
+    def on_enter_receive_gov_location(self, event):
+        try:
+            gov_report = GovReport.objects.get(
+                user_id=event.source.user_id,
+                report_time=datetime.fromtimestamp(event.timestamp/1000),
+                lat=0.0,
+                lng=0.0
+            )
+        except GovReport.DoesNotExist:
+            pass
+        else:
+            gov_report.lat = event.message.latitude
+            gov_report.lng = event.message.longitude
+            gov_report.save()
+
+        self.reply_message_with_logging(
+            event.reply_token,
+            event.source.user_id,
+            messages=TextSendMessage(text=DengueBotMachine.reply_msgs['thank_gov_report'])
+        )
+        self.finish_ans()
 
     @log_fsm_operation
     def on_enter_unrecognized_msg(self, event):
