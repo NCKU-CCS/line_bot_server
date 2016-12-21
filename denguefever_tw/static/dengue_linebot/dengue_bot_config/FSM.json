@@ -18,6 +18,9 @@
         "receive_user_address",
         "wait_user_suggestion",
         "ask_hospital_map",
+        "gov_faculty_report",
+        "wait_gov_location",
+        "receive_gov_location",
         "user_join",
         "unrecognized_msg"
     ],
@@ -311,6 +314,27 @@
         },
 
         {
+            "trigger": "advance",
+            "source": "user",
+            "dest": "gov_faculty_report",
+            "conditions": [
+                "is_text_message",
+                "is_gov_report"
+            ]
+        },
+        {
+            "trigger": "advance",
+            "source": "gov_faculty_report",
+            "dest": "wait_gov_location",
+        },
+        {
+            "trigger": "advance",
+            "source": "wait_gov_location",
+            "dest": "receive_gov_location",
+            "conditions": "is_location_message",
+        },
+
+        {
             "trigger": "finish_ans",
             "source": [
                 "ask_hospital_map",
@@ -323,7 +347,8 @@
                 "ask_realtime_epidemic",
                 "greet",
                 "ask_breeding_source",
-                "ask_who_we_are"
+                "ask_who_we_are",
+                "receive_gov_location"
             ],
             "dest": "user"
         },
@@ -334,7 +359,8 @@
                 "user",
                 "ask_usage",
                 "ask_prevention",
-                "wait_user_location"
+                "wait_user_location",
+                "wait_gov_location"
             ],
             "dest": "unrecognized_msg",
             "conditions": "is_pass"

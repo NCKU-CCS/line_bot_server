@@ -1,0 +1,22 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>User Detail</title>
+  </head>
+  <body>
+  </body>
+</html>
+
+{% extends "base.html" %}
+
+{% block title %} {{user.name}} {% endblock %}
+
+{% block content %}
+<label>Message Log</label><br>
+<ul>
+  <li>{{user.name}}</li>
+  <li>{{user.user_id}}</li>
+  <li>{{user.status_message}}</li>
+  <img src="{{user.picture_url}}" alt="" />
+</ul>
+{% endblock %}

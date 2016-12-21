@@ -1,4 +1,5 @@
-from django.db import models
+from django.contrib.gis.db import models
+from django.contrib.gis.geos import Point
 
 
 class LineUser(models.Model):
@@ -26,7 +27,7 @@ class Advice(models.Model):
 
 
 class MessageLog(models.Model):
-    speaker = models.TextField()
+    speaker = models.ForeignKey(LineUser, related_name='message_log')
     speak_time = models.DateTimeField()
     message_type = models.TextField()
     content = models.TextField(null=True, blank=True)
@@ -46,9 +47,53 @@ class MessageLog(models.Model):
         )
 
 
+class BotReplyLog(models.Model):
+    receiver = models.ForeignKey(LineUser, related_name='bot_reply_log')
+    speak_time = models.DateTimeField()
+    message_type = models.TextField()
+    content = models.TextField(null=True, blank=True)
+
+    def __repr__(self):
+        return '{speak_time}\n{message_type}\n BOT (to {receiver}): {content}'.format(
+            receiver=self.receiver,
+            message_type=self.message_type,
+            speak_time=self.speak_time,
+            content=self.content
+        )
+
+    def __str__(self):
+        return self.__repr__()
+
+
 class UnrecognizedMsg(models.Model):
     message_log = models.ForeignKey(MessageLog,
                                     related_name='unrecognized_message_log')
 
     def __str__(self):
         return str(self.message_log)
+
+
+class ResponseToUnrecogMsg(models.Model):
+    unrecognized_msg_content = models.TextField(unique=True)
+    content = models.TextField()
+
+    def __str__(self):
+        return 'Unrecognized Message: {unrecog_msg}\nResponse: {proper_response}'.format(
+            unrecog_msg=self.unrecognized_msg.content,
+            proper_response=self.content
+        )
+
+
+class GovReport(models.Model):
+    user_id = models.ForeignKey(LineUser, related_name='gov_faculty')
+    action = models.TextField()
+    note = models.TextField()
+    report_time = models.DateTimeField()
+    lng = models.FloatField(default=0.0)
+    lat = models.FloatField(default=0.0)
+    location = models.PointField(geography=True, srid=4326, default='POINT(0.0 0.0)')
+
+    def save(self, **kwargs):
+        if self.lng and self.lat:
+            self.location = Point(float(self.lng), float(self.lat))
+        super(GovReport, self).save(**kwargs)

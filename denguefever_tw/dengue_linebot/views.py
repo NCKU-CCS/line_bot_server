@@ -1,3 +1,4 @@
+from django.shortcuts import render
 from django.conf import settings
 from django.core.cache import cache
 from django.http import HttpResponse, HttpResponseBadRequest
@@ -8,20 +9,24 @@ from django.contrib.auth.decorators import login_required
 import os
 import logging
 from datetime import datetime
+from itertools import chain
 from pprint import pformat
 
 from linebot import LineBotApi, WebhookParser
 from linebot.exceptions import InvalidSignatureError, LineBotApiError
 from linebot.models import MessageEvent, TextMessage
 
-from .DengueBotFSM import DengueBotMachine
-from .models import MessageLog
+from .denguebot_fsm import DengueBotMachine
+from .models import (
+    MessageLog, LineUser,
+    BotReplyLog, UnrecognizedMsg, ResponseToUnrecogMsg
+)
 
 logger = logging.getLogger('django')
 
 line_bot_api = LineBotApi(settings.LINE_CHANNEL_ACCESS_TOKEN)
 line_parser = WebhookParser(settings.LINE_CHANNEL_SECRET)
-config_path = os.path.join(settings.STATIC_ROOT, 'dengue_linebot/dengue_bot_config/')
+config_path = os.path.join(settings.STATICFILES_DIRS[0], 'dengue_linebot/dengue_bot_config/')
 machine = DengueBotMachine(line_bot_api, root_path=config_path)
 
 
@@ -46,12 +51,12 @@ def reply(request):
         events = line_parser.parse(body, signature)
     except KeyError:
         logger.warning(
-            'Not a Line request.\n{req}\n'.format(req=pformat(request.text))
+            'Not a Line request.\n{req}\n'.format(req=pformat(request))
         )
         return HttpResponseBadRequest()
     except InvalidSignatureError:
         logger.warning(
-            'Invalid Signature.\n{req}'.format(req=pformat(request.text))
+            'Invalid Signature.\n{req}'.format(req=pformat(request))
         )
         return HttpResponseBadRequest()
     except LineBotApiError as e:
@@ -81,7 +86,8 @@ def reply(request):
                 if isinstance(event.message, TextMessage):
                     content = event.message.text
                     logger.info('Text: {text}\n'.format(text=content))
-                message_log = MessageLog(speaker=user_id,
+
+                message_log = MessageLog(speaker=LineUser.objects.get(user_id=user_id),
                                          speak_time=datetime.fromtimestamp(event.timestamp/1000),
                                          message_type=event.message.type,
                                          content=content)
@@ -124,3 +130,68 @@ def show_fsm(request):
 def reload_fsm(request):
     machine.load_config()
     return HttpResponse()
+
+
+@login_required
+def user_list(request):
+    context = {'users': LineUser.objects.all()}
+    return render(request, 'dengue_linebot/user_list.html', context)
+
+
+@login_required
+def user_detail(request, uid):
+    context = {'user': LineUser.objects.get(user_id=uid)}
+    return render(request, 'dengue_linebot/user_detail.html', context)
+
+
+@login_required
+def msg_log_list(request):
+    context = {'users': LineUser.objects.all()}
+    return render(request, 'dengue_linebot/msg_log_list.html', context)
+
+
+@login_required
+def msg_log_detail(request, uid):
+    all_msg_logs = sorted(
+        chain(
+            MessageLog.objects.filter(speaker=uid),
+            BotReplyLog.objects.filter(receiver=uid)
+        ),
+        key=lambda msg_log: msg_log.speak_time
+    )
+    context = {'all_msg_logs': all_msg_logs}
+    return render(request, 'dengue_linebot/msg_log_detail.html', context)
+
+
+@login_required
+def unrecognized_msg_list(request):
+    context = {'unrecog_msgs':  UnrecognizedMsg.objects.all()}
+    return render(request, 'dengue_linebot/unrecog_msgs.html', context)
+
+
+@login_required
+def handle_unrecognized_msg(request, mid):
+    unrecog_msg = UnrecognizedMsg.objects.get(id=mid)
+    msg_content = unrecog_msg.message_log.content
+
+    if request.method == 'POST':
+        response_content = request.POST['proper_response']
+        response_to_unrecog_msg = ResponseToUnrecogMsg(
+            unrecognized_msg_content=msg_content,
+            content=response_content
+        )
+        response_to_unrecog_msg.save()
+
+        context = {'msg_content': msg_content, 'proper_response': response_content}
+        return render(request, 'dengue_linebot/handle_unrecog_msg.html', context)
+    else:
+        try:
+            response_to_unrecog_msg = ResponseToUnrecogMsg.objects.get(
+                unrecognized_msg_content=msg_content
+            )
+            response_content = response_to_unrecog_msg.content
+        except ResponseToUnrecogMsg.DoesNotExist:
+            response_content = ''
+
+        context = {'msg_content': msg_content, 'proper_response': response_content}
+        return render(request, 'dengue_linebot/handle_unrecog_msg.html', context)
