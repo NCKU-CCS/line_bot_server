@@ -220,7 +220,7 @@ class DengueBotMachine(metaclass=Signleton):
         if (
             msg.strip() == "如何防範" or
             (any(m in msg for m in ["怎樣", "怎麼", "如何"]) and ("防疫" in msg)) or
-            any(m in msg for m in ["防範", "預防"])
+            any(m in msg for m in ["防範", "預防", "避免"])
         ):
             return True
         return False
@@ -246,7 +246,7 @@ class DengueBotMachine(metaclass=Signleton):
     @log_fsm_condition
     def is_asking_dengue_fever(self, event):
         msg = event.message.text
-        if any(m in msg for m in ["什麼是登革熱", "登革熱是什麼"]) or msg.strip() == "登革熱":
+        if any(m in msg for m in ["什麼", "登革熱"]) or msg.strip() == "登革熱":
             return True
         return False
 
@@ -297,9 +297,11 @@ class DengueBotMachine(metaclass=Signleton):
     def is_asking_symptom(self, event):
         msg = event.message.text
         if (
-            msg.strip() in ["症狀", "登革熱症狀"] or
             all(m in msg for m in ["登革熱", "症狀"]) or
-            all(m in msg for m in ["症狀", "是"])
+            all(m in msg for m in ["登革熱", "病情"]) or
+            all(m in msg for m in ["症狀", "是"]) or
+            all(m in msg for m in ["得到", "登革熱", "怎"]) or
+            "症狀" in msg
         ):
             return True
         return False
@@ -308,8 +310,8 @@ class DengueBotMachine(metaclass=Signleton):
     def is_asking_realtime_epidemic(self, event):
         msg = event.message.text
         if (
-            msg.strip() in ["即時疫情", "疫情"] or
-            (any(m in msg for m in ["最近", "本週", "這週"]) and ("疫情" in msg)) or
+            (any(m in msg for m in ["最近", "本週", "這週", "現在", "即時", "登革熱"]) and ("疫情" in msg)) or
+            (any(m in msg for m in ["病例", "幾例"]) and "登革熱" in msg) or
             ("疫情資訊" in msg)
         ):
             return True
