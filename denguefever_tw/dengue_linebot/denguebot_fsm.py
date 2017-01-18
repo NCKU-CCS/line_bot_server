@@ -1,8 +1,8 @@
 import os
+import logging
 from functools import wraps
 from datetime import datetime
 from urllib.parse import parse_qs
-import logging
 
 import ujson
 from jsmin import jsmin
@@ -21,15 +21,6 @@ from .models import (
     UnrecognizedMsg, MessageLog, BotReplyLog, ResponseToUnrecogMsg
 )
 import hospital
-
-
-symptom_preview_img_url = 'https://i.imgur.com/oydmUva.jpg'
-symptom_origin_img_url = 'https://i.imgur.com/fs6wzor.jpg'
-loc_step1_preview_img_url = 'https://i.imgur.com/8fdg2G2.jpg'
-loc_step1_origin_img_url = 'https://i.imgur.com/NAQFUgk.jpg'
-loc_step2_preview_img_url = 'https://i.imgur.com/3HEfVb7.jpg'
-loc_step2_origin_img_url = 'https://i.imgur.com/4mwZjtG.jpg'
-
 
 logger = logging.getLogger(__name__)
 
@@ -78,40 +69,71 @@ def log_fsm_operation(func):
 
 
 class DengueBotMachine(metaclass=Signleton):
-    states = list()
-    dengue_transitions = list()
-    reply_msgs = dict()
-
-    LOCATION_SEND_TUTOIRAL_MSG = [
-        ImageSendMessage(
-            original_content_url=loc_step1_origin_img_url,
-            preview_image_url=loc_step1_preview_img_url
-        ),
-        ImageSendMessage(
-            original_content_url=loc_step2_origin_img_url,
-            preview_image_url=loc_step2_preview_img_url
-        ),
-    ]
-
     def __init__(self, line_bot_api, initial_state='user', *, root_path):
         self.config_path_base = root_path if root_path else ''
         self.load_config()
         self.machine = GraphMachine(
             model=self,
-            states=DengueBotMachine.states,
-            transitions=DengueBotMachine.dengue_transitions,
+            states=self.states,
+            transitions=self.dengue_transitions,
             initial=initial_state,
             auto_transitions=False,
             show_conditions=True
         )
+
         self.line_bot_api = line_bot_api
+
+    def load_config(self):
+        self.load_fsm_config()
+        self.load_img_urls()
+        self.load_msg()
+
+    def load_fsm_config(self, filename='FSM.json'):
+        path = os.path.join(self.config_path_base, filename)
+        with open(path) as FSM_file:
+            data = ujson.loads(jsmin(FSM_file.read()))
+
+            self.states = data['states']
+            self.dengue_transitions = data['transitions']
+
+    def load_img_urls(self, filename='img_urls.json'):
+        path = os.path.join(self.config_path_base, filename)
+        with open(path) as img_url_file:
+            self.img_urls = ujson.loads(img_url_file.read())
+
+        self.LOCATION_SEND_TUTOIRAL_MSG = [
+            ImageSendMessage(
+                original_content_url=self.img_urls['loc_step1_origin'],
+                preview_image_url=self.img_urls['loc_step1_preview']
+            ),
+            ImageSendMessage(
+                original_content_url=self.img_urls['loc_step2_origin'],
+                preview_image_url=self.img_urls['loc_step2_preview']
+            ),
+        ]
+
+    def load_msg(self, filename='dengue_msg.json'):
+        path = os.path.join(self.config_path_base, filename)
+        with open(path) as msg_file:
+            msgs = ujson.loads(jsmin(msg_file.read()))
+
+            self.reply_msgs = msgs['reply_msgs']
+
+    def draw_graph(self, filename, prog='dot'):
+        self.graph.draw(filename, prog=prog)
+
+    def set_state(self, state):
+        self.machine.set_state(state)
+
+    def reset_state(self):
+        self.set_state('user')
 
     def reply_message_with_logging(self, reply_token, receiver_id, messages):
         def save_message(msg):
             try:
                 content = msg.text
             except AttributeError:
-                content = None
+                content = '===This is {message_type} type message.==='.format(message_type=msg.type)
 
             bot_reply_log = BotReplyLog(
                 receiver=LineUser.objects.get(user_id=receiver_id),
@@ -121,40 +143,14 @@ class DengueBotMachine(metaclass=Signleton):
             )
             bot_reply_log.save()
 
-        self.line_bot_api.reply_message(
-            reply_token,
-            messages
-        )
+        self.line_bot_api.reply_message(reply_token, messages)
 
         if not isinstance(messages, (list, tuple)):
             messages = [messages]
         for m in messages:
             save_message(m)
 
-    def draw_graph(self, filename, prog='dot'):
-        self.graph.draw(filename, prog=prog)
-
-    def load_config(self, filename='FSM.json'):
-        path = os.path.join(self.config_path_base, filename)
-        with open(path) as FSM_file:
-            data = ujson.loads(jsmin(FSM_file.read()))
-
-        DengueBotMachine.states = data['states']
-        DengueBotMachine.dengue_transitions = data['transitions']
-        self._load_msg()
-
-    def _load_msg(self, filename='dengue_msg.json'):
-        path = os.path.join(self.config_path_base, filename)
-        with open(path) as msg_file:
-            msgs = ujson.loads(jsmin(msg_file.read()))
-            DengueBotMachine.reply_msgs = msgs['reply_msgs']
-
-    def set_state(self, state):
-        self.machine.set_state(state)
-
-    def reset_state(self):
-        self.set_state('user')
-
+    # FSM conditions
     @log_fsm_condition
     def is_pass(self, event):
         return True
@@ -163,32 +159,33 @@ class DengueBotMachine(metaclass=Signleton):
     def is_failed(self, event):
         return False
 
-    def _is_this_message_event(self, event, event_type):
+    # Event Type Assertion
+    def _assert_message_type(self, event, event_type):
         return isinstance(event, MessageEvent) and isinstance(event.message, event_type)
 
     @log_fsm_condition
     def is_text_message(self, event):
-        return self._is_this_message_event(event, TextMessage)
+        return self._assert_message_type(event, TextMessage)
 
     @log_fsm_condition
     def is_sticker_message(self, event):
-        return self._is_this_message_event(event, StickerMessage)
+        return self._assert_message_type(event, StickerMessage)
 
     @log_fsm_condition
     def is_image_message(self, event):
-        return self._is_this_message_event(event, ImageMessage)
+        return self._assert_message_type(event, ImageMessage)
 
     @log_fsm_condition
     def is_video_message(self, event):
-        return self._is_this_message_event(event, VideoMessage)
+        return self._assert_message_type(event, VideoMessage)
 
     @log_fsm_condition
     def is_audio_message(self, event):
-        return self._is_this_message_event(event, AudioMessage)
+        return self._assert_message_type(event, AudioMessage)
 
     @log_fsm_condition
     def is_location_message(self, event):
-        return self._is_this_message_event(event, LocationMessage)
+        return self._assert_message_type(event, LocationMessage)
 
     @log_fsm_condition
     def is_follow_event(self, event):
@@ -214,6 +211,7 @@ class DengueBotMachine(metaclass=Signleton):
     def is_beacon_event(self, event):
         return isinstance(event, BeaconEvent)
 
+    # FSM Operation conditions
     @log_fsm_condition
     def is_asking_prevention(self, event):
         msg = event.message.text
@@ -367,6 +365,7 @@ class DengueBotMachine(metaclass=Signleton):
     def is_gov_report(self, event):
         return '#2016' in event.message.text
 
+    # FSM Operations
     @log_fsm_operation
     def on_enter_user_join(self, event):
         # TODO: implement update user data when user rejoin
@@ -384,31 +383,22 @@ class DengueBotMachine(metaclass=Signleton):
             user.save()
         self.finish()
 
-    def _send_text_in_rule(self, event, key):
-        self.reply_message_with_logging(
-            event.reply_token,
-            event.source.user_id,
-            TextSendMessage(
-                text=DengueBotMachine.reply_msgs[key]
-            )
-        )
-
     @log_fsm_operation
     def on_enter_ask_prevention(self, event):
         self.reply_message_with_logging(
             event.reply_token,
             event.source.user_id,
             TemplateSendMessage(
-                alt_text=DengueBotMachine.reply_msgs['ask_prevent_type'],
+                alt_text=self.reply_msgs['ask_prevent_type'],
                 template=ButtonsTemplate(
-                    text='請問是自身防疫還是環境防疫呢？',
+                    text=self.reply_msgs['ask_prevent_type'],
                     actions=[
                         PostbackTemplateAction(
-                            label='自身',
+                            label=self.reply_msgs['self_label'],
                             data='自身'
                         ),
                         PostbackTemplateAction(
-                            label='環境',
+                            label=self.reply_msgs['env_label'],
                             data='環境'
                         ),
                     ]
@@ -420,6 +410,13 @@ class DengueBotMachine(metaclass=Signleton):
     def on_enter_ask_self_prevention(self, event):
         self._send_text_in_rule(event, 'self_prevent')
         self.finish_ans()
+
+    def _send_text_in_rule(self, event, key):
+        self.reply_message_with_logging(
+            event.reply_token,
+            event.source.user_id,
+            TextSendMessage(text=self.reply_msgs[key])
+        )
 
     @log_fsm_operation
     def on_enter_ask_env_prevention(self, event):
@@ -434,7 +431,7 @@ class DengueBotMachine(metaclass=Signleton):
     @log_fsm_operation
     def on_enter_ask_hospital(self, event):
         messages = [
-            TextSendMessage(text=DengueBotMachine.reply_msgs['ask_address'])
+            TextSendMessage(text=self.reply_msgs['ask_address'])
         ]
         messages.extend(self.LOCATION_SEND_TUTOIRAL_MSG)
         self.reply_message_with_logging(
@@ -451,26 +448,12 @@ class DengueBotMachine(metaclass=Signleton):
         self._send_hospital_msgs(hospital_list, event)
         self.finish_ans()
 
-    @log_fsm_condition
-    def on_enter_receive_user_address(self, event):
-        coder = GoogleV3()
-        address = event.message.text
-        geocode = coder.geocode(address)
-        hospital_list = hospital.views.get_nearby_hospital(geocode.longitude, geocode.latitude)
-        self._send_hospital_msgs(hospital_list, event)
-        self.finish_ans()
-
     def _send_hospital_msgs(self, hospital_list, event):
         if hospital_list:
             msgs = self._create_hospitals_msgs(hospital_list)
         else:
-            msgs = [TextSendMessage(text="抱歉，你附近都沒有快篩診所\n")]
-            msgs.append(
-                TextSendMessage(text=(
-                    "想要查看地區所有快篩點，請點下面連結\n"
-                    "(如果手機不能瀏覽，可用電腦查看，或將連結貼到 chrome 瀏覽器)\n\n"
-                    "https://www.taiwanstat.com/realtime/dengue-vis-with-hospital/"))
-            )
+            msgs = TextSendMessage(text=self.reply_msgs['no_nearby_hospital'])
+
         self.reply_message_with_logging(
             event.reply_token,
             event.source.user_id,
@@ -478,7 +461,7 @@ class DengueBotMachine(metaclass=Signleton):
         )
 
     def _create_hospitals_msgs(self, hospital_list):
-        text = "您好,\n最近的三間快篩診所是:"
+        text = self.reply_msgs['nearby_msg_head']
         carousel_messages = list()
         for index, hospital in enumerate(hospital_list, 1):
             name = hospital.get('name')
@@ -511,14 +494,14 @@ class DengueBotMachine(metaclass=Signleton):
 
         carousel_messages.append(
             CarouselColumn(
-                text='想要查看地區所有快篩點\n請點下面連結',
+                text=self.reply_msgs['nearby_hospital_list_head'],
                 actions=[
                     MessageTemplateAction(
                         label=' ',
                         text=' '
                     ),
                     URITemplateAction(
-                        label='鄰近快篩診所',
+                        label=self.reply_msgs['nearby_hospital_label'],
                         uri='https://www.taiwanstat.com/realtime/dengue-vis-with-hospital/',
                     )
                 ]
@@ -535,6 +518,15 @@ class DengueBotMachine(metaclass=Signleton):
         hospital_messages = [template_message]
         return hospital_messages
 
+    @log_fsm_condition
+    def on_enter_receive_user_address(self, event):
+        coder = GoogleV3()
+        address = event.message.text
+        geocode = coder.geocode(address)
+        hospital_list = hospital.views.get_nearby_hospital(geocode.longitude, geocode.latitude)
+        self._send_hospital_msgs(hospital_list, event)
+        self.finish_ans()
+
     @log_fsm_operation
     def on_enter_ask_symptom(self, event):
         self.reply_message_with_logging(
@@ -542,10 +534,10 @@ class DengueBotMachine(metaclass=Signleton):
             event.source.user_id,
             messages=[
                 ImageSendMessage(
-                    original_content_url=symptom_origin_img_url,
-                    preview_image_url=symptom_preview_img_url
+                    original_content_url=self.img_urls['symptom_preview'],
+                    preview_image_url=self.img_urls['symptom_origin']
                 ),
-                TextSendMessage(text=DengueBotMachine.reply_msgs['symptom_warning'])
+                TextSendMessage(text=self.reply_msgs['symptom_warning'])
             ]
         )
         self.finish_ans()
@@ -563,6 +555,7 @@ class DengueBotMachine(metaclass=Signleton):
     @log_fsm_operation
     def on_enter_ask_breeding_source(self, event):
         self._send_text_in_rule(event, 'breeding_source')
+        self.finish_ans()
 
     @log_fsm_operation
     def on_enter_ask_who_we_are(self, event):
@@ -599,9 +592,7 @@ class DengueBotMachine(metaclass=Signleton):
 
     @log_fsm_operation
     def on_enter_wait_gov_location(self, event):
-        messages = [
-            TextSendMessage(text=DengueBotMachine.reply_msgs['ask_gov_address'])
-        ]
+        messages = [TextSendMessage(text=self.reply_msgs['ask_gov_address'])]
         messages.extend(self.LOCATION_SEND_TUTOIRAL_MSG)
         self.reply_message_with_logging(
             event.reply_token,
@@ -625,13 +616,14 @@ class DengueBotMachine(metaclass=Signleton):
             self.reply_message_with_logging(
                 event.reply_token,
                 event.source.user_id,
-                messages=TextSendMessage(text=DengueBotMachine.reply_msgs['thank_gov_report'])
+                messages=TextSendMessage(text=self.reply_msgs['thank_gov_report'])
             )
         self.finish_ans()
 
     @log_fsm_operation
     def on_enter_unrecognized_msg(self, event):
         if getattr(event, 'reply_token', None):
+            # TODO: Move datetime type casting to model
             msg_log = MessageLog.objects.get(speaker=event.source.user_id,
                                              speak_time=datetime.fromtimestamp(event.timestamp/1000),
                                              content=event.message.text)
@@ -659,7 +651,7 @@ class DengueBotMachine(metaclass=Signleton):
         self.line_bot_api.reply_message(
             event.reply_token,
             messages=LocationSendMessage(
-                title="地圖 - {name}".format(name=hosp.name),
+                title=self.reply_msgs['map_msg_template'].format(name=hosp.name),
                 address=hosp.address,
                 latitude=hosp.lat,
                 longitude=hosp.lng

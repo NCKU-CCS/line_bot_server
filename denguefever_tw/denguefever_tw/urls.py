@@ -23,5 +23,6 @@ urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^dengue_linebot/', include('dengue_linebot.urls')),
     url(r'^hospital/', include('hospital.urls')),
-    url(r'^callback/', dengue_linebot.views.reply),
+    url(r'^callback/$', dengue_linebot.views.reply),
+    url(r'^$', dengue_linebot.views.index),
 ]
