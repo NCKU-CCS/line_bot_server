@@ -1,7 +1,7 @@
-from django.shortcuts import render
 from django.conf import settings
-from django.core.cache import cache
 from django.http import HttpResponse, HttpResponseBadRequest
+from django.core.cache import cache
+from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
@@ -22,6 +22,7 @@ from .models import (
     BotReplyLog, UnrecognizedMsg, ResponseToUnrecogMsg
 )
 
+
 logger = logging.getLogger('django')
 
 line_bot_api = LineBotApi(settings.LINE_CHANNEL_ACCESS_TOKEN)
@@ -33,12 +34,43 @@ machine = DengueBotMachine(line_bot_api, root_path=config_path)
 def _log_line_api_error(e):
     logger.warning(
         ('LineBotApiError\n'
-            'Status Code: {status_code}\n'
-            'Error Message: {err_msg}\n'
-            'Error Details: {err_detail}').format(status_code=e.status_code,
-                                                  err_msg=e.error.message,
-                                                  err_detail=e.error.details)
+         'Status Code: {status_code}\n'
+         'Error Message: {err_msg}\n'
+         'Error Details: {err_detail}').format(status_code=e.status_code,
+                                               err_msg=e.error.message,
+                                               err_detail=e.error.details)
     )
+
+
+def _log_received_event(event, state):
+    user_id = event.source.user_id
+
+    logger.info(
+        ('Receive Event\n'
+         'User ID: {user_id}\n'
+         'Event Type: {event_type}\n'
+         'User state: {state}\n').format(
+             user_id=user_id,
+             event_type=event.type,
+             state=state)
+    )
+
+    if isinstance(event, MessageEvent):
+        message_type = event.message.type
+
+        logger.info('Message type: {message_type}\n'.format(message_type=message_type))
+        if isinstance(event.message, TextMessage):
+            content = event.message.text
+            logger.info('Text: {text}\n'.format(text=content))
+        else:
+            content = '===This is {message_type} type message.==='.format(message_type=message_type)
+
+        # TODO: Move datetime type casting to model
+        message_log = MessageLog(speaker=LineUser.objects.get(user_id=user_id),
+                                 speak_time=datetime.fromtimestamp(event.timestamp/1000),
+                                 message_type=message_type,
+                                 content=content)
+        message_log.save()
 
 
 @csrf_exempt
@@ -50,17 +82,13 @@ def reply(request):
         body = request.body.decode('utf-8')
         events = line_parser.parse(body, signature)
     except KeyError:
-        logger.warning(
-            'Not a Line request.\n{req}\n'.format(req=pformat(request))
-        )
+        logger.warning('Not a Line request.\n{req}\n'.format(req=pformat(request)))
         return HttpResponseBadRequest()
     except InvalidSignatureError:
-        logger.warning(
-            'Invalid Signature.\n{req}'.format(req=pformat(request))
-        )
+        logger.warning('Invalid Signature.\n{req}'.format(req=pformat(request)))
         return HttpResponseBadRequest()
     except LineBotApiError as e:
-        _log_line_api_error()
+        _log_line_api_error(e)
         return HttpResponseBadRequest()
 
     for event in events:
@@ -68,31 +96,9 @@ def reply(request):
             user_id = event.source.user_id
             state = cache.get(user_id) or 'user'
 
-            logger.info(
-                ('Receive Event\n'
-                 'User ID: {user_id}\n'
-                 'Event Type: {event_type}\n'
-                 'User state: {state}\n').format(
-                     user_id=user_id,
-                     event_type=event.type,
-                     state=state)
-            )
-            content = None
-            if isinstance(event, MessageEvent):
-                logger.info(
-                    'Message type: {message_type}\n'.format(
-                        message_type=event.message.type)
-                )
-                if isinstance(event.message, TextMessage):
-                    content = event.message.text
-                    logger.info('Text: {text}\n'.format(text=content))
+            _log_received_event(event, state)
 
-                message_log = MessageLog(speaker=LineUser.objects.get(user_id=user_id),
-                                         speak_time=datetime.fromtimestamp(event.timestamp/1000),
-                                         message_type=event.message.type,
-                                         content=content)
-                message_log.save()
-
+            # TODO: Change different machine
             machine.set_state(state)
             advance_statue = machine.advance(event)
             cache.set(user_id, machine.state)
@@ -114,8 +120,12 @@ def reply(request):
         except Exception as e:
             logger.exception('Exception when recevie event.\n{}'.format(str(e)))
             machine.reset_state()
-
     return HttpResponse()
+
+
+@login_required
+def index(request):
+    return render(request, 'dengue_linebot/index.html')
 
 
 @login_required
