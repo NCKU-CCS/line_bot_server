@@ -425,7 +425,28 @@ class DengueBotMachine(metaclass=Signleton):
 
     @log_fsm_operation
     def on_enter_ask_dengue_fever(self, event):
-        self._send_text_in_rule(event, 'dengue_fever_intro')
+        KNOWLEDGE_URL = 'http://www.denguefever.tw/knowledge'
+        QA_URL = 'http://www.denguefever.tw/qa'
+        self.reply_message_with_logging(
+            event.reply_token,
+            event.source.user_id,
+            messages=TemplateSendMessage(
+                alt_text=self.reply_msgs['dengue_fever_intro'],
+                template=ButtonsTemplate(
+                    text=self.reply_msgs['dengue_fever_intro_button'],
+                    actions=[
+                        URITemplateAction(
+                            label=self.reply_msgs['dengue_intro_label'],
+                            uri=KNOWLEDGE_URL
+                        ),
+                        URITemplateAction(
+                            label=self.reply_msgs['dengue_qa_label'],
+                            uri=QA_URL
+                        )
+                    ]
+                )
+            )
+        )
         self.finish_ans()
 
     @log_fsm_operation
@@ -544,7 +565,23 @@ class DengueBotMachine(metaclass=Signleton):
 
     @log_fsm_operation
     def on_enter_ask_realtime_epidemic(self, event):
-        self._send_text_in_rule(event, 'new_condition')
+        EPIDEMIC_LINK = 'http://www.denguefever.tw/realTime'
+        self.reply_message_with_logging(
+            event.reply_token,
+            event.source.user_id,
+            messages=TemplateSendMessage(
+                alt_text=self.reply_msgs['new_condition']+EPIDEMIC_LINK,
+                template=ButtonsTemplate(
+                    text=self.reply_msgs['new_condition'],
+                    actions=[
+                        URITemplateAction(
+                            label='Link',
+                            uri=EPIDEMIC_LINK
+                        )
+                    ]
+                )
+            )
+        )
         self.finish_ans()
 
     @log_fsm_operation
