@@ -1,54 +1,4 @@
 {
-    "random_reply_lst": [
-        {
-            "msg": "啊... 你在說什麼，聽無，要看使用說明嗎？",
-            "state": "entry_manual"
-        },
-        {
-            "msg": "想知道可以跟我聊些什麼嗎？",
-            "state": "entry_manual"
-        },
-        {
-            "msg": "想不想跟我聊天?",
-            "state": "entry_manual"
-        },
-        {
-            "msg": "是不是想知道附近的快篩醫院嗎?",
-            "state": "entry_hospital"
-        },
-        {
-            "msg": "啊... 看來我無法聽懂你說的耶\n要不要吃個翻譯蒟蒻？",
-            "state": "eat_manual"
-        },
-        {
-            "msg": "請問您是不是有些話或是建議想對我們說?\n不知道說什麼可以打 \"聊什麼\"\n如果可以給我們建議請打 \"是\"",
-            "state": "entry_give_advice"
-        },
-        {
-            "msg": "是不是一直問不到想問的事情，可不可以給我們一些建議？\n\n是 or 否",
-            "state": "entry_give_advice"
-        },
-        {
-            "msg": "你在說什麼，我聽不懂... 該不會你是蚊子派來的！？看我使出降蚊十八掌！",
-            "state": null
-        },
-        {
-            "msg": "一起練就降蚊十八招\nhttp://www.denguefever.tw/killer",
-            "state": null
-        },
-        {
-            "msg": "什麼是登革熱呢？請看\nhttp://www.denguefever.tw/knowledge.html",
-            "state": null
-        },
-        {
-            "msg": "登革熱潛在孳生源有哪些？\n\n各種人工容器之積水，如水缸、廢輪胎、泡麵碗、手搖杯、花瓶、水盤、貯水槽、廢容器等之積水。",
-            "state": null
-        },
-        {
-            "msg": "一起為登革熱防疫盡一份心力？\n立即到 app store 搜尋: 掌蚊人",
-            "state": null
-        }
-    ],
     "reply_msgs": {
         "self_prevent": "自身防範的方法：\n1. 穿著淺色長袖衣服\n2. 使用還有敵避(DEET) 的防蚊液體",
         "env_prevent": "環境防範的方法：\n登革熱孳生源主要是因為積水而引起，如果想要防範的話，首先要從 \"清除周遭積水\" 下手！\n\n除了要清理水盆之外，\"泡麵碗\"，\"手搖杯\" 也是令人頭痛的孳生源之一！\n\n如果看到公共環境積水也可以\"通報里長\"\n\n偷偷告訴你，掌蚊人 app 可以用來通報里長喔!",
@@ -65,6 +15,13 @@
         "symptom_warning": "若是得了登革熱可能有以上症狀, 如果擔心的話，可以去快篩喔！",
         "unknown_msg": "我不太明白你的意思\n\n不過你可以問我以下問題:\n1. 什麼是登革熱\n2. 登革熱症狀\n3. 如何防範\n4. 附近的快篩診所\n5. 即時疫情\n6. 給予建議 or 想對我們說什麼？",
         "ask_gov_address": "請將目前的位置傳給我\n",
-        "thank_gov_report": "謝謝您"
+        "thank_gov_report": "謝謝您",
+        "nearby_hospital_list_head": "想要查看地區所有快篩點\n請點下面連結",
+        "no_nearby_hospital": "抱歉，你附近都沒有快篩診所\n\n想要查看地區所有快篩點，請點下面連結\n(如果手機不能瀏覽，可用電腦查看，或將連結貼到 chrome 瀏覽器)\n\nhttps://www.taiwanstat.com/realtime/dengue-vis-with-hospital/",
+        "nearby_msg_head": "您好,\n最近的三間快篩診所是:",
+        "map_msg_template": "地圖 - {name}",
+        "nearby_hospital_label": "鄰近快篩診所",
+        "self_label": "自身",
+        "env_label": "環境"
     }
 }
