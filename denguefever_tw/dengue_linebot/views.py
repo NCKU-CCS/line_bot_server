@@ -18,7 +18,7 @@ from linebot.models import MessageEvent, TextMessage
 
 from .denguebot_fsm import DengueBotMachine
 from .models import (
-    MessageLog, LineUser,
+    MessageLog, LineUser, Suggestion,
     BotReplyLog, UnrecognizedMsg, ResponseToUnrecogMsg
 )
 
@@ -205,3 +205,9 @@ def handle_unrecognized_msg(request, mid):
 
         context = {'msg_content': msg_content, 'proper_response': response_content}
         return render(request, 'dengue_linebot/handle_unrecog_msg.html', context)
+
+
+@login_required
+def suggestion_list(request):
+    context = {'suggestions': Suggestion.objects.all()}
+    return render(request, 'dengue_linebot/suggestion_list.html', context)
