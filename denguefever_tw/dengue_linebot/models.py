@@ -85,7 +85,7 @@ class ResponseToUnrecogMsg(models.Model):
 
 
 class GovReport(models.Model):
-    user_id = models.ForeignKey(LineUser, related_name='gov_faculty')
+    user = models.ForeignKey(LineUser, related_name='gov_faculty')
     action = models.TextField()
     note = models.TextField()
     report_time = models.DateTimeField()
