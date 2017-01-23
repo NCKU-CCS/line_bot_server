@@ -17,7 +17,7 @@ from linebot.models import (
 )
 
 from .models import (
-    LineUser, Advice, GovReport,
+    LineUser, Suggestion, GovReport,
     UnrecognizedMsg, MessageLog, BotReplyLog, ResponseToUnrecogMsg
 )
 import hospital
@@ -606,7 +606,8 @@ class DengueBotMachine(metaclass=Signleton):
     @log_fsm_operation
     def on_exit_wait_user_suggestion(self, event):
         self._send_text_in_rule(event, 'thank_advice')
-        advice = Advice(content=event.message.text, user_id=event.source.user_id)
+        advice = Suggestion(content=event.message.text,
+                            user=LineUser.objects.get(user_id=event.source.user_id))
         advice.save()
 
     @log_fsm_operation

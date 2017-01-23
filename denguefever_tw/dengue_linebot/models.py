@@ -15,13 +15,13 @@ class LineUser(models.Model):
         )
 
 
-class Advice(models.Model):
+class Suggestion(models.Model):
     content = models.TextField()
-    user_id = models.TextField()
+    user = models.ForeignKey(LineUser, related_name='suggestion')
 
     def __str__(self):
-        return '{user_id}: {content}'.format(
-            user_id=self.user_id,
+        return '{user}: {content}'.format(
+            user=self.user.name,
             content=self.content
         )
 
