@@ -17,7 +17,7 @@ from linebot.models import (
 )
 
 from .models import (
-    LineUser, Advice, GovReport,
+    LineUser, Suggestion, GovReport,
     UnrecognizedMsg, MessageLog, BotReplyLog, ResponseToUnrecogMsg
 )
 import hospital
@@ -606,7 +606,8 @@ class DengueBotMachine(metaclass=Signleton):
     @log_fsm_operation
     def on_exit_wait_user_suggestion(self, event):
         self._send_text_in_rule(event, 'thank_advice')
-        advice = Advice(content=event.message.text, user_id=event.source.user_id)
+        advice = Suggestion(content=event.message.text,
+                            user=LineUser.objects.get(user_id=event.source.user_id))
         advice.save()
 
     @log_fsm_operation
@@ -619,7 +620,7 @@ class DengueBotMachine(metaclass=Signleton):
         _, _, action, note = text.split('#')
 
         gov_report = GovReport(
-            user_id=LineUser.objects.get(user_id=event.source.user_id),
+            user=LineUser.objects.get(user_id=event.source.user_id),
             action=action,
             note=note,
             report_time=datetime.fromtimestamp(event.timestamp/1000),
@@ -641,7 +642,7 @@ class DengueBotMachine(metaclass=Signleton):
     def on_enter_receive_gov_location(self, event):
         try:
             gov_report = GovReport.objects.filter(
-                user_id=event.source.user_id,
+                user=LineUser.objects.get(user_id=event.source.user_id),
             ).order_by('-report_time')[0]
         except GovReport.DoesNotExist:
             logger.error('Gov Report Does Not Exist')

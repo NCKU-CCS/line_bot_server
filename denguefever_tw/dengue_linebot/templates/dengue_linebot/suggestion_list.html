@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}User List{% endblock %}
+
+{% block content %}
+<h1>Suggestions</h1>
+<ul>
+{% for sug in suggestions %}
+  <li>
+    <a href="/dengue_linebot/{{sug.user.user_id}}/user_detail/">{{sug.user.name}}</a> - {{sug.content}}
+  </li>
+{% endfor %}
+</ul>
+{% endblock %}
