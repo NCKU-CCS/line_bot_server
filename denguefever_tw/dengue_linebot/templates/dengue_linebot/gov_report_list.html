@@ -1,0 +1,32 @@
+
+{% extends "base.html" %}
+
+{% block title %}Government Report List{% endblock %}
+
+{% block content %}
+<h1>Government Report List</h1>
+<ul>
+{% for report in gov_reports %}
+  <li>
+    回報編號: {{report.id}}
+    <ul>
+      <li>
+        回報人員: <a href="/dengue_linebot/{{report.user.user_id}}/user_detail/">{{report.user.name}}</a>
+      </li>
+      <li>
+        回報時間: {{report.report_time}}
+      </li>
+      <li>
+        回報原因: {{report.action}}
+      </li>
+      <li>
+        備註: {{report.note}}
+      </li>
+      <li>
+        地點: {{report.lng}}, {{report.lat}}
+      </li>
+    </ul>
+  </li>
+{% endfor %}
+</ul>
+{% endblock %}
