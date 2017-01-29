@@ -150,7 +150,7 @@ class DengueBotMachine(metaclass=Signleton):
         for m in messages:
             save_message(m)
 
-    # FSM conditions
+    # -FSM conditions-
     @log_fsm_condition
     def is_pass(self, event):
         return True
@@ -159,7 +159,7 @@ class DengueBotMachine(metaclass=Signleton):
     def is_failed(self, event):
         return False
 
-    # Event Type Assertion
+    # --Event Type Assertion--
     def _assert_message_type(self, event, event_type):
         return isinstance(event, MessageEvent) and isinstance(event.message, event_type)
 
@@ -211,7 +211,105 @@ class DengueBotMachine(metaclass=Signleton):
     def is_beacon_event(self, event):
         return isinstance(event, BeaconEvent)
 
-    # FSM Operation conditions
+    # --None Text Condtions--
+    @log_fsm_condition
+    def is_selecting_ask_dengue_fever(self, event):
+        return '1' == event.message.text or self.is_asking_dengue_fever(event)
+
+    @log_fsm_condition
+    def is_selecting_ask_symptom(self, event):
+        return '2' == event.message.text or self.is_asking_symptom(event)
+
+    @log_fsm_condition
+    def is_selecting_ask_prevention(self, event):
+        return '3' == event.message.text or self.is_asking_prevention(event)
+
+    @log_fsm_condition
+    def is_selecting_ask_hospital(self, event):
+        return '4' == event.message.text or self.is_asking_hospital(event)
+
+    @log_fsm_condition
+    def is_selecting_ask_epidemic(self, event):
+        return '5' == event.message.text or self.is_asking_epidemic(event)
+
+    @log_fsm_condition
+    def is_selecting_give_suggestion(self, event):
+        return '6' == event.message.text or self.is_giving_suggestion(event)
+
+    @log_fsm_condition
+    def is_hospital_address(self, event):
+        return 'hosptial_address' in parse_qs(event.postback.data)
+
+    @log_fsm_condition
+    def is_valid_address(self, event):
+        coder = GoogleV3()
+        address = event.message.text
+        geocode = coder.geocode(address)
+        return geocode is not None
+
+    @log_fsm_operation
+    def is_gov_report(self, event):
+        return '#2016' in event.message.text
+
+    # --Text Conditions--
+    @log_fsm_condition
+    def is_greeting(self, event):
+        msg = event.message.text
+        if any(m in msg.strip().lower() for m in ["哈囉", "你好", "嗨", "安安", "hello", "hi"]):
+            return True
+        return False
+
+    @log_fsm_condition
+    def is_asking_who_we_are(self, event):
+        msg = event.message.text
+        if msg.strip() in ["你是誰", "掌蚊人是誰", "誰是掌蚊人", "掌蚊人"]:
+            return True
+        return False
+
+    @log_fsm_condition
+    def is_asking_usage(self, event):
+        msg = event.message.text
+        if (
+            msg.strip() in ["聊什麼", "翻譯蒟蒻"] or
+            any(m in msg for m in ["使用說明", "功能"]) or
+            (any(m in msg for m in ["可以", "能", "會"]) and
+             any(m in msg for m in ["做啥", "幹麻", "幹嘛", "幹啥", "什麼", "幹什麼", "做什麼"])) or
+            all(m in msg for m in ["有", "功能"]) or
+            ("怎麼" in msg and any(m in msg for m in ["使用", "用"]))
+        ):
+            return True
+        return False
+
+    @log_fsm_condition
+    def is_asking_breeding_source(self, event):
+        msg = event.message.text
+        if (
+            all(m in msg for m in ["登革熱", "孳生源"]) or
+            (all(m in msg for m in ["孳生源", "是"]) and any(m in msg for m in ["什麼", "啥"]))
+        ):
+            return True
+        return False
+
+    @log_fsm_condition
+    def is_asking_dengue_fever(self, event):
+        msg = event.message.text
+        if any(m in msg for m in ["什麼", "登革熱"]) or msg.strip() == "登革熱":
+            return True
+        return False
+
+    @log_fsm_condition
+    def is_asking_symptom(self, event):
+        msg = event.message.text
+        if (
+            all(m in msg for m in ["登革熱", "症狀"]) or
+            all(m in msg for m in ["登革熱", "病情"]) or
+            all(m in msg for m in ["症狀", "是"]) or
+            all(m in msg for m in ["得到", "登革熱", "怎"]) or
+            "症狀" in msg
+        ):
+            return True
+        return False
+
     @log_fsm_condition
     def is_asking_prevention(self, event):
         msg = event.message.text
@@ -242,37 +340,6 @@ class DengueBotMachine(metaclass=Signleton):
         return '環境' in text
 
     @log_fsm_condition
-    def is_asking_dengue_fever(self, event):
-        msg = event.message.text
-        if any(m in msg for m in ["什麼", "登革熱"]) or msg.strip() == "登革熱":
-            return True
-        return False
-
-    @log_fsm_condition
-    def is_asking_who_we_are(self, event):
-        msg = event.message.text
-        if msg.strip() in ["你是誰", "掌蚊人是誰", "誰是掌蚊人", "掌蚊人"]:
-            return True
-        return False
-
-    @log_fsm_condition
-    def is_asking_breeding_source(self, event):
-        msg = event.message.text
-        if (
-            all(m in msg for m in ["登革熱", "孳生源"]) or
-            (all(m in msg for m in ["孳生源", "是"]) and any(m in msg for m in ["什麼", "啥"]))
-        ):
-            return True
-        return False
-
-    @log_fsm_condition
-    def is_greeting(self, event):
-        msg = event.message.text
-        if any(m in msg.strip().lower() for m in ["哈囉", "你好", "嗨", "安安", "hello", "hi"]):
-            return True
-        return False
-
-    @log_fsm_condition
     def is_asking_hospital(self, event):
         msg = event.message.text
         if (
@@ -285,27 +352,7 @@ class DengueBotMachine(metaclass=Signleton):
         return False
 
     @log_fsm_condition
-    def is_valid_address(self, event):
-        coder = GoogleV3()
-        address = event.message.text
-        geocode = coder.geocode(address)
-        return geocode is not None
-
-    @log_fsm_condition
-    def is_asking_symptom(self, event):
-        msg = event.message.text
-        if (
-            all(m in msg for m in ["登革熱", "症狀"]) or
-            all(m in msg for m in ["登革熱", "病情"]) or
-            all(m in msg for m in ["症狀", "是"]) or
-            all(m in msg for m in ["得到", "登革熱", "怎"]) or
-            "症狀" in msg
-        ):
-            return True
-        return False
-
-    @log_fsm_condition
-    def is_asking_realtime_epidemic(self, event):
+    def is_asking_epidemic(self, event):
         msg = event.message.text
         if (
             (any(m in msg for m in ["最近", "本週", "這週", "現在", "即時", "登革熱"]) and ("疫情" in msg)) or
@@ -319,155 +366,13 @@ class DengueBotMachine(metaclass=Signleton):
     def is_giving_suggestion(self, event):
         return '建議' in event.message.text
 
-    @log_fsm_condition
-    def is_asking_usage(self, event):
-        msg = event.message.text
-        if (
-            msg.strip() in ["聊什麼", "翻譯蒟蒻"] or
-            any(m in msg for m in ["使用說明", "功能"]) or
-            (any(m in msg for m in ["可以", "能", "會"]) and
-             any(m in msg for m in ["做啥", "幹麻", "幹嘛", "幹啥", "什麼", "幹什麼", "做什麼"])) or
-            all(m in msg for m in ["有", "功能"]) or
-            ("怎麼" in msg and any(m in msg for m in ["使用", "用"]))
-        ):
-            return True
-        return False
-
-    @log_fsm_condition
-    def is_selecting_ask_dengue_fever(self, event):
-        return '1' == event.message.text or self.is_asking_dengue_fever(event)
-
-    @log_fsm_condition
-    def is_selecting_ask_symptom(self, event):
-        return '2' == event.message.text or self.is_asking_symptom(event)
-
-    @log_fsm_condition
-    def is_selecting_ask_prevention(self, event):
-        return '3' == event.message.text or self.is_asking_prevention(event)
-
-    @log_fsm_condition
-    def is_selecting_ask_hospital(self, event):
-        return '4' == event.message.text or self.is_asking_hospital(event)
-
-    @log_fsm_condition
-    def is_selecting_ask_realtime_epidemic(self, event):
-        return '5' == event.message.text or self.is_asking_realtime_epidemic(event)
-
-    @log_fsm_condition
-    def is_selecting_give_suggestion(self, event):
-        return '6' == event.message.text or self.is_giving_suggestion(event)
-
-    @log_fsm_condition
-    def is_hospital_address(self, event):
-        return 'hosptial_address' in parse_qs(event.postback.data)
-
-    @log_fsm_operation
-    def is_gov_report(self, event):
-        return '#2016' in event.message.text
-
     # FSM Operations
-    @log_fsm_operation
-    def on_enter_user_join(self, event):
-        # TODO: implement update user data when user rejoin
-        user_id = event.source.user_id
-        try:
-            LineUser.objects.get(user_id=user_id)
-        except LineUser.DoesNotExist:
-            profile = self.line_bot_api.get_profile(user_id)
-            user = LineUser(
-                user_id=profile.user_id,
-                name=profile.display_name,
-                picture_url=profile.picture_url or '',
-                status_message=profile.status_message or ''
-            )
-            user.save()
-        self.finish()
-
-    @log_fsm_operation
-    def on_enter_ask_prevention(self, event):
-        self.reply_message_with_logging(
-            event.reply_token,
-            event.source.user_id,
-            TemplateSendMessage(
-                alt_text=self.reply_msgs['ask_prevent_type'],
-                template=ButtonsTemplate(
-                    text=self.reply_msgs['ask_prevent_type'],
-                    actions=[
-                        PostbackTemplateAction(
-                            label=self.reply_msgs['self_label'],
-                            data='自身'
-                        ),
-                        PostbackTemplateAction(
-                            label=self.reply_msgs['env_label'],
-                            data='環境'
-                        ),
-                    ]
-                )
-            )
-        )
-
-    @log_fsm_operation
-    def on_enter_ask_self_prevention(self, event):
-        self._send_text_in_rule(event, 'self_prevent')
-        self.finish_ans()
-
     def _send_text_in_rule(self, event, key):
         self.reply_message_with_logging(
             event.reply_token,
             event.source.user_id,
             TextSendMessage(text=self.reply_msgs[key])
         )
-
-    @log_fsm_operation
-    def on_enter_ask_env_prevention(self, event):
-        self._send_text_in_rule(event, 'env_prevent')
-        self.finish_ans()
-
-    @log_fsm_operation
-    def on_enter_ask_dengue_fever(self, event):
-        KNOWLEDGE_URL = 'http://www.denguefever.tw/knowledge'
-        QA_URL = 'http://www.denguefever.tw/qa'
-        self.reply_message_with_logging(
-            event.reply_token,
-            event.source.user_id,
-            messages=TemplateSendMessage(
-                alt_text=self.reply_msgs['dengue_fever_intro'],
-                template=ButtonsTemplate(
-                    text=self.reply_msgs['dengue_fever_intro_button'],
-                    actions=[
-                        URITemplateAction(
-                            label=self.reply_msgs['dengue_intro_label'],
-                            uri=KNOWLEDGE_URL
-                        ),
-                        URITemplateAction(
-                            label=self.reply_msgs['dengue_qa_label'],
-                            uri=QA_URL
-                        )
-                    ]
-                )
-            )
-        )
-        self.finish_ans()
-
-    @log_fsm_operation
-    def on_enter_ask_hospital(self, event):
-        messages = [
-            TextSendMessage(text=self.reply_msgs['ask_address'])
-        ]
-        messages.extend(self.LOCATION_SEND_TUTOIRAL_MSG)
-        self.reply_message_with_logging(
-            event.reply_token,
-            event.source.user_id,
-            messages=messages
-        )
-        self.advance()
-
-    @log_fsm_operation
-    def on_enter_receive_user_location(self, event):
-        hospital_list = hospital.views.get_nearby_hospital(event.message.longitude,
-                                                           event.message.latitude)
-        self._send_hospital_msgs(hospital_list, event)
-        self.finish_ans()
 
     def _send_hospital_msgs(self, hospital_list, event):
         if hospital_list:
@@ -539,13 +444,90 @@ class DengueBotMachine(metaclass=Signleton):
         hospital_messages = [template_message]
         return hospital_messages
 
-    @log_fsm_condition
-    def on_enter_receive_user_address(self, event):
-        coder = GoogleV3()
-        address = event.message.text
-        geocode = coder.geocode(address)
-        hospital_list = hospital.views.get_nearby_hospital(geocode.longitude, geocode.latitude)
-        self._send_hospital_msgs(hospital_list, event)
+    @log_fsm_operation
+    def on_enter_user_join(self, event):
+        # TODO: implement update user data when user rejoin
+        user_id = event.source.user_id
+        try:
+            LineUser.objects.get(user_id=user_id)
+        except LineUser.DoesNotExist:
+            profile = self.line_bot_api.get_profile(user_id)
+            user = LineUser(
+                user_id=profile.user_id,
+                name=profile.display_name,
+                picture_url=profile.picture_url or '',
+                status_message=profile.status_message or ''
+            )
+            user.save()
+        self.finish()
+
+    @log_fsm_operation
+    def on_enter_greet(self, event):
+        self._send_text_in_rule(event, 'greeting')
+        self.finish_ans()
+
+    @log_fsm_operation
+    def on_enter_ask_who_we_are(self, event):
+        self._send_text_in_rule(event, 'who_we_are')
+        self.finish_ans()
+
+    @log_fsm_operation
+    def on_enter_ask_usage(self, event):
+        self._send_text_in_rule(event, 'manual')
+
+    @log_fsm_operation
+    def on_enter_ask_breeding_source(self, event):
+        self._send_text_in_rule(event, 'breeding_source')
+        self.finish_ans()
+
+    @log_fsm_operation
+    def on_enter_unrecognized_msg(self, event):
+        if getattr(event, 'reply_token', None):
+            # TODO: Move datetime type casting to model
+            msg_log = MessageLog.objects.get(speaker=event.source.user_id,
+                                             speak_time=datetime.fromtimestamp(event.timestamp/1000),
+                                             content=event.message.text)
+            unrecognized_msg = UnrecognizedMsg(message_log=msg_log)
+            unrecognized_msg.save()
+
+            try:
+                response_to_unrecog_msg = ResponseToUnrecogMsg.objects.get(
+                    unrecognized_msg_content=unrecognized_msg.message_log.content
+                )
+            except ResponseToUnrecogMsg.DoesNotExist:
+                self._send_text_in_rule(event, 'unknown_msg')
+            else:
+                response_content = response_to_unrecog_msg.content
+                self.line_bot_api.reply_message(
+                    event.reply_token,
+                    TextSendMessage(text=response_content)
+                )
+        self.handle_unrecognized_msg(event)
+
+    @log_fsm_operation
+    def on_enter_ask_dengue_fever(self, event):
+        KNOWLEDGE_URL = 'http://www.denguefever.tw/knowledge'
+        QA_URL = 'http://www.denguefever.tw/qa'
+        self.reply_message_with_logging(
+            event.reply_token,
+            event.source.user_id,
+            messages=TemplateSendMessage(
+                alt_text=self.reply_msgs['dengue_fever_intro'],
+                template=ButtonsTemplate(
+                    text=self.reply_msgs['dengue_fever_intro_button'],
+                    actions=[
+                        URITemplateAction(
+                            label=self.reply_msgs['dengue_intro_label'],
+                            uri=KNOWLEDGE_URL
+                        ),
+                        URITemplateAction(
+                            label=self.reply_msgs['dengue_qa_label'],
+                            uri=QA_URL
+                        )
+                    ]
+                )
+            )
+        )
         self.finish_ans()
 
     @log_fsm_operation
@@ -564,7 +546,84 @@ class DengueBotMachine(metaclass=Signleton):
         self.finish_ans()
 
     @log_fsm_operation
-    def on_enter_ask_realtime_epidemic(self, event):
+    def on_enter_ask_prevention(self, event):
+        self.reply_message_with_logging(
+            event.reply_token,
+            event.source.user_id,
+            TemplateSendMessage(
+                alt_text=self.reply_msgs['ask_prevent_type'],
+                template=ButtonsTemplate(
+                    text=self.reply_msgs['ask_prevent_type'],
+                    actions=[
+                        PostbackTemplateAction(
+                            label=self.reply_msgs['self_label'],
+                            data='自身'
+                        ),
+                        PostbackTemplateAction(
+                            label=self.reply_msgs['env_label'],
+                            data='環境'
+                        ),
+                    ]
+                )
+            )
+        )
+
+    @log_fsm_operation
+    def on_enter_ask_self_prevention(self, event):
+        self._send_text_in_rule(event, 'self_prevent')
+        self.finish_ans()
+
+    @log_fsm_operation
+    def on_enter_ask_env_prevention(self, event):
+        self._send_text_in_rule(event, 'env_prevent')
+        self.finish_ans()
+
+    @log_fsm_operation
+    def on_enter_ask_hospital(self, event):
+        messages = [
+            TextSendMessage(text=self.reply_msgs['ask_address'])
+        ]
+        messages.extend(self.LOCATION_SEND_TUTOIRAL_MSG)
+        self.reply_message_with_logging(
+            event.reply_token,
+            event.source.user_id,
+            messages=messages
+        )
+        self.advance()
+
+    @log_fsm_operation
+    def on_enter_receive_user_location(self, event):
+        hospital_list = hospital.views.get_nearby_hospital(event.message.longitude,
+                                                           event.message.latitude)
+        self._send_hospital_msgs(hospital_list, event)
+        self.finish_ans()
+
+    @log_fsm_condition
+    def on_enter_receive_user_address(self, event):
+        coder = GoogleV3()
+        address = event.message.text
+        geocode = coder.geocode(address)
+        hospital_list = hospital.views.get_nearby_hospital(geocode.longitude, geocode.latitude)
+        self._send_hospital_msgs(hospital_list, event)
+        self.finish_ans()
+
+    @log_fsm_operation
+    def on_enter_ask_hospital_map(self, event):
+        address = parse_qs(event.postback.data)['hosptial_address'][0]
+        hosp = hospital.models.Hospital.objects.using('tainan').get(address=address)
+        self.line_bot_api.reply_message(
+            event.reply_token,
+            messages=LocationSendMessage(
+                title=self.reply_msgs['map_msg_template'].format(name=hosp.name),
+                address=hosp.address,
+                latitude=hosp.lat,
+                longitude=hosp.lng
+            )
+        )
+        self.finish_ans()
+
+    @log_fsm_operation
+    def on_enter_ask_epidemic(self, event):
         EPIDEMIC_LINK = 'http://www.denguefever.tw/realTime'
         self.reply_message_with_logging(
             event.reply_token,
@@ -585,21 +644,6 @@ class DengueBotMachine(metaclass=Signleton):
         self.finish_ans()
 
     @log_fsm_operation
-    def on_enter_greet(self, event):
-        self._send_text_in_rule(event, 'greeting')
-        self.finish_ans()
-
-    @log_fsm_operation
-    def on_enter_ask_breeding_source(self, event):
-        self._send_text_in_rule(event, 'breeding_source')
-        self.finish_ans()
-
-    @log_fsm_operation
-    def on_enter_ask_who_we_are(self, event):
-        self._send_text_in_rule(event, 'who_we_are')
-        self.finish_ans()
-
-    @log_fsm_operation
     def on_enter_wait_user_suggestion(self, event):
         self._send_text_in_rule(event, 'ask_advice')
 
@@ -609,10 +653,6 @@ class DengueBotMachine(metaclass=Signleton):
         advice = Suggestion(content=event.message.text,
                             user=LineUser.objects.get(user_id=event.source.user_id))
         advice.save()
-
-    @log_fsm_operation
-    def on_enter_ask_usage(self, event):
-        self._send_text_in_rule(event, 'manual')
 
     @log_fsm_operation
     def on_enter_gov_faculty_report(self, event):
@@ -656,43 +696,4 @@ class DengueBotMachine(metaclass=Signleton):
                 event.source.user_id,
                 messages=TextSendMessage(text=self.reply_msgs['thank_gov_report'])
             )
-        self.finish_ans()
-
-    @log_fsm_operation
-    def on_enter_unrecognized_msg(self, event):
-        if getattr(event, 'reply_token', None):
-            # TODO: Move datetime type casting to model
-            msg_log = MessageLog.objects.get(speaker=event.source.user_id,
-                                             speak_time=datetime.fromtimestamp(event.timestamp/1000),
-                                             content=event.message.text)
-            unrecognized_msg = UnrecognizedMsg(message_log=msg_log)
-            unrecognized_msg.save()
-
-            try:
-                response_to_unrecog_msg = ResponseToUnrecogMsg.objects.get(
-                    unrecognized_msg_content=unrecognized_msg.message_log.content
-                )
-            except ResponseToUnrecogMsg.DoesNotExist:
-                self._send_text_in_rule(event, 'unknown_msg')
-            else:
-                response_content = response_to_unrecog_msg.content
-                self.line_bot_api.reply_message(
-                    event.reply_token,
-                    TextSendMessage(text=response_content)
-                )
-        self.handle_unrecognized_msg(event)
-
-    @log_fsm_operation
-    def on_enter_ask_hospital_map(self, event):
-        address = parse_qs(event.postback.data)['hosptial_address'][0]
-        hosp = hospital.models.Hospital.objects.using('tainan').get(address=address)
-        self.line_bot_api.reply_message(
-            event.reply_token,
-            messages=LocationSendMessage(
-                title=self.reply_msgs['map_msg_template'].format(name=hosp.name),
-                address=hosp.address,
-                latitude=hosp.lat,
-                longitude=hosp.lng
-            )
-        )
         self.finish_ans()
