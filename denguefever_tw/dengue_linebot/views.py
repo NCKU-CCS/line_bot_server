@@ -1,7 +1,8 @@
+from django.contrib import auth
 from django.conf import settings
-from django.http import HttpResponse, HttpResponseBadRequest
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
 from django.core.cache import cache
-from django.shortcuts import render
+from django.shortcuts import render, render_to_response
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
@@ -71,6 +72,28 @@ def _log_received_event(event, state):
                                  message_type=message_type,
                                  content=content)
         message_log.save()
+
+
+@csrf_exempt
+def login(request):
+    if request.user.is_authenticated():
+        return HttpResponseRedirect('/')
+
+    username = request.POST.get('username', '')
+    password = request.POST.get('password', '')
+
+    user = auth.authenticate(username=username, password=password)
+
+    if user is not None and user.is_active:
+        auth.login(request, user)
+        return HttpResponseRedirect('/')
+    else:
+        return render_to_response('dengue_linebot/login.html')
+
+
+def logout(request):
+    auth.logout(request)
+    return HttpResponseRedirect('/login/')
 
 
 @csrf_exempt
