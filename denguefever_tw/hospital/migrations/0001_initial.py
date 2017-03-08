@@ -27,4 +27,8 @@ class Migration(migrations.Migration):
                 ('location', django.contrib.gis.db.models.fields.PointField(default='POINT(0.0 0.0)', geography=True, srid=4326)),
             ],
         ),
+        migrations.AlterUniqueTogether(
+            name='hospital',
+            unique_together=set([('name', 'address', 'location')]),
+        ),
     ]
