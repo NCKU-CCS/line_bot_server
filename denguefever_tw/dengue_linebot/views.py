@@ -25,18 +25,42 @@ from .models import (
 )
 
 
+DEFAULT_LANGUAGE = 'zh_tw'
+
 logger = logging.getLogger('django')
 
 line_bot_api = LineBotApi(settings.LINE_CHANNEL_ACCESS_TOKEN)
 line_parser = WebhookParser(settings.LINE_CHANNEL_SECRET)
 
+dengue_bot_fsms = dict()
+
 config_path = os.path.join(settings.STATIC_ROOT, 'dengue_linebot/config/')
 
-cond_path = os.path.join(config_path, 'cond_config.json')
-with open(cond_path) as cond_file:
-    cond_config = ujson.load(cond_file)
-FsmCls = generate_fsm_cls('ZhtwDengeuFSM', cond_config)
-machine = FsmCls(line_bot_api, root_path=config_path)
+
+def generate_fsm(language):
+    cond_path = os.path.join(config_path, language)
+    cond_path = os.path.join(cond_path, 'cond_config.json')
+    with open(cond_path) as cond_file:
+        cond_config = ujson.load(cond_file)
+
+    cls_name = language + '_FSM'
+    FsmCls = generate_fsm_cls(cls_name, cond_config)
+    return FsmCls(line_bot_api, root_path=config_path, language=language)
+
+
+def get_fsm(language):
+    machine = dengue_bot_fsms.get(language)
+    if machine:
+        return machine
+    else:
+        try:
+            dengue_bot_fsms[language] = generate_fsm(language)
+        except FileNotFoundError:
+            logger.info('{language} FSM is not supported'.format(language=language))
+            return dengue_bot_fsms['zh_tw']
+        else:
+            logger.info('{language} FSM is generated'.format(language=language))
+            return dengue_bot_fsms[language]
 
 
 def _log_line_api_error(e):
@@ -122,14 +146,23 @@ def reply(request):
         return HttpResponseBadRequest()
 
     for event in events:
+        user_id = event.source.user_id
+
         try:
-            user_id = event.source.user_id
-            state = cache.get(user_id) or 'user'
+            line_user = LineUser.objects.get(user_id=user_id)
+        except LineUser.DoesNotExist:
+            machine = get_fsm(DEFAULT_LANGUAGE)
+            machine.on_enter_user_join(event)
 
-            _log_received_event(event, state)
+            line_user = LineUser.objects.get(user_id=user_id)
 
-            # TODO: Change different machine
-            machine.set_state(state)
+        state = cache.get(user_id) or 'user'
+        language = line_user.language
+        _log_received_event(event, state)
+        machine = get_fsm(language)
+        machine.set_state(state)
+
+        try:
             advance_statue = machine.advance(event)
             cache.set(user_id, machine.state)
 

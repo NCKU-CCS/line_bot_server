@@ -63,8 +63,10 @@ def log_fsm_operation(func):
 
 
 class DengueBotMachine:
-    def __init__(self, line_bot_api, initial_state='user', *, root_path=None):
+    def __init__(self, line_bot_api, initial_state='user', *,
+                 root_path=None, language='zh_tw'):
         self.config_path_base = root_path if root_path else ''
+        self.language = language
         self.load_config()
         self.machine = GraphMachine(
             model=self,
@@ -107,7 +109,8 @@ class DengueBotMachine:
         ]
 
     def load_msg(self, filename='dengue_msg.json'):
-        path = os.path.join(self.config_path_base, filename)
+        path = os.path.join(self.config_path_base, self.language)
+        path = os.path.join(path, filename)
         with open(path) as msg_file:
             msgs = ujson.loads(jsmin(msg_file.read()))
 
