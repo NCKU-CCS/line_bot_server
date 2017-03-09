@@ -1,17 +1,21 @@
-import os
 import logging
-from functools import wraps
+import os
 from datetime import datetime
+from functools import wraps
 from urllib.parse import parse_qs
 
 import ujson
+from geopy.geocoders import GoogleV3
 from jsmin import jsmin
 from transitions.extensions import GraphMachine
-from geopy.geocoders import GoogleV3
+from condconf import CondMeta, cond_func_generator
 from linebot.models import (
-    MessageEvent, FollowEvent, UnfollowEvent, JoinEvent, LeaveEvent, PostbackEvent, BeaconEvent,
-    TextMessage, StickerMessage, ImageMessage, VideoMessage, AudioMessage, LocationMessage,
-    TextSendMessage, ImageSendMessage, LocationSendMessage, TemplateSendMessage, CarouselTemplate,
+    MessageEvent, FollowEvent, UnfollowEvent, JoinEvent, LeaveEvent,
+    PostbackEvent, BeaconEvent,
+    TextMessage, StickerMessage, LocationMessage,
+    ImageMessage, VideoMessage, AudioMessage,
+    TextSendMessage, ImageSendMessage, LocationSendMessage,
+    TemplateSendMessage, CarouselTemplate,
     CarouselColumn, MessageTemplateAction, URITemplateAction,
     ButtonsTemplate, PostbackTemplateAction
 )
@@ -22,18 +26,8 @@ from .models import (
 )
 import hospital
 
+
 logger = logging.getLogger(__name__)
-
-
-class Signleton(type):
-    def __init__(self, *args, **kwargs):
-        self.__instance = None
-        super().__init__(*args, **kwargs)
-
-    def __call__(self, *args, **kwargs):
-        if self.__instance is None:
-            self.__instance = super().__call__(*args, **kwargs)
-        return self.__instance
 
 
 def log_fsm_condition(func):
@@ -68,8 +62,8 @@ def log_fsm_operation(func):
     return wrapper
 
 
-class DengueBotMachine(metaclass=Signleton):
-    def __init__(self, line_bot_api, initial_state='user', *, root_path):
+class DengueBotMachine:
+    def __init__(self, line_bot_api, initial_state='user', *, root_path=None):
         self.config_path_base = root_path if root_path else ''
         self.load_config()
         self.machine = GraphMachine(
@@ -133,7 +127,9 @@ class DengueBotMachine(metaclass=Signleton):
             try:
                 content = msg.text
             except AttributeError:
-                content = '===This is {message_type} type message.==='.format(message_type=msg.type)
+                content = '===This is {message_type} type message.==='.format(
+                    message_type=msg.type
+                )
 
             bot_reply_log = BotReplyLog(
                 receiver=LineUser.objects.get(user_id=receiver_id),
@@ -250,121 +246,6 @@ class DengueBotMachine(metaclass=Signleton):
     @log_fsm_operation
     def is_gov_report(self, event):
         return '#2016' in event.message.text
-
-    # --Text Conditions--
-    @log_fsm_condition
-    def is_greeting(self, event):
-        msg = event.message.text
-        if any(m in msg.strip().lower() for m in ["哈囉", "你好", "嗨", "安安", "hello", "hi"]):
-            return True
-        return False
-
-    @log_fsm_condition
-    def is_asking_who_we_are(self, event):
-        msg = event.message.text
-        if msg.strip() in ["你是誰", "掌蚊人是誰", "誰是掌蚊人", "掌蚊人"]:
-            return True
-        return False
-
-    @log_fsm_condition
-    def is_asking_usage(self, event):
-        msg = event.message.text
-        if (
-            msg.strip() in ["聊什麼", "翻譯蒟蒻"] or
-            any(m in msg for m in ["使用說明", "功能"]) or
-            (any(m in msg for m in ["可以", "能", "會"]) and
-             any(m in msg for m in ["做啥", "幹麻", "幹嘛", "幹啥", "什麼", "幹什麼", "做什麼"])) or
-            all(m in msg for m in ["有", "功能"]) or
-            ("怎麼" in msg and any(m in msg for m in ["使用", "用"]))
-        ):
-            return True
-        return False
-
-    @log_fsm_condition
-    def is_asking_breeding_source(self, event):
-        msg = event.message.text
-        if (
-            all(m in msg for m in ["登革熱", "孳生源"]) or
-            (all(m in msg for m in ["孳生源", "是"]) and any(m in msg for m in ["什麼", "啥"]))
-        ):
-            return True
-        return False
-
-    @log_fsm_condition
-    def is_asking_dengue_fever(self, event):
-        msg = event.message.text
-        if any(m in msg for m in ["什麼", "登革熱"]) or msg.strip() == "登革熱":
-            return True
-        return False
-
-    @log_fsm_condition
-    def is_asking_symptom(self, event):
-        msg = event.message.text
-        if (
-            all(m in msg for m in ["登革熱", "症狀"]) or
-            all(m in msg for m in ["登革熱", "病情"]) or
-            all(m in msg for m in ["症狀", "是"]) or
-            all(m in msg for m in ["得到", "登革熱", "怎"]) or
-            "症狀" in msg
-        ):
-            return True
-        return False
-
-    @log_fsm_condition
-    def is_asking_prevention(self, event):
-        msg = event.message.text
-        if (
-            msg.strip() == "如何防範" or
-            (any(m in msg for m in ["怎樣", "怎麼", "如何"]) and ("防疫" in msg)) or
-            any(m in msg for m in ["防範", "預防", "避免"])
-        ):
-            return True
-        return False
-
-    @log_fsm_condition
-    def is_asking_self_prevention(self, event):
-        text = ''
-        if self.is_postback_event(event):
-            text = event.postback.data
-        elif self.is_text_message(event):
-            text = event.message.text
-        return '自身' in text
-
-    @log_fsm_condition
-    def is_asking_env_prevention(self, event):
-        text = ''
-        if self.is_postback_event(event):
-            text = event.postback.data
-        elif self.is_text_message(event):
-            text = event.message.text
-        return '環境' in text
-
-    @log_fsm_condition
-    def is_asking_hospital(self, event):
-        msg = event.message.text
-        if (
-            msg.strip() in ["快篩檢驗", "快篩"] or
-            (any(m in msg for m in ["最近", "附近", "去哪", "去那", "哪裡", "那裡", "在哪", "在那"]) and
-             any(m in msg for m in ["快篩", "篩檢",  "檢查", "檢驗", "診所", "醫院"])) or
-            all(m in msg for m in ["快篩", "診所"])
-        ):
-            return True
-        return False
-
-    @log_fsm_condition
-    def is_asking_epidemic(self, event):
-        msg = event.message.text
-        if (
-            (any(m in msg for m in ["最近", "本週", "這週", "現在", "即時", "登革熱"]) and ("疫情" in msg)) or
-            (any(m in msg for m in ["病例", "幾例"]) and "登革熱" in msg) or
-            ("疫情資訊" in msg)
-        ):
-            return True
-        return False
-
-    @log_fsm_condition
-    def is_giving_suggestion(self, event):
-        return '建議' in event.message.text
 
     # FSM Operations
     def _send_text_in_rule(self, event, key):
@@ -697,3 +578,27 @@ class DengueBotMachine(metaclass=Signleton):
                 messages=TextSendMessage(text=self.reply_msgs['thank_gov_report'])
             )
         self.finish_ans()
+
+
+def generate_fsm_cls(cls_name, condition_config,
+                     *, template_args=None, external_globals=None, cond_var_name=None):
+    """Generate FSM class through condition config"""
+
+    if not template_args:
+        template_args = {
+            'decorators': ['log_fsm_condition'],
+            'func_args': ['self', 'event'],
+            'preprocess_code': ['msg = event.message.text']
+        }
+    if not external_globals:
+        external_globals = {
+            'log_fsm_condition': log_fsm_condition
+        }
+
+    cond_funcs = cond_func_generator(
+        condition_config,
+        template_args=template_args,
+        cond_var_name=cond_var_name or 'msg'
+    )
+    return CondMeta(cls_name, (DengueBotMachine,), dict(),
+                    cond_funcs=cond_funcs, external_globals=external_globals)
