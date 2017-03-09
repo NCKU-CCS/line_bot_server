@@ -1,0 +1,279 @@
+[
+    {
+        "name": "is_asking_prevention",
+        "condition": {
+            "type": "complex-any",
+            "content": [
+                {
+                    "type": "complex-all",
+                    "content": [
+                        {
+                            "type": "any",
+                            "content": ["怎樣", "怎麼", "如何"]
+                        },
+                        {
+                            "type": "all",
+                            "content": ["防疫", "防範"]
+                        }
+                    ]
+                },
+                {
+                    "type": "any",
+                    "content": ["防範", "預防", "避免"]
+                }
+            ]
+        }
+    },
+    {
+        "name": "is_asking_self_prevention",
+        "condition": {
+            "type": "any",
+            "content": ["自身"]
+        },
+        "template_args": {
+            "preprocess_code": [
+                "msg = ''",
+                "if self.is_postback_event(event):",
+                "    msg = event.postback.data",
+                "elif self.is_text_message(event):",
+                "    msg = event.message.text"
+            ]
+        }
+    },
+    {
+        "name": "is_asking_env_prevention",
+        "condition": {
+            "type": "all",
+            "content": ["環境"]
+        },
+        "template_args": {
+            "preprocess_code": [
+                "msg = ''",
+                "if self.is_postback_event(event):",
+                "    msg = event.postback.data",
+                "elif self.is_text_message(event):",
+                "    msg = event.message.text"
+            ]
+        }
+    },
+    {
+        "name": "is_asking_dengue_fever",
+        "condition": {
+            "type": "complex-any",
+            "content": [
+                {
+                    "type": "all",
+                    "content": ["什麼", "登革熱"]
+                },
+                {
+                    "type": "match",
+                    "content": ["登革熱"]
+                }
+            ]
+        }
+    },
+    {
+        "name": "is_asking_who_we_are",
+        "condition": {
+            "type": "complex-any",
+            "content": [
+                {
+                    "type": "any",
+                    "content": ["你是誰", "掌蚊人是誰", "誰是掌蚊人", "掌蚊人"]
+                }
+            ]
+        }
+    },
+    {
+        "name": "is_asking_breeding_source",
+        "condition": {
+            "type": "complex-any",
+            "content": [
+                {
+                    "type": "all",
+                    "content": ["登革熱", "孳生源"]
+                },
+                {
+                    "type": "complex-all",
+                    "content": [
+                        {
+                            "type": "all",
+                            "content": ["孳生源", "是"]
+                        },
+                        {
+                            "type": "any",
+                            "content": ["什麼", "啥"]
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "is_greeting",
+        "condition": {
+            "type": "complex-any",
+            "content": [
+                {
+                    "type": "any",
+                    "content": ["哈囉", "你好", "嗨", "安安", "hello", "hi"]
+                }
+            ]
+        },
+        "template_args": {
+            "preprocess_code": [
+                "msg = event.message.text.strip().lower()"
+            ]
+        }
+    },
+    {
+        "name": "is_asking_hospital",
+        "condition": {
+            "type": "complex-any",
+            "content": [
+                {
+                    "type": "match",
+                    "content": ["快篩檢驗", "快篩"]
+                },
+                {
+                    "type": "complex-all",
+                    "content": [
+                        {
+                            "type": "any",
+                            "content": ["最近", "附近", "去哪", "去那", "哪裡", "那裡", "在哪", "在那"]
+                        },
+                        {
+                            "type": "any",
+                            "content": ["快篩", "篩檢",  "檢查", "檢驗", "診所", "醫院"]
+                        }
+                    ]
+                },
+                {
+                    "type": "all",
+                    "content": ["快篩", "診所"]
+                }
+            ]
+        }
+    },
+    {
+        "name": "is_giving_suggestion",
+        "condition": {
+            "type": "complex-any",
+            "content": [
+                {
+                    "type": "any",
+                    "content": ["建議"]
+                }
+            ]
+        }
+    },
+    {
+        "name": "is_asking_symptom",
+        "condition": {
+            "type": "complex-any",
+            "content": [
+                {
+                    "type": "all",
+                    "content": ["登革熱", "症狀"]
+                },
+                {
+                    "type": "all",
+                    "content": ["登革熱", "病情"]
+                },
+                {
+                    "type": "all",
+                    "content": ["症狀", "是"]
+                },
+                {
+                    "type": "all",
+                    "content": ["得到", "登革熱", "怎"]
+                }
+            ]
+        }
+    },
+    {
+        "name": "is_asking_epidemic",
+        "condition": {
+            "type": "complex-any",
+            "content": [
+                {
+                    "type": "complex-all",
+                    "content": [
+                        {
+                            "type": "any",
+                            "content": ["最近", "本週", "這週", "現在", "即時", "登革熱"]
+                        },
+                        {
+                            "type": "all",
+                            "content": ["疫情"]
+                        }
+                    ]
+                },
+                {
+                    "type": "complex-all",
+                    "content": [
+                        {
+                            "type": "any",
+                            "content": ["病例", "幾例"]
+                        },
+                        {
+                            "type": "all",
+                            "content": ["登革熱"]
+                        }
+                    ]
+                },
+                {
+                    "type": "all",
+                    "content": ["疫情資訊"]
+                }
+            ]
+        }
+    },
+    {
+        "name": "is_asking_usage",
+        "condition": {
+            "type": "complex-any",
+            "content": [
+                {
+                    "type": "match",
+                    "content": ["聊什麼", "翻譯蒟蒻"]
+                },
+                {
+                    "type": "any",
+                    "content": ["使用說明", "功能"]
+                },
+                {
+                    "type": "complex-all",
+                    "content": [
+                        {
+                            "type": "any",
+                            "content": ["可以", "能", "會"]
+                        },
+                        {
+                            "type": "any",
+                            "content": ["做啥", "幹麻", "幹嘛", "幹啥", "什麼", "幹什麼", "做什麼"]
+                        }
+                    ]
+                },
+                {
+                    "type": "all",
+                    "content": ["有", "功能"]
+                },
+                {
+                    "type": "complex-all",
+                    "content": [
+                        {
+                            "type": "any",
+                            "content": ["怎麼"]
+                        },
+                        {
+                            "type": "any",
+                            "content": ["使用", "用"]
+
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+]

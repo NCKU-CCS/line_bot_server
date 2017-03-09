@@ -13,11 +13,12 @@ from datetime import datetime
 from itertools import chain
 from pprint import pformat
 
+import ujson
 from linebot import LineBotApi, WebhookParser
 from linebot.exceptions import InvalidSignatureError, LineBotApiError
 from linebot.models import MessageEvent, TextMessage
 
-from .denguebot_fsm import DengueBotMachine
+from .denguebot_fsm import generate_fsm_cls
 from .models import (
     MessageLog, LineUser, Suggestion, GovReport,
     BotReplyLog, UnrecognizedMsg, ResponseToUnrecogMsg
@@ -28,8 +29,14 @@ logger = logging.getLogger('django')
 
 line_bot_api = LineBotApi(settings.LINE_CHANNEL_ACCESS_TOKEN)
 line_parser = WebhookParser(settings.LINE_CHANNEL_SECRET)
-config_path = os.path.join(settings.STATICFILES_DIRS[0], 'dengue_linebot/dengue_bot_config/')
-machine = DengueBotMachine(line_bot_api, root_path=config_path)
+
+config_path = os.path.join(settings.STATIC_ROOT, 'dengue_linebot/config/')
+
+cond_path = os.path.join(config_path, 'cond_config.json')
+with open(cond_path) as cond_file:
+    cond_config = ujson.load(cond_file)
+FsmCls = generate_fsm_cls('ZhtwDengeuFSM', cond_config)
+machine = FsmCls(line_bot_api, root_path=config_path)
 
 
 def _log_line_api_error(e):
