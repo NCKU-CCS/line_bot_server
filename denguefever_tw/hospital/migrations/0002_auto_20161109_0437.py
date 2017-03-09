@@ -15,19 +15,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.CreateModel(
-            name='Hospital',
-            fields=[
-                ('hospital_id', models.TextField(primary_key=True, serialize=False)),
-                ('name', models.TextField()),
-                ('address', models.TextField()),
-                ('phone', models.TextField()),
-                ('opening_hours', models.TextField()),
-                ('lng', models.FloatField()),
-                ('lat', models.FloatField()),
-                ('location', django.contrib.gis.db.models.fields.PointField(default='POINT(0.0 0.0)', geography=True, srid=4326)),
-            ],
-        ),
         migrations.AlterUniqueTogether(
             name='hospital',
             unique_together=set([('name', 'address', 'location')]),

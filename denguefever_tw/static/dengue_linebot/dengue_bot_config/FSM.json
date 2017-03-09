@@ -6,7 +6,7 @@
         "ask_usage",
         "ask_dengue_fever",
         "ask_prevention",
-        "ask_realtime_epidemic",
+        "ask_epidemic",
         "ask_symptom",
         "ask_breeding_source",
         "ask_who_we_are",
@@ -120,10 +120,10 @@
         {
             "trigger": "advance",
             "source": "user",
-            "dest": "ask_realtime_epidemic",
+            "dest": "ask_epidemic",
             "conditions": [
                 "is_text_message",
-                "is_asking_realtime_epidemic"
+                "is_asking_epidemic"
             ]
         },
 
@@ -221,10 +221,10 @@
         {
             "trigger": "advance",
             "source": "ask_usage",
-            "dest": "ask_realtime_epidemic",
+            "dest": "ask_epidemic",
             "conditions": [
                 "is_text_message",
-                "is_selecting_ask_realtime_epidemic"
+                "is_selecting_ask_epidemic"
             ]
         },
         {
@@ -275,10 +275,10 @@
         {
             "trigger": "advance",
             "source": "user",
-            "dest": "ask_realtime_epidemic",
+            "dest": "ask_epidemic",
             "conditions": [
                 "is_text_message",
-                "is_selecting_ask_realtime_epidemic"
+                "is_selecting_ask_epidemic"
             ]
         },
         {
@@ -344,7 +344,7 @@
                 "receive_user_location",
                 "receive_user_address",
                 "ask_symptom",
-                "ask_realtime_epidemic",
+                "ask_epidemic",
                 "greet",
                 "ask_breeding_source",
                 "ask_who_we_are",
