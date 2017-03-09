@@ -7,6 +7,7 @@ class LineUser(models.Model):
     name = models.TextField()
     picture_url = models.TextField(blank=True)
     status_message = models.TextField(blank=True)
+    language = models.TextField(default='zh_tw')
 
     def __str__(self):
         return '{name} ({user_id})'.format(
