@@ -151,7 +151,7 @@ def reply(request):
         try:
             line_user = LineUser.objects.get(user_id=user_id)
         except LineUser.DoesNotExist:
-            machine = dengue_bot_fsms[DEFAULT_LANGUAGE]
+            machine = get_fsm(DEFAULT_LANGUAGE)
             machine.on_enter_user_join(event)
 
             line_user = LineUser.objects.get(user_id=user_id)
