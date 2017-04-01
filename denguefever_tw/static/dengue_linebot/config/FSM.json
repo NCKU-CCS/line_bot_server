@@ -101,10 +101,7 @@
             "trigger": "advance",
             "source": "wait_user_location",
             "dest": "receive_user_address",
-            "conditions": [
-                "is_text_message",
-                "is_valid_address"
-            ]
+            "conditions": "is_text_message",
         },
 
         {

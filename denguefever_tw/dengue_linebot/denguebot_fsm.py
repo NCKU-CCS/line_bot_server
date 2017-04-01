@@ -239,13 +239,6 @@ class DengueBotMachine:
     def is_hospital_address(self, event):
         return 'hosptial_address' in parse_qs(event.postback.data)
 
-    @log_fsm_condition
-    def is_valid_address(self, event):
-        coder = GoogleV3()
-        address = event.message.text
-        geocode = coder.geocode(address)
-        return geocode is not None
-
     @log_fsm_operation
     def is_gov_report(self, event):
         return '#2016' in event.message.text
@@ -487,9 +480,14 @@ class DengueBotMachine:
         coder = GoogleV3()
         address = event.message.text
         geocode = coder.geocode(address)
-        hospital_list = hospital.views.get_nearby_hospital(geocode.longitude, geocode.latitude)
-        self._send_hospital_msgs(hospital_list, event)
-        self.finish_ans()
+        if geocode:
+            hospital_list = hospital.views.get_nearby_hospital(geocode.longitude, geocode.latitude)
+            self._send_hospital_msgs(hospital_list, event)
+            self.finish_ans()
+        else:
+            # Invalid address
+            self._send_text_in_rule(event, 'invalid_address')
+            self.finish_ans()
 
     @log_fsm_operation
     def on_enter_ask_hospital_map(self, event):
