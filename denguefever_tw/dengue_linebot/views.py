@@ -195,6 +195,7 @@ def index(request):
 def show_fsm(request):
     resp = HttpResponse(content_type="image/png")
     resp.name = 'state.png'
+    machine = get_fsm(DEFAULT_LANGUAGE)
     machine.draw_graph(resp, prog='dot')
     return resp
 

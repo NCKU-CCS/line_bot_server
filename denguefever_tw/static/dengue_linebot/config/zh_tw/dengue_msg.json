@@ -23,6 +23,7 @@
         "thank_gov_report": "謝謝您",
         "nearby_hospital_list_head": "想要查看地區所有快篩點\n請點下面連結",
         "no_nearby_hospital": "抱歉，你附近都沒有快篩診所\n\n想要查看地區所有快篩點，請點下面連結\n(如果手機不能瀏覽，可用電腦查看，或將連結貼到 chrome 瀏覽器)\n\nhttps://www.taiwanstat.com/realtime/dengue-vis-with-hospital/",
+        "invalid_address": "抱歉，我找不到您輸入的地址\n請您嘗試使用Line所提供的位址功能將所在地傳送給掌蚊人\n謝謝您",
         "nearby_msg_head": "您好,\n最近的三間快篩診所是:",
         "nearby_hospital_label": "鄰近快篩診所",
         "map_msg_template": "地圖 - {name}"
