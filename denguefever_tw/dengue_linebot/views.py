@@ -18,7 +18,7 @@ from linebot import LineBotApi, WebhookParser
 from linebot.exceptions import InvalidSignatureError, LineBotApiError
 from linebot.models import MessageEvent, TextMessage
 
-from .denguebot_fsm import generate_fsm_cls
+from .denguebot_fsm.denguebotfsm import generate_fsm_cls
 from .models import (
     MessageLog, LineUser, Suggestion, GovReport,
     BotReplyLog, UnrecognizedMsg, ResponseToUnrecogMsg

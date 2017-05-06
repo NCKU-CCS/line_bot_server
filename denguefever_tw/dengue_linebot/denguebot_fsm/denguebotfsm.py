@@ -20,7 +20,7 @@ from linebot.models import (
     ButtonsTemplate, PostbackTemplateAction
 )
 
-from .models import (
+from ..models import (
     LineUser, Suggestion, GovReport,
     UnrecognizedMsg, MessageLog, BotReplyLog, ResponseToUnrecogMsg
 )
