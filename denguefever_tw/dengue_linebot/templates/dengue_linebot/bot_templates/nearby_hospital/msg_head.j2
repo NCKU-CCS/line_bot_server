@@ -1,0 +1,8 @@
+您好,
+最近的三間快篩診所是:
+
+{% for hospital in hospitals %}
+{{ loop.index }}.{{ hospital.name }}
+{{ hospital.address }}
+{{ hospital.phone  }}
+{% endfor %}

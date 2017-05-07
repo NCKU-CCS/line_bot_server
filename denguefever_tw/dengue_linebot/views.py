@@ -14,6 +14,7 @@ from itertools import chain
 from pprint import pformat
 
 import ujson
+from jsmin import jsmin
 from linebot import LineBotApi, WebhookParser
 from linebot.exceptions import InvalidSignatureError, LineBotApiError
 from linebot.models import MessageEvent, TextMessage
@@ -35,6 +36,7 @@ line_parser = WebhookParser(settings.LINE_CHANNEL_SECRET)
 dengue_bot_fsms = dict()
 
 config_path = os.path.join(settings.STATIC_ROOT, 'dengue_linebot/config/')
+bot_template_path = os.path.join(os.getcwd(), 'templates/dengue_linebot/bot_templates')
 
 
 def generate_fsm(language):
@@ -45,7 +47,20 @@ def generate_fsm(language):
 
     cls_name = language + '_FSM'
     FsmCls = generate_fsm_cls(cls_name, cond_config)
-    return FsmCls(line_bot_api, root_path=config_path, language=language)
+
+    FSM_CONFIG_PATH = os.path.join(config_path, 'FSM.json')
+    with open(FSM_CONFIG_PATH, 'r') as fsm_config_file:
+        data = ujson.loads(jsmin(fsm_config_file.read()))
+        states = data['states']
+        transitions = data['transitions']
+
+    return FsmCls(
+        states=states,
+        transitions=transitions,
+        bot_client=line_bot_api,
+        template_path='/Users/LeeW/Coding/project/netdb/line-bot/line_bot_server/denguefever_tw/dengue_linebot/templates/dengue_linebot/bot_templates',
+        root_path=config_path
+    )
 
 
 def get_fsm(language):
