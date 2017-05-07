@@ -8,10 +8,8 @@ import ujson
 from geopy.geocoders import GoogleV3
 from condconf import CondMeta, cond_func_generator
 from linebot.models import (
-    MessageEvent, FollowEvent, UnfollowEvent, JoinEvent, LeaveEvent,
-    PostbackEvent, BeaconEvent,
-    TextMessage, StickerMessage, LocationMessage,
-    ImageMessage, VideoMessage, AudioMessage,
+    MessageEvent, FollowEvent, UnfollowEvent, JoinEvent, LeaveEvent, PostbackEvent, BeaconEvent,
+    TextMessage, StickerMessage, LocationMessage, ImageMessage, VideoMessage, AudioMessage,
     TextSendMessage, ImageSendMessage, LocationSendMessage,
     TemplateSendMessage, CarouselTemplate,
     CarouselColumn, MessageTemplateAction, URITemplateAction,
@@ -121,7 +119,7 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
         self.load_config()
         super().__init__(
             states, transitions, initial_state,
-            bot_client=bot_client, template_path=template_path, external_modules=None
+            bot_client=bot_client, template_path=template_path, external_modules=external_modules
         )
 
     def load_config(self):
@@ -297,19 +295,18 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
     # --static--
     @log_fsm_operation
     def on_enter_user_join(self, event):
-        # TODO: implement update user data when user rejoin
         user_id = event.source.user_id
-        try:
-            LineUser.objects.get(user_id=user_id)
-        except LineUser.DoesNotExist:
-            profile = self.bot_client.get_profile(user_id)
-            user = LineUser(
-                user_id=profile.user_id,
-                name=profile.display_name,
-                picture_url=profile.picture_url or '',
-                status_message=profile.status_message or ''
-            )
-            user.save()
+        profile = self.bot_client.get_profile(user_id)
+        user, created = LineUser.objects.get_or_create(
+            user_id=profile.user_id,
+        )
+
+        user.name = profile.display_name,
+        user.picture_url=profile.picture_url or '',
+        user.status_message=profile.status_message or ''
+
+        user.save()
+
         self.finish()
 
     @log_fsm_operation
@@ -491,7 +488,7 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
 
     @log_fsm_operation
     def on_enter_wait_gov_location(self, event):
-        messages = [TextSendMessage(text=self.render_text('ask_gov_address.j2'))]
+        messages = [TextSendMessage(text=self.render_text('_ask_address.j2'))]
         messages.extend(self.LOCATION_SEND_TUTOIRAL_MSG)
         self.reply_message_with_logging(
             event,
