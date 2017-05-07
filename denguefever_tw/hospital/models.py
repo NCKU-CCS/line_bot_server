@@ -20,4 +20,4 @@ class Hospital(models.Model):
 
     def save(self, **kwargs):
         self.location = Point(float(self.lng), float(self.lat))
-        super(Hospital, self).save(**kwargs)
+        super().save(**kwargs)

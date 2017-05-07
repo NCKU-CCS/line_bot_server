@@ -14,6 +14,7 @@ from itertools import chain
 from pprint import pformat
 
 import ujson
+from jsmin import jsmin
 from linebot import LineBotApi, WebhookParser
 from linebot.exceptions import InvalidSignatureError, LineBotApiError
 from linebot.models import MessageEvent, TextMessage
@@ -26,6 +27,8 @@ from .models import (
 
 
 DEFAULT_LANGUAGE = 'zh_tw'
+CONFIG_PATH = os.path.join(settings.STATIC_ROOT, 'dengue_linebot/config/')
+BOT_TEMPLATE_PATH = os.path.join(os.getcwd(), 'dengue_linebot/templates/dengue_linebot/bot_templates')
 
 logger = logging.getLogger('django')
 
@@ -34,27 +37,37 @@ line_parser = WebhookParser(settings.LINE_CHANNEL_SECRET)
 
 dengue_bot_fsms = dict()
 
-config_path = os.path.join(settings.STATIC_ROOT, 'dengue_linebot/config/')
 
-
-def generate_fsm(language):
-    cond_path = os.path.join(config_path, language)
+def _generate_fsm(language):
+    cond_path = os.path.join(CONFIG_PATH, language)
     cond_path = os.path.join(cond_path, 'cond_config.json')
     with open(cond_path) as cond_file:
         cond_config = ujson.load(cond_file)
 
     cls_name = language + '_FSM'
     FsmCls = generate_fsm_cls(cls_name, cond_config)
-    return FsmCls(line_bot_api, root_path=config_path, language=language)
+
+    FSM_CONFIG_PATH = os.path.join(CONFIG_PATH, 'FSM.json')
+    with open(FSM_CONFIG_PATH, 'r') as fsm_config_file:
+        data = ujson.loads(jsmin(fsm_config_file.read()))
+        states = data['states']
+        transitions = data['transitions']
+
+    return FsmCls(
+        states=states,
+        transitions=transitions,
+        bot_client=line_bot_api,
+        template_path=os.path.join(BOT_TEMPLATE_PATH, language),
+    )
 
 
-def get_fsm(language):
+def _get_fsm(language):
     machine = dengue_bot_fsms.get(language)
     if machine:
         return machine
     else:
         try:
-            dengue_bot_fsms[language] = generate_fsm(language)
+            dengue_bot_fsms[language] = _generate_fsm(language)
         except FileNotFoundError:
             logger.info('{language} FSM is not supported'.format(language=language))
             return dengue_bot_fsms['zh_tw']
@@ -97,7 +110,6 @@ def _log_received_event(event, state):
         else:
             content = '===This is {message_type} type message.==='.format(message_type=message_type)
 
-        # TODO: Move datetime type casting to model
         message_log = MessageLog(speaker=LineUser.objects.get(user_id=user_id),
                                  speak_time=datetime.fromtimestamp(event.timestamp/1000),
                                  message_type=message_type,
@@ -151,7 +163,7 @@ def reply(request):
         try:
             line_user = LineUser.objects.get(user_id=user_id)
         except LineUser.DoesNotExist:
-            machine = get_fsm(DEFAULT_LANGUAGE)
+            machine = _get_fsm(DEFAULT_LANGUAGE)
             machine.on_enter_user_join(event)
 
             line_user = LineUser.objects.get(user_id=user_id)
@@ -159,7 +171,7 @@ def reply(request):
         state = cache.get(user_id) or 'user'
         language = line_user.language
         _log_received_event(event, state)
-        machine = get_fsm(language)
+        machine = _get_fsm(language)
         machine.set_state(state)
 
         try:
@@ -193,6 +205,7 @@ def index(request):
 
 @login_required
 def show_fsm(request):
+    machine = _get_fsm(DEFAULT_LANGUAGE)
     resp = HttpResponse(content_type="image/png")
     resp.name = 'state.png'
     machine = get_fsm(DEFAULT_LANGUAGE)
@@ -202,7 +215,8 @@ def show_fsm(request):
 
 @login_required
 def reload_fsm(request):
-    machine.load_config()
+    for language in dengue_bot_fsms.keys():
+        dengue_bot_fsms[language] = _generate_fsm(language)
     return HttpResponse()
 
 

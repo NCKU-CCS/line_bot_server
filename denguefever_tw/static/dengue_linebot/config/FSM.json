@@ -2,26 +2,90 @@
     /* All the state must be definied here*/
     "states": [
         "user",
-        "greet",
-        "ask_usage",
+        "receive_user_language",
+        {
+            "name": "greet",
+            "on_enter": {
+                "name": "on_enter_greet",
+                "oper_type": "custom",
+                "custom_type": "text-finish",
+                "template": "greeting.j2"
+
+            }
+        },
+        {
+            "name": "ask_usage",
+            "on_enter": {
+                "name": "on_enter_ask_usage",
+                "oper_type": "text",
+                "template": "manual.j2"
+
+            }
+        },
         "ask_dengue_fever",
         "ask_prevention",
         "ask_epidemic",
         "ask_symptom",
-        "ask_breeding_source",
-        "ask_who_we_are",
-        "ask_self_prevention",
-        "ask_env_prevention",
+        {
+            "name": "ask_breeding_source",
+            "on_enter": {
+                "name": "on_enter_ask_breeding_source",
+                "oper_type": "custom",
+                "custom_type": "text-finish",
+                "template": "breeding_source.j2"
+            }
+        },
+        {
+            "name": "ask_who_we_are",
+            "on_enter": {
+                "name": "on_enter_ask_who_we_are",
+                "oper_type": "custom",
+                "custom_type": "text-finish",
+                "template": "who_we_are.j2"
+            }
+        },
+        {
+            "name": "ask_self_prevention",
+            "on_enter": {
+                "name": "on_enter_ask_self_prevention",
+                "oper_type": "custom",
+                "custom_type": "text-finish",
+                "template": "self_prevent.j2"
+            }
+        },
+        {
+            "name": "ask_env_prevention",
+            "on_enter": {
+                "name": "on_enter_ask_env_prevention",
+                "oper_type": "custom",
+                "custom_type": "text-finish",
+                "template": "env_prevent.j2"
+            }
+        },
         "ask_hospital",
         "wait_user_location",
         "receive_user_location",
         "receive_user_address",
-        "wait_user_suggestion",
+        {
+            "name": "wait_user_suggestion",
+            "on_enter": {
+                "name": "on_enter_wait_user_suggestion",
+                "oper_type": "text",
+                "template": "ask_advice.j2"
+            }
+        },
         "ask_hospital_map",
         "gov_faculty_report",
         "wait_gov_location",
         "receive_gov_location",
-        "user_join",
+        {
+            "name": "user_join",
+            "on_enter": {
+                "name": "on_enter_user_join",
+                "oper_type": "text",
+                "template": "ask_language.j2"
+            }
+        },
         "unrecognized_msg"
     ],
     "transitions": [
@@ -295,8 +359,20 @@
             "conditions": "is_follow_event"
         },
         {
-            "trigger": "finish",
+            "trigger": "advance",
             "source": "user_join",
+            "dest": "receive_user_language",
+            "conditions": "is_valid_language"
+        },
+        {
+            "trigger": "advance",
+            "source": "user_join",
+            "dest": "user_join",
+            "conditions": "is_invalid_language"
+        },
+        {
+            "trigger": "finish",
+            "source": "receive_user_language",
             "dest": "user",
         },
 
