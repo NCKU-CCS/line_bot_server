@@ -1,10 +1,8 @@
 import logging
-import os
 from datetime import datetime
 from functools import wraps, partial
 from urllib.parse import parse_qs
 
-import ujson
 from geopy.geocoders import GoogleV3
 from condconf import CondMeta, cond_func_generator
 from linebot.models import (
@@ -27,6 +25,7 @@ from .constants import (
 
 
 logger = logging.getLogger(__name__)
+
 
 def log_fsm_condition(func):
     @wraps(func)
@@ -71,6 +70,10 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
             preview_image_url=LOC_STEP2_PREVIEW_URL
         ),
     ]
+    SUPPORTED_LANGUAGES = {
+        '1': 'zh_tw',
+        '2': 'en_us'
+    }
 
     def __init__(self, states, transitions, initial_state='user', *,
                  bot_client, template_path, external_modules=None):
@@ -154,6 +157,15 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
     def is_gov_report(self, event):
         return '#2016' in event.message.text
 
+    @log_fsm_operation
+    def is_valid_language(self, event):
+        text = event.message.text
+        return text in self.SUPPORTED_LANGUAGES or text.lower() in self.SUPPORTED_LANGUAGES.values()
+
+    @log_fsm_operation
+    def is_invalid_language(self, event):
+        return not self.is_valid_language(event)
+
     # FSM Operations
     # --dynamic--
     def handle_custom_callback(self, callback):
@@ -234,16 +246,29 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
 
     # --static--
     @log_fsm_operation
-    def on_enter_user_join(self, event):
+    def on_enter_receive_user_language(self, event):
+        # FIXME
+        language_choice = event.message.text
+        language = self.SUPPORTED_LANGUAGES.get(language_choice)
+        if not language:
+            language = language_choice
+
         user_id = event.source.user_id
         profile = self.bot_client.get_profile(user_id)
         user, created = LineUser.objects.get_or_create(user_id=profile.user_id)
         user.name = profile.display_name,
         user.picture_url = profile.picture_url or '',
         user.status_message = profile.status_message or ''
+        user.language = language
         user.save()
 
-        self.finish()
+
+        self.reply_message_with_logging(
+            event,
+            TextSendMessage(text=self.render_text('set_language_success.j2', {'language': language}))
+        )
+
+        self.finish(event)
 
     @log_fsm_operation
     def on_enter_unrecognized_msg(self, event):

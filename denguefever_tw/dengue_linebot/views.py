@@ -28,7 +28,7 @@ from .models import (
 
 DEFAULT_LANGUAGE = 'zh_tw'
 CONFIG_PATH = os.path.join(settings.STATIC_ROOT, 'dengue_linebot/config/')
-BOT_TEMPLATE_PATH = os.path.join(os.getcwd(), 'templates/dengue_linebot/bot_templates')
+BOT_TEMPLATE_PATH = os.path.join(os.getcwd(), 'dengue_linebot/templates/dengue_linebot/bot_templates')
 
 logger = logging.getLogger('django')
 

@@ -2,6 +2,7 @@
     /* All the state must be definied here*/
     "states": [
         "user",
+        "receive_user_language",
         {
             "name": "greet",
             "on_enter": {
@@ -77,7 +78,14 @@
         "gov_faculty_report",
         "wait_gov_location",
         "receive_gov_location",
-        "user_join",
+        {
+            "name": "user_join",
+            "on_enter": {
+                "name": "on_enter_user_join",
+                "oper_type": "text",
+                "template": "ask_language.j2"
+            }
+        },
         "unrecognized_msg"
     ],
     "transitions": [
@@ -354,8 +362,20 @@
             "conditions": "is_follow_event"
         },
         {
-            "trigger": "finish",
+            "trigger": "advance",
             "source": "user_join",
+            "dest": "receive_user_language",
+            "conditions": "is_valid_language"
+        },
+        {
+            "trigger": "advance",
+            "source": "user_join",
+            "dest": "user_join",
+            "conditions": "is_invalid_language"
+        },
+        {
+            "trigger": "finish",
+            "source": "receive_user_language",
             "dest": "user",
         },
 
