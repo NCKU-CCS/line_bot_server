@@ -8,8 +8,6 @@ import ujson
 from geopy.geocoders import GoogleV3
 from condconf import CondMeta, cond_func_generator
 from linebot.models import (
-    MessageEvent, FollowEvent, UnfollowEvent, JoinEvent, LeaveEvent, PostbackEvent, BeaconEvent,
-    TextMessage, StickerMessage, LocationMessage, ImageMessage, VideoMessage, AudioMessage,
     TextSendMessage, ImageSendMessage, LocationSendMessage,
     TemplateSendMessage, CarouselTemplate,
     CarouselColumn, MessageTemplateAction, URITemplateAction,
@@ -21,11 +19,14 @@ from ..models import (
     LineUser, Suggestion, GovReport,
     UnrecognizedMsg, MessageLog, BotReplyLog, ResponseToUnrecogMsg
 )
-from .botfsm import BotGraphMachine
+from .botfsm import BotGraphMachine, LineBotEventConditionMixin
+from .constants import (
+    SYMPTOM_PREVIEW_URL, SYMPTOM_ORIGIN_URL, KNOWLEDGE_URL, QA_URL,
+    LOC_STEP1_PREVIEW_URL, LOC_STEP1_ORIGIN_URL, LOC_STEP2_PREVIEW_URL, LOC_STEP2_ORIGIN_URL,
+)
 
 
 logger = logging.getLogger(__name__)
-
 
 def log_fsm_condition(func):
     @wraps(func)
@@ -59,84 +60,24 @@ def log_fsm_operation(func):
     return wrapper
 
 
-class LineBotEventConditionMixin:
-    def _assert_message_type(self, event, event_type):
-        return isinstance(event, MessageEvent) and isinstance(event.message, event_type)
-
-    @log_fsm_condition
-    def is_text_message(self, event):
-        return self._assert_message_type(event, TextMessage)
-
-    @log_fsm_condition
-    def is_sticker_message(self, event):
-        return self._assert_message_type(event, StickerMessage)
-
-    @log_fsm_condition
-    def is_image_message(self, event):
-        return self._assert_message_type(event, ImageMessage)
-
-    @log_fsm_condition
-    def is_video_message(self, event):
-        return self._assert_message_type(event, VideoMessage)
-
-    @log_fsm_condition
-    def is_audio_message(self, event):
-        return self._assert_message_type(event, AudioMessage)
-
-    @log_fsm_condition
-    def is_location_message(self, event):
-        return self._assert_message_type(event, LocationMessage)
-
-    @log_fsm_condition
-    def is_follow_event(self, event):
-        return isinstance(event, FollowEvent)
-
-    @log_fsm_condition
-    def is_unfollow_event(self, event):
-        return isinstance(event, UnfollowEvent)
-
-    @log_fsm_condition
-    def is_join_event(self, event):
-        return isinstance(event, JoinEvent)
-
-    @log_fsm_condition
-    def is_leave_event(self, event):
-        return isinstance(event, LeaveEvent)
-
-    @log_fsm_condition
-    def is_postback_event(self, event):
-        return isinstance(event, PostbackEvent)
-
-    @log_fsm_condition
-    def is_beacon_event(self, event):
-        return isinstance(event, BeaconEvent)
-
-
 class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
+    LOCATION_SEND_TUTOIRAL_MSG = [
+        ImageSendMessage(
+            original_content_url=LOC_STEP1_ORIGIN_URL,
+            preview_image_url=LOC_STEP1_PREVIEW_URL
+        ),
+        ImageSendMessage(
+            original_content_url=LOC_STEP2_ORIGIN_URL,
+            preview_image_url=LOC_STEP2_PREVIEW_URL
+        ),
+    ]
+
     def __init__(self, states, transitions, initial_state='user', *,
-                 bot_client, template_path, external_modules=None, root_path):
-        self.config_path_base = root_path if root_path else ''
-        self.load_config()
+                 bot_client, template_path, external_modules=None):
         super().__init__(
             states, transitions, initial_state,
             bot_client=bot_client, template_path=template_path, external_modules=external_modules
         )
-
-    def load_config(self):
-        path = os.path.join(self.config_path_base, 'img_urls.json')
-        with open(path) as img_url_file:
-            self.img_urls = ujson.loads(img_url_file.read())
-
-        self.LOCATION_SEND_TUTOIRAL_MSG = [
-            ImageSendMessage(
-                original_content_url=self.img_urls['loc_step1_origin'],
-                preview_image_url=self.img_urls['loc_step1_preview']
-            ),
-            ImageSendMessage(
-                original_content_url=self.img_urls['loc_step2_origin'],
-                preview_image_url=self.img_urls['loc_step2_preview']
-            ),
-        ]
 
     def reply_message_with_logging(self, event, messages):
         receiver_id = event.source.user_id
@@ -221,18 +162,17 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
 
     @log_fsm_operation
     def _text_finish_base(self, event, template):
-        self._text_base(event, template)
+        self._send_template_text(event, template)
         self.finish_ans()
 
-    @log_fsm_operation
-    def _text_base(self, event, template):
+    # --helpers--
+    def _send_template_text(self, event, template):
         self.reply_message_with_logging(
             event,
             TextSendMessage(text=super()._text_base(event, template))
         )
 
-    # --helpers--
-    _send_template_text = _text_base
+    _text_base = log_fsm_operation(_send_template_text)
 
     def _send_hospital_msgs(self, hospital_list, event):
         if hospital_list:
@@ -297,14 +237,10 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
     def on_enter_user_join(self, event):
         user_id = event.source.user_id
         profile = self.bot_client.get_profile(user_id)
-        user, created = LineUser.objects.get_or_create(
-            user_id=profile.user_id,
-        )
-
+        user, created = LineUser.objects.get_or_create(user_id=profile.user_id)
         user.name = profile.display_name,
-        user.picture_url=profile.picture_url or '',
-        user.status_message=profile.status_message or ''
-
+        user.picture_url = profile.picture_url or '',
+        user.status_message = profile.status_message or ''
         user.save()
 
         self.finish()
@@ -312,10 +248,11 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
     @log_fsm_operation
     def on_enter_unrecognized_msg(self, event):
         if getattr(event, 'reply_token', None):
-            # TODO: Move datetime type casting to model
-            msg_log = MessageLog.objects.get(speaker=event.source.user_id,
-                                             speak_time=datetime.fromtimestamp(event.timestamp/1000),
-                                             content=event.message.text)
+            msg_log = MessageLog.objects.get(
+                speaker=event.source.user_id,
+                speak_time=datetime.fromtimestamp(event.timestamp/1000),
+                content=event.message.text
+            )
             unrecognized_msg = UnrecognizedMsg(message_log=msg_log)
             unrecognized_msg.save()
 
@@ -335,16 +272,16 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
 
     @log_fsm_operation
     def on_enter_ask_dengue_fever(self, event):
-        KNOWLEDGE_URL = 'http://www.denguefever.tw/knowledge'
-        QA_URL = 'http://www.denguefever.tw/qa'
-        context = {
-            'knowledge_url': KNOWLEDGE_URL,
-            'qa_url': QA_URL
-        }
         self.reply_message_with_logging(
             event,
             messages=TemplateSendMessage(
-                alt_text=self.render_text('denguefever_intro/alt_text.j2', context),
+                alt_text=self.render_text(
+                    'denguefever_intro/alt_text.j2',
+                    {
+                        'knowledge_url': KNOWLEDGE_URL,
+                        'qa_url': QA_URL
+                    }
+                ),
                 template=ButtonsTemplate(
                     text=self.render_text('denguefever_intro/intro_head.j2', {'is_button': True}),
                     actions=[
@@ -368,8 +305,8 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
             event,
             messages=[
                 ImageSendMessage(
-                    original_content_url=self.img_urls['symptom_preview'],
-                    preview_image_url=self.img_urls['symptom_origin']
+                    original_content_url=SYMPTOM_ORIGIN_URL,
+                    preview_image_url=SYMPTOM_PREVIEW_URL
                 ),
                 TextSendMessage(text=self.render_text('symptom_warning'))
             ]
@@ -378,7 +315,7 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
 
     @log_fsm_operation
     def on_enter_ask_prevention(self, event):
-        text = self.render_text('ask_prevent_type.js')
+        text = self.render_text('ask_prevent_type.j2')
         self.reply_message_with_logging(
             event,
             TemplateSendMessage(
@@ -432,7 +369,7 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
         address = parse_qs(event.postback.data)['hosptial_address'][0]
         hosp = hospital.models.Hospital.objects.using('tainan').get(address=address)
         self.bot_client.reply_message(
-            event.reply_token,
+            event,
             messages=LocationSendMessage(
                 title=self.render_text('nearby_hospital/map_msg.j2', hosp.name),
                 address=hosp.address,
@@ -445,13 +382,10 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
     @log_fsm_operation
     def on_enter_ask_epidemic(self, event):
         EPIDEMIC_LINK = 'http://www.denguefever.tw/realTime'
-        context = {
-            'link': EPIDEMIC_LINK
-        }
         self.reply_message_with_logging(
             event,
             messages=TemplateSendMessage(
-                alt_text=self.render_text('new_condition.j2', context),
+                alt_text=self.render_text('new_condition.j2', {'link': EPIDEMIC_LINK}),
                 template=ButtonsTemplate(
                     text=self.render_text('new_condition.j2'),
                     actions=[
