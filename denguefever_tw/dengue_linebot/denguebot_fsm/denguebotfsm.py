@@ -255,7 +255,6 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
         user.language = language
         user.save()
 
-
         self.reply_message_with_logging(
             event,
             TextSendMessage(text=self.render_text('set_language_success.j2', {'language': language}))
@@ -342,11 +341,11 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
                     text=text,
                     actions=[
                         PostbackTemplateAction(
-                            label=self.render_text('self_label.j2'),
+                            label=self.render_text('label/self_label.j2'),
                             data='自身'
                         ),
                         PostbackTemplateAction(
-                            label=self.render_text('env_label.j2'),
+                            label=self.render_text('label/env_label.j2'),
                             data='環境'
                         ),
                     ]
