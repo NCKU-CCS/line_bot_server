@@ -9,6 +9,11 @@ Including the following functionality
 
 The main logic of this bot is based on finite state machine.  
 
+# Clone This Project
+```sh
+git clone --recursive https://github.com/NCKU-CCS/line_bot_server
+```
+
 ---
 - [Pre Requirements](#prereq)
 - [Setup](#setup)
