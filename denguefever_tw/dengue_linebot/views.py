@@ -175,7 +175,7 @@ def reply(request):
         machine.set_state(state)
 
         try:
-            advance_statue = machine.advance(event)
+            advance_status = machine.advance(event)
             cache.set(user_id, machine.state)
 
             logger.info(
@@ -184,7 +184,7 @@ def reply(request):
                  'User ID: {user_id}\n'
                  'Macinhe State: {m_state}\n'
                  'User State: {u_state}\n').format(
-                     status=advance_statue,
+                     status=advance_status,
                      user_id=user_id,
                      m_state=machine.state,
                      u_state=cache.get(user_id))
