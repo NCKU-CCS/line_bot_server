@@ -7,6 +7,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
 
+import csv
 import os
 import logging
 from datetime import datetime
@@ -250,6 +251,25 @@ def msg_log_detail(request, uid):
     context = {'all_msg_logs': all_msg_logs}
     return render(request, 'dengue_linebot/msg_log_detail.html', context)
 
+
+@login_required
+def export_msg_log(request):
+    message_logs = MessageLog.objects.all().select_related()
+
+    resp = HttpResponse(content_type='text/csv')
+    resp['Content-Disposition'] = 'attachment; filename="denguebot_report.csv"'
+
+    writer = csv.writer(resp)
+    writer.writerow(['紀錄日期', '訊息類別', '訊息', '使用者代號', '暱稱'])
+    for msg_log in message_logs:
+        writer.writerow([
+            msg_log.speak_time,
+            msg_log.message_type,
+            msg_log.content,
+            msg_log.speaker_id,
+            msg_log.speaker.name
+        ])
+    return resp
 
 @login_required
 def unrecognized_msg_list(request):

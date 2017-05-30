@@ -16,4 +16,5 @@ urlpatterns = [
     url(r'^(?P<mid>\S+)/handle_unrecognized_msg/$', handle_unrecognized_msg),
     url(r'^suggestion_list/$', suggestion_list),
     url(r'^gov_report_list/$', gov_report_list),
+    url(r'^export_msg_log/$', export_msg_log),
 ]
