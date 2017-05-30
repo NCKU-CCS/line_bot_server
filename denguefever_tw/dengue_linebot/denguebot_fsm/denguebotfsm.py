@@ -333,7 +333,7 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
                     original_content_url=SYMPTOM_ORIGIN_URL,
                     preview_image_url=SYMPTOM_PREVIEW_URL
                 ),
-                TextSendMessage(text=self.render_text('symptom_warning'))
+                TextSendMessage(text=self.render_text('symptom_warning.j2'))
             ]
         )
         self.finish_ans()
