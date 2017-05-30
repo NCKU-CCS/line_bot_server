@@ -211,7 +211,7 @@ def show_fsm(request):
     resp.name = 'state.png'
     machine = get_fsm(DEFAULT_LANGUAGE)
     machine.draw_graph(resp, prog='dot')
-    return resp
+    retur resp
 
 
 @login_required
@@ -270,6 +270,7 @@ def export_msg_log(request):
             msg_log.speaker.name
         ])
     return resp
+
 
 @login_required
 def unrecognized_msg_list(request):
