@@ -78,14 +78,7 @@
         "gov_faculty_report",
         "wait_gov_location",
         "receive_gov_location",
-        {
-            "name": "user_join",
-            "on_enter": {
-                "name": "on_enter_user_join",
-                "oper_type": "text",
-                "template": "ask_language.j2"
-            }
-        },
+        "user_join",
         "unrecognized_msg"
     ],
     "transitions": [

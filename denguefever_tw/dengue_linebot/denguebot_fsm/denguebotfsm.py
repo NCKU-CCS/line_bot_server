@@ -239,6 +239,18 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
 
     # --static--
     @log_fsm_operation
+    def on_enter_user_join(self, event):
+        user_id = event.source.user_id
+        profile = self.bot_client.get_profile(user_id)
+        user, created = LineUser.objects.get_or_create(user_id=profile.user_id)
+        user.name = profile.display_name,
+        user.picture_url = profile.picture_url or '',
+        user.status_message = profile.status_message or ''
+        user.save()
+
+        self._send_template_text(event, 'ask_language.j2')
+
+    @log_fsm_operation
     def on_enter_receive_user_language(self, event):
         # FIXME
         language_choice = event.message.text
@@ -247,11 +259,7 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
             language = language_choice
 
         user_id = event.source.user_id
-        profile = self.bot_client.get_profile(user_id)
-        user, created = LineUser.objects.get_or_create(user_id=profile.user_id)
-        user.name = profile.display_name,
-        user.picture_url = profile.picture_url or '',
-        user.status_message = profile.status_message or ''
+        user, created = LineUser.objects.get_or_create(user_id=user_id)
         user.language = language
         user.save()
 
