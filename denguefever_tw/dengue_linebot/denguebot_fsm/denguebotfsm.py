@@ -72,7 +72,6 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
     ]
     SUPPORTED_LANGUAGES = {
         '1': 'zh_tw',
-        '2': 'en_us'
     }
 
     def __init__(self, states, transitions, initial_state='user', *,
