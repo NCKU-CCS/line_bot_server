@@ -8,12 +8,19 @@ class LineUser(models.Model):
     picture_url = models.TextField(blank=True)
     status_message = models.TextField(blank=True)
     language = models.TextField(default='zh_tw')
+    lng = models.FloatField(default=0.0)
+    lat = models.FloatField(default=0.0)
+    location = models.PointField(geography=True, srid=4326, default='POINT(0.0 0.0)')
 
     def __str__(self):
         return '{name} ({user_id})'.format(
             name=self.name,
             user_id=self.user_id
         )
+    def save(self, **kwargs):
+        if self.lng and self.lat:
+            self.location = Point(float(self.lng), float(self.lat))
+        super(LineUser, self).save(**kwargs)
 
 
 class Suggestion(models.Model):
