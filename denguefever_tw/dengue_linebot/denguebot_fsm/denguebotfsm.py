@@ -142,6 +142,10 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
         return '6' == event.message.text or self.is_giving_suggestion(event)
 
     @log_fsm_condition
+    def is_selecting_register_location(self, event):
+        return '7' == event.message.text
+
+    @log_fsm_condition
     def is_hospital_address(self, event):
         return 'hosptial_address' in parse_qs(event.postback.data)
 
@@ -476,6 +480,33 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
                 messages=TextSendMessage(text=self.render_text('thank_gov_report'))
             )
         self.finish_ans()
+
+    @log_fsm_operation
+    def on_enter_user_register_location(self, event):
+        messages = [
+            TextSendMessage(text=self.render_text('register_location.j2'))
+        ]
+        messages.extend(self.LOCATION_SEND_TUTOIRAL_MSG)
+        self.reply_message_with_logging(
+            event,
+            messages=messages
+        )
+        self.advance()
+
+    @log_fsm_operation
+    def on_enter_receive_register_location(self, event):
+        try:
+            line_user = LineUser.objects.get(user_id=event.source.user_id)
+        except LineUser.DoesNotExist:
+            pass
+        else:
+            line_user.lat = event.message.latitude
+            line_user.lng = event.message.longitude
+            line_user.save()
+            self._send_template_text(event, 'register_location_success.j2')
+        self.finish_ans()
+
+
 
 
 def generate_fsm_cls(cls_name, condition_config,

@@ -79,7 +79,10 @@
         "wait_gov_location",
         "receive_gov_location",
         "user_join",
-        "unrecognized_msg"
+        "unrecognized_msg",
+        "user_register_location",
+        "wait_register_location",
+        "receive_register_location"
     ],
     "transitions": [
         {
@@ -399,6 +402,27 @@
             "dest": "receive_gov_location",
             "conditions": "is_location_message",
         },
+        {
+            "trigger": "advance",
+            "source": "user",
+            "dest": "user_register_location",
+            "conditions": [
+                "is_text_message",
+                "is_selecting_register_location"
+            ]
+        },
+        {
+            "trigger": "advance",
+            "source": "user_register_location",
+            "dest": "wait_register_location",
+        },
+        {
+            "trigger": "advance",
+            "source": "wait_register_location",
+            "dest": "receive_register_location",
+            "conditions": "is_location_message"
+        },
+
 
         {
             "trigger": "finish_ans",
@@ -414,7 +438,8 @@
                 "greet",
                 "ask_breeding_source",
                 "ask_who_we_are",
-                "receive_gov_location"
+                "receive_gov_location",
+                "receive_register_location"
             ],
             "dest": "user"
         },
