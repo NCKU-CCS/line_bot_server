@@ -155,6 +155,13 @@ Import tainan hosptial data
 python manage.py import_dengue_hospital
 ```
 
+### Import Tainan Minimum Area Data
+
+```sh
+python manage.py import_tainan_minarea
+```
+
+
 ## <a name='cache'></a> Cache
 Cache is used to store user state.  
 Currently `redis` is used  
