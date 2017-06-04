@@ -20,7 +20,7 @@ class Command(BaseCommand):
                     )
                     minarea.save()
                 except IntegrityError:
-                    print('data have already been imported')
+                    self.stderr.write('data have already been imported')
                     break
 
         self.stdout.write('Successfully imported')
