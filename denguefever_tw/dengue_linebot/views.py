@@ -18,7 +18,7 @@ import ujson
 from jsmin import jsmin
 from linebot import LineBotApi, WebhookParser
 from linebot.exceptions import InvalidSignatureError, LineBotApiError
-from linebot.models import MessageEvent, TextMessage
+from linebot.models import MessageEvent, TextMessage, TextSendMessage
 
 from .denguebot_fsm import generate_fsm_cls
 from .models import (
@@ -316,3 +316,17 @@ def suggestion_list(request):
 def gov_report_list(request):
     context = {'gov_reports': GovReport.objects.all().order_by('-report_time')}
     return render(request, 'dengue_linebot/gov_report_list.html', context)
+
+def lineuser_in_minarea(area_id):
+    return LineUser.objects.filter(location_area_id=area_id)
+
+def push_msg(users, msg):
+    for user in users:
+        try:
+            line_bot_api.push_message(user.user_id, TextSendMessage(text=msg))
+        except LineBotApiError as e:
+            print(e.status_code)
+            print(e.error.message)
+            print(e.error.details)
+        else:
+            print('Successfully pushed msg to {user}'.format(user=user))
