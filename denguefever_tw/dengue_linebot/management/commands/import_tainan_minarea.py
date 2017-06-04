@@ -24,6 +24,3 @@ class Command(BaseCommand):
                     break
 
         self.stdout.write('Successfully imported')
-
-
-
