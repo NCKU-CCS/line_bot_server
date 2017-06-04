@@ -105,3 +105,11 @@ class GovReport(models.Model):
         if self.lng and self.lat:
             self.location = Point(float(self.lng), float(self.lat))
         super(GovReport, self).save(**kwargs)
+
+class MinArea(models.Model):
+    area_id = models.TextField()
+    area_sn = models.TextField(primary_key=True)
+    area = models.PolygonField(geography=True, srid=4326)
+
+    def __str__(self):
+        return str(self.area_id)
