@@ -1,0 +1,20 @@
+{% if error_msg %}
+	{% for msg in error_msg %}
+	<strong>{{ msg }}</strong><br>
+	{% endfor %}
+
+{% else %}
+	{% if push_log %}
+		{% for log in push_log %}
+		{{ log }}<br>
+		{% endfor %}
+
+	{% else %}
+		<strong>Selected areas do not have any users!</strong><br>
+	{% endif %}
+
+{% endif %}
+<br>
+<a href=javascript:onclick=history.go(-1)>Previous page</a><br>
+<a href = "/">Go back to home page</a>
+

@@ -18,12 +18,12 @@ import ujson
 from jsmin import jsmin
 from linebot import LineBotApi, WebhookParser
 from linebot.exceptions import InvalidSignatureError, LineBotApiError
-from linebot.models import MessageEvent, TextMessage, TextSendMessage
+from linebot.models import MessageEvent, TextMessage, TextSendMessage, ImageSendMessage
 
 from .denguebot_fsm import generate_fsm_cls
 from .models import (
     MessageLog, LineUser, Suggestion, GovReport,
-    BotReplyLog, UnrecognizedMsg, ResponseToUnrecogMsg
+    BotReplyLog, UnrecognizedMsg, ResponseToUnrecogMsg, MinArea
 )
 
 
@@ -317,16 +317,58 @@ def gov_report_list(request):
     context = {'gov_reports': GovReport.objects.all().order_by('-report_time')}
     return render(request, 'dengue_linebot/gov_report_list.html', context)
 
-def lineuser_in_minarea(area_id):
-    return LineUser.objects.filter(location_area_id=area_id)
+@login_required
+def push_msg(request):
+    context = {'areas': MinArea.objects.all()}
+    return render(request, 'dengue_linebot/push_msg.html', context)
 
-def push_msg(users, msg):
+@login_required
+def push_msg_result(request):
+    areas_id = request.POST.getlist('msg_to')
+    content = request.POST['content']
+    img = request.POST['img']
+    error_msg = []
+    push_log = []
+
+    if not areas_id:
+        error_msg.append('You do not choose any area!')
+    if (not content) and (not img):
+        error_msg.append('You do not write any content or image!')
+
+    if not error_msg:
+        for area_id in areas_id:
+            users = LineUser.objects.filter(location=MinArea.objects.get(area_id=area_id))
+            push_log.extend(_push_msg(users=users, text=content, img=img))
+
+    return render(request, 'dengue_linebot/push_msg_result.html', {
+        'error_msg':error_msg,
+        'push_log':push_log
+    })
+
+def _push_msg(users, text, img):
+    return_msg = []
+
     for user in users:
-        try:
-            line_bot_api.push_message(user.user_id, TextSendMessage(text=msg))
-        except LineBotApiError as e:
-            print(e.status_code)
-            print(e.error.message)
-            print(e.error.details)
-        else:
-            print('Successfully pushed msg to {user}'.format(user=user))
+        if text:
+            try:
+                line_bot_api.push_message(user.user_id, TextSendMessage(text=text))
+            except LineBotApiError:
+                return_msg.append('<TEXT_ERROR> Can not push text to {user}'.format(
+                    user=user
+                ))
+            else:
+                return_msg.append('Successfully pushed text to {user}'.format(user=user))
+
+        if img:
+            try:
+                line_bot_api.push_message(user.user_id, ImageSendMessage(
+                    original_content_url=img,
+                    preview_image_url=img
+                ))
+            except LineBotApiError:
+                return_msg.append('<IMG_ERROR> Can not push img to {user}'.format(
+                    user=user
+                ))
+            else:
+                return_msg.append('Successfully pushed img to {user}'.format(user=user))
+    return return_msg
