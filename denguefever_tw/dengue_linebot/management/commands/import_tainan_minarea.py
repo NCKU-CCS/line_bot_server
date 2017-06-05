@@ -16,6 +16,7 @@ class Command(BaseCommand):
                     minarea = MinArea(
                         area_id=area['properties']['VILLAGEID'],
                         area_sn=area['properties']['VILLAGESN'],
+                        area_name=area['properties']['VILLAGENAM'],
                         area=GEOSGeometry(json.dumps(area['geometry']))
                     )
                     minarea.save()
