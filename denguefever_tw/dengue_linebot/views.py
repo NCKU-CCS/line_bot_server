@@ -317,58 +317,62 @@ def gov_report_list(request):
     context = {'gov_reports': GovReport.objects.all().order_by('-report_time')}
     return render(request, 'dengue_linebot/gov_report_list.html', context)
 
+
 @login_required
-def push_msg(request):
+def push_msg_form(request):
     context = {'areas': MinArea.objects.all()}
     return render(request, 'dengue_linebot/push_msg.html', context)
+
 
 @login_required
 def push_msg_result(request):
     areas_id = request.POST.getlist('msg_to')
     content = request.POST['content']
     img = request.POST['img']
-    error_msg = []
-    push_log = []
+    error_msgs = list()
+    push_logs = list()
 
     if not areas_id:
-        error_msg.append('You do not choose any area!')
-    if (not content) and (not img):
-        error_msg.append('You do not write any content or image!')
+        error_msgs.append('You do not choose any area!')
+    if not content and not img:
+        error_msgs.append('You do not write any content or image!')
 
-    if not error_msg:
+    if not error_msgs:
         for area_id in areas_id:
-            users = LineUser.objects.filter(location=MinArea.objects.get(area_id=area_id))
-            push_log.extend(_push_msg(users=users, text=content, img=img))
+            users = list(LineUser.objects.filter(location=MinArea.objects.get(area_id=area_id)))
+            if users:
+                push_logs.extend(_push_msg(users=users, text=content, img=img))
 
     return render(request, 'dengue_linebot/push_msg_result.html', {
-        'error_msg':error_msg,
-        'push_log':push_log
+        'error_msgs':error_msgs,
+        'push_logs':push_logs
     })
 
+
 def _push_msg(users, text, img):
-    return_msg = []
+    splited_users_lists = _split_list(users)
+    msgs = list()
+    push_logs = list()
 
-    for user in users:
-        if text:
-            try:
-                line_bot_api.push_message(user.user_id, TextSendMessage(text=text))
-            except LineBotApiError:
-                return_msg.append('<TEXT_ERROR> Can not push text to {user}'.format(
-                    user=user
-                ))
-            else:
-                return_msg.append('Successfully pushed text to {user}'.format(user=user))
+    if text:
+        msgs.append(TextSendMessage(text=text))
+    if img:
+        msgs.append(ImageSendMessage(original_content_url=img, preview_image_url=img))
 
-        if img:
-            try:
-                line_bot_api.push_message(user.user_id, ImageSendMessage(
-                    original_content_url=img,
-                    preview_image_url=img
-                ))
-            except LineBotApiError:
-                return_msg.append('<IMG_ERROR> Can not push img to {user}'.format(
-                    user=user
-                ))
-            else:
-                return_msg.append('Successfully pushed img to {user}'.format(user=user))
-    return return_msg
+    for users in splited_users_lists:
+        try:
+            line_bot_api.multicast([user.user_id for user in users], msgs)
+            push_logs.extend(["Successfully pushed msg to {user}".format(user=user) for user in users])
+        except LineBotApiError as e:
+            push_logs.extend(e.error.details)
+    return push_logs
+
+
+def _split_list(l, size=150):
+    lists = list()
+    while len(l) > size:
+        split = l[:size]
+        lists.append(split)
+        l = l[size:]
+    lists.append(l)
+    return lists
