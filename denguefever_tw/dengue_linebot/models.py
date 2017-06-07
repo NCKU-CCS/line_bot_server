@@ -113,6 +113,7 @@ class MinArea(models.Model):
     area_id = models.TextField()
     area_sn = models.TextField(primary_key=True)
     area_name = models.TextField(null=True)
+    district_name = models.TextField(null=True)
     area = models.PolygonField(srid=4326)
 
     def __str__(self):
