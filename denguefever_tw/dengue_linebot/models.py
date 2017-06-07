@@ -17,7 +17,7 @@ class LineUser(models.Model):
             try:
                 self.location = MinArea.objects.get(area__contains=Point(float(self.lng), float(self.lat)))
             except MinArea.DoesNotExist:
-                logger.error('the location of the user can not match any minarea')
+                logger.error('The location of the user can not match any minarea')
         super(LineUser, self).save(**kwargs)
 
     def __str__(self):
