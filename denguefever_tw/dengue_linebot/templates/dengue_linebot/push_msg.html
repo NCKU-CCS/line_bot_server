@@ -1,22 +1,24 @@
 <form action="{% url 'push_msg_result' %}" method="POST">
-{% csrf_token %}
-<strong>Msg to :</strong>
-<br>
-<div style="width:95%;">
-	{% for area in areas %}
-	<div style="display:inline-block;">
-		<input type="checkbox" name="msg_to" value="{{area.area_id}}">{{area.area_name}}
-	</div>
-	{% endfor %}
-</div>
-<br>
-<strong>Content</strong><br>
-<textarea name = "content" style="height:50%; width:50%;" ></textarea>
-<br><br>
-<strong>Image (https URL)</strong>
-<br>
-<input type = "text" name = "img">
-<br>
-<input type = "submit" value = "submit">
-<br>
+  {% csrf_token %}
+  <strong style="color:red;">Msg to :</strong>
+  <br>
+  <div style="width:95%;">
+    {% for area in areas %}
+    <div style="display:inline-block;">
+      <input type="checkbox" name="msg_to" value="{{area.area_id}}">{{area.area_name}}
+    </div>
+    {% endfor %}
+  </div>
+  <br>
+  <strong>Content</strong>
+  <br>
+  <textarea name="content" style="height:50%; width:50%;"></textarea>
+  <br>
+  <br>
+  <strong>Image (https URL)</strong>
+  <br>
+  <input type="text" name="img">
+  <br>
+  <input type="submit" value="submit">
+  <br>
 </form>
