@@ -339,7 +339,7 @@ def push_msg_result(request):
 
     if not error_msgs:
         for area_id in areas_id:
-            users = list(LineUser.objects.filter(location=MinArea.objects.get(area_id=area_id)))
+            users = LineUser.objects.filter(location=MinArea.objects.get(area_id=area_id))
             if users:
                 push_logs.extend(_push_msg(users=users, text=content, img=img))
 
@@ -350,7 +350,7 @@ def push_msg_result(request):
 
 
 def _push_msg(users, text, img):
-    splited_users_lists = _split_list(users)
+    splited_users_lists = [users[i:i + 150] for i in range(0, len(users), 150)]
     msgs = list()
     push_logs = list()
 
@@ -366,13 +366,3 @@ def _push_msg(users, text, img):
         except LineBotApiError as e:
             push_logs.extend(e.error.details)
     return push_logs
-
-
-def _split_list(l, size=150):
-    lists = list()
-    while len(l) > size:
-        split = l[:size]
-        lists.append(split)
-        l = l[size:]
-    lists.append(l)
-    return lists
