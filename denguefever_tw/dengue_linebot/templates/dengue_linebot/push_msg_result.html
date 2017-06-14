@@ -4,15 +4,11 @@
   {% endfor %}
 
 {% else %}
-  {% if push_logs %}
-    {% for log in push_logs %}
-    {{ log }}<br>
+  {% for logs in push_logs %}
+    {% for log in logs %}
+      {{ log }}<br>
     {% endfor %}
-
-  {% else %}
-    <strong>Selected areas do not have any users!</strong><br>
-  {% endif %}
-
+  {% endfor %}
 {% endif %}
 <br>
 <a href=javascript:onclick=history.go(-1)>Previous page</a><br>

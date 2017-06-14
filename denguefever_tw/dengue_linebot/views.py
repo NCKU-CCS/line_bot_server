@@ -26,7 +26,7 @@ from .models import (
     BotReplyLog, UnrecognizedMsg, ResponseToUnrecogMsg, MinArea
 )
 
-
+MULTICAST_LIMIT = 150
 DEFAULT_LANGUAGE = 'zh_tw'
 CONFIG_PATH = os.path.join(settings.STATIC_ROOT, 'dengue_linebot/config/')
 BOT_TEMPLATE_PATH = os.path.join(os.getcwd(), 'dengue_linebot/templates/dengue_linebot/bot_templates')
@@ -330,19 +330,18 @@ def push_msg_result(request):
     content = request.POST['content']
     img = request.POST['img']
     error_msgs = list()
-    push_logs = list()
+    users = list()
 
     if not areas_id:
         error_msgs.append('You do not choose any area!')
     if not content and not img:
-        error_msgs.append('You do not write any content or image!')
+        error_msgs.append('Either content or image should be added!')
 
     if not error_msgs:
         for area_id in areas_id:
-            users = LineUser.objects.filter(location=MinArea.objects.get(area_id=area_id))
-            if users:
-                push_logs.extend(_push_msg(users=users, text=content, img=img))
+            users.extend(LineUser.objects.filter(location=MinArea.objects.get(area_id=area_id)))
 
+    push_logs = _push_msg(users=users, text=content, img=img)
     return render(request, 'dengue_linebot/push_msg_result.html', {
         'error_msgs':error_msgs,
         'push_logs':push_logs
@@ -350,7 +349,7 @@ def push_msg_result(request):
 
 
 def _push_msg(users, text, img):
-    splited_users_lists = [users[i:i + 150] for i in range(0, len(users), 150)]
+    splited_users_lists = [users[i:i + MULTICAST_LIMIT] for i in range(0, len(users), MULTICAST_LIMIT)]
     msgs = list()
     push_logs = list()
 
@@ -359,10 +358,14 @@ def _push_msg(users, text, img):
     if img:
         msgs.append(ImageSendMessage(original_content_url=img, preview_image_url=img))
 
-    for users in splited_users_lists:
-        try:
-            line_bot_api.multicast([user.user_id for user in users], msgs)
-            push_logs.extend(["Successfully pushed msg to {user}".format(user=user) for user in users])
-        except LineBotApiError as e:
-            push_logs.extend(e.error.details)
-    return push_logs
+    if msgs and splited_users_lists:
+        for users in splited_users_lists:
+            try:
+                line_bot_api.multicast([user.user_id for user in users], msgs)
+                push_logs = ["Successfully pushed msg to {user}".format(user=user) for user in users]
+            except LineBotApiError as e:
+                push_logs = e.error.details
+            finally:
+                yield push_logs
+    else:
+        return
