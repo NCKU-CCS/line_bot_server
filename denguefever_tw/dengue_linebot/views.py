@@ -349,6 +349,25 @@ def push_msg_result(request):
 
 
 def _push_msg(users, text, img):
+    """Push message to specific users in Line Bot
+    
+    Use multicast of line_bot_api to push message to specific users, then
+    yields the logs of push message.
+
+    Args:
+        users (List[LineUser]): users who we send message to
+        text (str): the text in message
+        img (str): url of the picture in message
+
+    Yields:
+        List[str]: the logs of push message to users
+
+    Examples:
+        >>> for logs in _push_msg(users=users, text=content, img=img):
+                for log in logs:
+                    print(log)
+        'Successfully pushed msg to XXX'
+    """
     splited_users_lists = [users[i:i + MULTICAST_LIMIT] for i in range(0, len(users), MULTICAST_LIMIT)]
     msgs = list()
     push_logs = list()
@@ -368,4 +387,4 @@ def _push_msg(users, text, img):
             finally:
                 yield push_logs
     else:
-        return
+        logger.info('Fail to push message!')
