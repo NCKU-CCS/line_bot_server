@@ -18,15 +18,15 @@ import ujson
 from jsmin import jsmin
 from linebot import LineBotApi, WebhookParser
 from linebot.exceptions import InvalidSignatureError, LineBotApiError
-from linebot.models import MessageEvent, TextMessage
+from linebot.models import MessageEvent, TextMessage, TextSendMessage, ImageSendMessage
 
 from .denguebot_fsm import generate_fsm_cls
 from .models import (
     MessageLog, LineUser, Suggestion, GovReport,
-    BotReplyLog, UnrecognizedMsg, ResponseToUnrecogMsg
+    BotReplyLog, UnrecognizedMsg, ResponseToUnrecogMsg, MinArea
 )
 
-
+MULTICAST_LIMIT = 150
 DEFAULT_LANGUAGE = 'zh_tw'
 CONFIG_PATH = os.path.join(settings.STATIC_ROOT, 'dengue_linebot/config/')
 BOT_TEMPLATE_PATH = os.path.join(os.getcwd(), 'dengue_linebot/templates/dengue_linebot/bot_templates')
@@ -316,3 +316,75 @@ def suggestion_list(request):
 def gov_report_list(request):
     context = {'gov_reports': GovReport.objects.all().order_by('-report_time')}
     return render(request, 'dengue_linebot/gov_report_list.html', context)
+
+
+@login_required
+def push_msg_form(request):
+    context = {'areas': MinArea.objects.all()}
+    return render(request, 'dengue_linebot/push_msg.html', context)
+
+
+@login_required
+def push_msg_result(request):
+    areas_id = request.POST.getlist('msg_to')
+    content = request.POST['content']
+    img = request.POST['img']
+    error_msgs = list()
+    users = list()
+
+    if not areas_id:
+        error_msgs.append('You do not choose any area!')
+    if not content and not img:
+        error_msgs.append('Either content or image should be added!')
+
+    if not error_msgs:
+        for area_id in areas_id:
+            users.extend(LineUser.objects.filter(location=MinArea.objects.get(area_id=area_id)))
+
+    push_logs = _push_msg(users=users, text=content, img=img)
+    return render(request, 'dengue_linebot/push_msg_result.html', {
+        'error_msgs':error_msgs,
+        'push_logs':push_logs
+    })
+
+
+def _push_msg(users, text, img):
+    """Push message to specific users in Line Bot
+    
+    Use multicast of line_bot_api to push message to specific users, then
+    yields the logs of push message.
+
+    Args:
+        users (List[LineUser]): users who we send message to
+        text (str): the text in message
+        img (str): url of the picture in message
+
+    Yields:
+        List[str]: the logs of push message to users
+
+    Examples:
+        >>> for logs in _push_msg(users=users, text=content, img=img):
+                for log in logs:
+                    print(log)
+        'Successfully pushed msg to XXX'
+    """
+    splited_users_lists = [users[i:i + MULTICAST_LIMIT] for i in range(0, len(users), MULTICAST_LIMIT)]
+    msgs = list()
+    push_logs = list()
+
+    if text:
+        msgs.append(TextSendMessage(text=text))
+    if img:
+        msgs.append(ImageSendMessage(original_content_url=img, preview_image_url=img))
+
+    if msgs and splited_users_lists:
+        for users in splited_users_lists:
+            try:
+                line_bot_api.multicast([user.user_id for user in users], msgs)
+                push_logs = ["Successfully pushed msg to {user}".format(user=user) for user in users]
+            except LineBotApiError as e:
+                push_logs = e.error.details
+            finally:
+                yield push_logs
+    else:
+        logger.info('Fail to push message!')

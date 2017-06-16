@@ -2,7 +2,7 @@ from django.contrib.gis.db import models
 from django.contrib.gis.geos import Point
 
 
-class LineUser(models.Model):
+class LineUser(models.Model):   
     user_id = models.TextField(primary_key=True)
     name = models.TextField()
     picture_url = models.TextField(blank=True)
@@ -10,18 +10,21 @@ class LineUser(models.Model):
     language = models.TextField(default='zh_tw')
     lng = models.FloatField(default=0.0)
     lat = models.FloatField(default=0.0)
-    location = models.PointField(geography=True, srid=4326, default='POINT(0.0 0.0)')
+    location = models.ForeignKey('MinArea', null=True)
+
+    def save(self, **kwargs):
+        if self.lng and self.lat:
+            try:
+                self.location = MinArea.objects.get(area__contains=Point(float(self.lng), float(self.lat)))
+            except MinArea.DoesNotExist:
+                logger.error('The location of the user can not match any minarea')
+        super(LineUser, self).save(**kwargs)
 
     def __str__(self):
         return '{name} ({user_id})'.format(
             name=self.name,
             user_id=self.user_id
         )
-    def save(self, **kwargs):
-        if self.lng and self.lat:
-            self.location = Point(float(self.lng), float(self.lat))
-        super(LineUser, self).save(**kwargs)
-
 
 class Suggestion(models.Model):
     content = models.TextField()
@@ -109,7 +112,12 @@ class GovReport(models.Model):
 class MinArea(models.Model):
     area_id = models.TextField()
     area_sn = models.TextField(primary_key=True)
-    area = models.PolygonField(geography=True, srid=4326)
+    area_name = models.TextField(null=True)
+    district_name = models.TextField(null=True)
+    area = models.PolygonField(srid=4326)
 
     def __str__(self):
-        return str(self.area_id)
+        return ' {name} ({id})'.format(
+            name=self.area_name,
+            id=self.area_id
+        )
