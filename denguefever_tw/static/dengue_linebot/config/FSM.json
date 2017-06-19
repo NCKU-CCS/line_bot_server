@@ -451,7 +451,8 @@
                 "ask_usage",
                 "ask_prevention",
                 "wait_user_location",
-                "wait_gov_location"
+                "wait_gov_location",
+                "wait_register_location"
             ],
             "dest": "unrecognized_msg",
             "conditions": "is_pass"

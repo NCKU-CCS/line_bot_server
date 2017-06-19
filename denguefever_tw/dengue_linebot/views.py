@@ -383,7 +383,8 @@ def _push_msg(users, text, img):
                 line_bot_api.multicast([user.user_id for user in users], msgs)
                 push_logs = ["Successfully pushed msg to {user}".format(user=user) for user in users]
             except LineBotApiError as e:
-                push_logs = e.error.details
+                _log_line_api_error(e)
+                push_logs = [e.error.message]
             finally:
                 yield push_logs
     else:
