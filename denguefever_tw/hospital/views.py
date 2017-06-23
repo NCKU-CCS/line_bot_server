@@ -6,10 +6,10 @@ from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST, require_GET
 
-import shortuuid
 import json
+import shortuuid
 
-from hospital.models import Hospital
+from .models import Hospital
 
 
 @csrf_exempt
