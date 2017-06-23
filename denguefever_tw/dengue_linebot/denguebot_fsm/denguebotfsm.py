@@ -507,8 +507,6 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
         self.finish_ans()
 
 
-
-
 def generate_fsm_cls(cls_name, condition_config,
                      *, template_args=None, external_globals=None, cond_var_name=None):
     """Generate FSM class through condition config"""

@@ -2,7 +2,7 @@ from django.contrib.gis.db import models
 from django.contrib.gis.geos import Point
 
 
-class LineUser(models.Model):   
+class LineUser(models.Model):
     user_id = models.TextField(primary_key=True)
     name = models.TextField()
     picture_url = models.TextField(blank=True)
@@ -25,6 +25,7 @@ class LineUser(models.Model):
             name=self.name,
             user_id=self.user_id
         )
+
 
 class Suggestion(models.Model):
     content = models.TextField()
@@ -109,6 +110,7 @@ class GovReport(models.Model):
             self.location = Point(float(self.lng), float(self.lat))
         super(GovReport, self).save(**kwargs)
 
+
 class MinArea(models.Model):
     area_id = models.TextField()
     area_sn = models.TextField(primary_key=True)
@@ -117,7 +119,7 @@ class MinArea(models.Model):
     area = models.PolygonField(srid=4326)
 
     def __str__(self):
-        return ' {name} ({id})'.format(
-            name=self.area_name,
-            id=self.area_id
+        return ' {dis} {area}'.format(
+            dis=self.district_name,
+            area=self.area_name
         )

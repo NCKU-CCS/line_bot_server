@@ -1,9 +1,11 @@
 from django.contrib.gis.geos import GEOSGeometry
-from django.core.management.base import BaseCommand, CommandError
+from django.db.utils import IntegrityError
+from django.core.management.base import BaseCommand
 
 import json
 
 from ...models import MinArea
+
 
 class Command(BaseCommand):
     help = 'Import Tainan Minarea Data'
