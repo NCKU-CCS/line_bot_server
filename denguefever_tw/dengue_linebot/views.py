@@ -131,8 +131,7 @@ def login(request):
     if user is not None and user.is_active:
         auth.login(request, user)
         return HttpResponseRedirect('/')
-    else:
-        return render_to_response('dengue_linebot/login.html')
+    return render_to_response('dengue_linebot/login.html')
 
 
 def logout(request):
@@ -209,7 +208,7 @@ def show_fsm(request):
     machine = _get_fsm(DEFAULT_LANGUAGE)
     resp = HttpResponse(content_type="image/png")
     resp.name = 'state.png'
-    machine = get_fsm(DEFAULT_LANGUAGE)
+    machine = _get_fsm(DEFAULT_LANGUAGE)
     machine.draw_graph(resp, prog='dot')
     return resp
 
@@ -343,14 +342,14 @@ def push_msg_result(request):
 
     push_logs = _push_msg(users=users, text=content, img=img)
     return render(request, 'dengue_linebot/push_msg_result.html', {
-        'error_msgs':error_msgs,
-        'push_logs':push_logs
+        'error_msgs': error_msgs,
+        'push_logs': push_logs
     })
 
 
 def _push_msg(users, text, img):
     """Push message to specific users in Line Bot
-    
+
     Use multicast of line_bot_api to push message to specific users, then
     yields the logs of push message.
 
