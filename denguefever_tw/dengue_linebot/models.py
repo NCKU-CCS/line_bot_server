@@ -1,8 +1,13 @@
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import Point
 
+import logging
 
-class LineUser(models.Model):   
+
+logger = logging.getLogger(__name__)
+
+
+class LineUser(models.Model):
     user_id = models.TextField(primary_key=True)
     name = models.TextField()
     picture_url = models.TextField(blank=True)
@@ -12,19 +17,34 @@ class LineUser(models.Model):
     lat = models.FloatField(default=0.0)
     location = models.ForeignKey('MinArea', null=True)
 
-    def save(self, **kwargs):
+    def save(self, *args, **kwargs):
         if self.lng and self.lat:
             try:
                 self.location = MinArea.objects.get(area__contains=Point(float(self.lng), float(self.lat)))
             except MinArea.DoesNotExist:
                 logger.error('The location of the user can not match any minarea')
-        super(LineUser, self).save(**kwargs)
+        super(LineUser, self).save(*args, **kwargs)
 
     def __str__(self):
         return '{name} ({user_id})'.format(
             name=self.name,
             user_id=self.user_id
         )
+
+
+class MinArea(models.Model):
+    area_id = models.TextField()
+    area_sn = models.TextField(primary_key=True)
+    area_name = models.TextField(null=True)
+    district_name = models.TextField(null=True)
+    area = models.PolygonField(srid=4326)
+
+    def __str__(self):
+        return ' {name} ({id})'.format(
+            name=self.area_name,
+            id=self.area_id
+        )
+
 
 class Suggestion(models.Model):
     content = models.TextField()
@@ -72,13 +92,9 @@ class BotReplyLog(models.Model):
             content=self.content
         )
 
-    def __str__(self):
-        return self.__repr__()
-
 
 class UnrecognizedMsg(models.Model):
-    message_log = models.ForeignKey(MessageLog,
-                                    related_name='unrecognized_message_log')
+    message_log = models.ForeignKey(MessageLog, related_name='unrecognized_message_log')
 
     def __str__(self):
         return str(self.message_log)
@@ -90,7 +106,7 @@ class ResponseToUnrecogMsg(models.Model):
 
     def __str__(self):
         return 'Unrecognized Message: {unrecog_msg}\nResponse: {proper_response}'.format(
-            unrecog_msg=self.unrecognized_msg.content,
+            unrecog_msg=self.unrecognized_msg_content,
             proper_response=self.content
         )
 
@@ -108,16 +124,3 @@ class GovReport(models.Model):
         if self.lng and self.lat:
             self.location = Point(float(self.lng), float(self.lat))
         super(GovReport, self).save(**kwargs)
-
-class MinArea(models.Model):
-    area_id = models.TextField()
-    area_sn = models.TextField(primary_key=True)
-    area_name = models.TextField(null=True)
-    district_name = models.TextField(null=True)
-    area = models.PolygonField(srid=4326)
-
-    def __str__(self):
-        return ' {name} ({id})'.format(
-            name=self.area_name,
-            id=self.area_id
-        )
