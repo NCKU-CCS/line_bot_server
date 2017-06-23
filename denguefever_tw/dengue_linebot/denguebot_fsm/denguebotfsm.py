@@ -378,7 +378,7 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
 
     @log_fsm_operation
     def on_enter_receive_user_location(self, event):
-        hospital_list = hospital.views.get_nearby_hospital(event.message.longitude,
+        hospital_list = hospital.utils.get_nearby_hospital(event.message.longitude,
                                                            event.message.latitude)
         self._send_hospital_msgs(hospital_list, event)
         self.finish_ans()
@@ -389,7 +389,7 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
         address = event.message.text
         geocode = coder.geocode(address)
         if geocode:
-            hospital_list = hospital.views.get_nearby_hospital(geocode.longitude, geocode.latitude)
+            hospital_list = hospital.utils.get_nearby_hospital(geocode.longitude, geocode.latitude)
             self._send_hospital_msgs(hospital_list, event)
             self.finish_ans()
         else:
@@ -505,8 +505,6 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
             line_user.save()
             self._send_template_text(event, 'register_location_success.j2')
         self.finish_ans()
-
-
 
 
 def generate_fsm_cls(cls_name, condition_config,
