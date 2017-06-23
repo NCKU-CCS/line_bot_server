@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-from functools import wraps, partial
+from functools import partial
 from urllib.parse import parse_qs
 
 from geopy.geocoders import GoogleV3
@@ -18,6 +18,7 @@ from ..models import (
     UnrecognizedMsg, MessageLog, BotReplyLog, ResponseToUnrecogMsg
 )
 from .botfsm import BotGraphMachine, LineBotEventConditionMixin
+from .decorators import log_fsm_condition, log_fsm_operation
 from .constants import (
     SYMPTOM_PREVIEW_URL, SYMPTOM_ORIGIN_URL, KNOWLEDGE_URL, QA_URL,
     LOC_STEP1_PREVIEW_URL, LOC_STEP1_ORIGIN_URL, LOC_STEP2_PREVIEW_URL, LOC_STEP2_ORIGIN_URL,
@@ -25,38 +26,6 @@ from .constants import (
 
 
 logger = logging.getLogger(__name__)
-
-
-def log_fsm_condition(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        result = func(*args, **kwargs)
-        logger.info(
-            '{condition} is {result}\n'.format(
-                condition=func.__name__,
-                result=result)
-        )
-        return result
-    return wrapper
-
-
-def log_fsm_operation(func):
-    @wraps(func)
-    def wrapper(self, *args, **kwargs):
-        pre_state = self.state
-        result = func(self, *args, **kwargs)
-        post_state = self.state
-        logger.info(
-            ('FSM Opertion\n'
-             'Beforce Advance: {pre_state}\n'
-             'Triggered Function: {func}\n'
-             'After Advance: {post_state}\n').format(
-                 pre_state=pre_state,
-                 func=func.__name__,
-                 post_state=post_state)
-        )
-        return result
-    return wrapper
 
 
 class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
