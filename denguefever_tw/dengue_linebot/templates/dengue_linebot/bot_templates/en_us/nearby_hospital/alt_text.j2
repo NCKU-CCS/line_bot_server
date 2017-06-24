@@ -1,0 +1,10 @@
+Hey,
+you can go to these clinics/hospitals for having the NS1 antigen test (dengue test):
+
+
+
+{% for hospital in hospitals %}
+{{ loop.index }}.{{ hospital.name }}
+{{ hospital.address }}
+{{ hospital.phone  }}
+{% endfor %}

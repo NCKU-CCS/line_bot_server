@@ -1,0 +1,8 @@
+Hello,
+There are three clinics near you:
+
+{% for hospital in hospitals %}
+{{ loop.index }}.{{ hospital.name }}
+{{ hospital.address }}
+{{ hospital.phone  }}
+{% endfor %}
