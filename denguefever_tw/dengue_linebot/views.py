@@ -179,7 +179,7 @@ def show_fsm(request):
 def reload_fsm(request):
     for language in dengue_bot_fsms.keys():
         dengue_bot_fsms[language] = _generate_fsm(language)
-    return HttpResponse()
+    return HttpResponseRedirect('/')
 
 
 @login_required
