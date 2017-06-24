@@ -247,11 +247,10 @@ def handle_unrecognized_msg(request, mid):
 
     if request.method == 'POST':
         response_content = request.POST['proper_response']
-        response_to_unrecog_msg = ResponseToUnrecogMsg(
-            unrecognized_msg_content=msg_content,
-            content=response_content
+        response_to_unrecog_msg, _ = ResponseToUnrecogMsg.objects.get_or_create(
+            unrecognized_msg_content=msg_content
         )
-        response_to_unrecog_msg.save()
+        response_to_unrecog_msg.content = response_content
 
         context = {'msg_content': msg_content, 'proper_response': response_content}
         messages.success(request, 'Update Response to %s' % response_content)
