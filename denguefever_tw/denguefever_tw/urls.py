@@ -24,7 +24,7 @@ urlpatterns = [
     url(r'^dengue_linebot/', include('dengue_linebot.urls')),
     url(r'^hospital/', include('hospital.urls')),
     url(r'^callback/$', dengue_linebot.views.reply),
-    url(r'^$', dengue_linebot.views.index),
-    url(r'^login/$', dengue_linebot.views.login),
-    url(r'^logout/$', dengue_linebot.views.logout),
+    url(r'^$', dengue_linebot.views.index, name='index'),
+    url(r'^login/$', dengue_linebot.views.login, name='login'),
+    url(r'^logout/$', dengue_linebot.views.logout, name='logout'),
 ]
