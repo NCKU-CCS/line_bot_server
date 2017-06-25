@@ -1,0 +1,254 @@
+[
+    {
+        "name": "is_asking_prevention",
+        "condition": {
+            "type": "complex-any",
+            "content": [
+                {
+                    "type": "complex-all",
+                    "content": [
+                        {
+                            "type": "any",
+                            "content": ["how", "how to"]
+                        },
+                        {
+                            "type": "all",
+                            "content": ["prevent"]
+                        }
+                    ]
+                },
+                {
+                    "type": "any",
+                    "content": ["prevent", "prevention"]
+                }
+            ]
+        }
+    },
+    {
+        "name": "is_asking_self_prevention",
+        "condition": {
+            "type": "any",
+            "content": ["self"]
+        },
+        "template_args": {
+            "preprocess_code": [
+                "msg = ''",
+                "if self.is_postback_event(event):",
+                "    msg = event.postback.data",
+                "elif self.is_text_message(event):",
+                "    msg = event.message.text"
+            ]
+        }
+    },
+    {
+        "name": "is_asking_env_prevention",
+        "condition": {
+            "type": "all",
+            "content": ["env", "environment"]
+        },
+        "template_args": {
+            "preprocess_code": [
+                "msg = ''",
+                "if self.is_postback_event(event):",
+                "    msg = event.postback.data",
+                "elif self.is_text_message(event):",
+                "    msg = event.message.text"
+            ]
+        }
+    },
+    {
+        "name": "is_asking_dengue_fever",
+        "condition": {
+            "type": "complex-all",
+            "content": [
+                {
+                    "type": "any",
+                    "content": ["What",  "What's"]
+                },
+                {
+                    "type": "all",
+                    "content": ["dengue fever"]
+                }
+            ]
+        }
+    },
+    {
+        "name": "is_asking_who_we_are",
+        "condition": {
+            "type": "complex-any",
+            "content": [
+                {
+                    "type": "any",
+                    "content": ["Who", "are you", "mosquito man"]
+                }
+            ]
+        }
+    },
+    {
+        "name": "is_asking_breeding_source",
+        "condition": {
+            "type": "complex-any",
+            "content": [
+                {
+                    "type": "all",
+                    "content": ["dengue fever", "breeding source"]
+                },
+                {
+                    "type": "complex-all",
+                    "content": [
+                        {
+                            "type": "all",
+                            "content": ["breeding source"]
+                        },
+                        {
+                            "type": "any",
+                            "content": ["what's", "what"]
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        "name": "is_greeting",
+        "condition": {
+            "type": "complex-any",
+            "content": [
+                {
+                    "type": "any",
+                    "content": ["hello", "hi"]
+                }
+            ]
+        },
+        "template_args": {
+            "preprocess_code": [
+                "msg = event.message.text.strip().lower()"
+            ]
+        }
+    },
+    {
+        "name": "is_asking_hospital",
+        "condition": {
+            "type": "complex-any",
+            "content": [
+                {
+                    "type": "match",
+                    "content": ["rapid screen"]
+                },
+                {
+                    "type": "complex-all",
+                    "content": [
+                        {
+                            "type": "any",
+                            "content": ["nearby", "near", "where"]
+                        },
+                        {
+                            "type": "any",
+                            "content": ["rapid screen", "hospital", "clinic"]
+                        }
+                    ]
+                },
+                {
+                    "type": "all",
+                    "content": ["rapid screen", "hospital"]
+                }
+            ]
+        }
+    },
+    {
+        "name": "is_giving_suggestion",
+        "condition": {
+            "type": "complex-any",
+            "content": [
+                {
+                    "type": "any",
+                    "content": ["suggestion", "advice"]
+                }
+            ]
+        }
+    },
+    {
+        "name": "is_asking_symptom",
+        "condition": {
+            "type": "complex-any",
+            "content": [
+                {
+                    "type": "all",
+                    "content": ["dengue fever", "symptom"]
+                },
+                {
+                    "type": "all",
+                    "content": ["symptom", "is"]
+                },
+                {
+                    "type": "all",
+                    "content": ["got", "dengue fever", "what"]
+                }
+            ]
+        }
+    },
+    {
+        "name": "is_asking_epidemic",
+        "condition": {
+            "type": "complex-any",
+            "content": [
+                {
+                    "type": "complex-all",
+                    "content": [
+                        {
+                            "type": "any",
+                            "content": ["recent", "this week", "currently", "dengue fever"]
+                        },
+                        {
+                            "type": "all",
+                            "content": ["epidemic"]
+                        }
+                    ]
+                },
+                {
+                    "type": "complex-all",
+                    "content": [
+                        {
+                            "type": "any",
+                            "content": ["how many", "how serious"]
+                        },
+                        {
+                            "type": "all",
+                            "content": ["dengue fever"]
+                        }
+                    ]
+                },
+                {
+                    "type": "all",
+                    "content": ["epidemic"]
+                }
+            ]
+        }
+    },
+    {
+        "name": "is_asking_usage",
+        "condition": {
+            "type": "complex-any",
+            "content": [
+                {
+                    "type": "any",
+                    "content": ["how to use", "what can you do", "help"]
+                },
+                {
+                    "type": "complex-all",
+                    "content": [
+                        {
+                            "type": "any",
+                            "content": ["what", "how"]
+                        },
+                        {
+                            "type": "any",
+                            "content": ["function", "use"]
+
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+]
