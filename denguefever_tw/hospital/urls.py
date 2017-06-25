@@ -1,4 +1,5 @@
 from django.conf.urls import url
+
 from .views import hospital_insert, hospital_nearby
 
 

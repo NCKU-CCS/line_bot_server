@@ -2,10 +2,12 @@ from django.db.utils import IntegrityError
 from django.core.management.base import BaseCommand
 
 import csv
-import shortuuid
 import logging
 
+import shortuuid
+
 from ...models import Hospital
+
 
 logger = logging.getLogger(__name__)
 
