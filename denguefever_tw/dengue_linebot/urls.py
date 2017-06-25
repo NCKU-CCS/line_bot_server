@@ -18,5 +18,5 @@ urlpatterns = [
     url(r'^gov_report_list/$', gov_report_list),
     url(r'^export_msg_log/$', export_msg_log),
     url(r'^push_msg/$', push_msg_form),
-    url(r'^push_msg_result/$', push_msg_result, name='push_msg_result'),     
+    url(r'^push_msg_result/$', push_msg_result, name='push_msg_result'),
 ]

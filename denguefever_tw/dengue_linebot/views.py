@@ -10,7 +10,6 @@ from django.contrib.auth.decorators import login_required
 import csv
 import os
 import logging
-from datetime import datetime
 from itertools import chain
 from pprint import pformat
 
@@ -18,18 +17,23 @@ import ujson
 from jsmin import jsmin
 from linebot import LineBotApi, WebhookParser
 from linebot.exceptions import InvalidSignatureError, LineBotApiError
-from linebot.models import MessageEvent, TextMessage, TextSendMessage, ImageSendMessage
 
+from .decorators import log_line_api_error, log_received_event
+from .utils import push_msg
 from .denguebot_fsm import generate_fsm_cls
 from .models import (
     MessageLog, LineUser, Suggestion, GovReport,
     BotReplyLog, UnrecognizedMsg, ResponseToUnrecogMsg, MinArea
 )
 
-MULTICAST_LIMIT = 150
-DEFAULT_LANGUAGE = 'zh_tw'
+
 CONFIG_PATH = os.path.join(settings.STATIC_ROOT, 'dengue_linebot/config/')
-BOT_TEMPLATE_PATH = os.path.join(os.getcwd(), 'dengue_linebot/templates/dengue_linebot/bot_templates')
+BOT_TEMPLATE_PATH = os.path.join(
+    os.getcwd(),
+    'dengue_linebot/templates/dengue_linebot/bot_templates'
+)
+DEFAULT_LANGUAGE = 'zh_tw'
+
 
 logger = logging.getLogger('django')
 
@@ -46,15 +50,15 @@ def _generate_fsm(language):
         cond_config = ujson.load(cond_file)
 
     cls_name = language + '_FSM'
-    FsmCls = generate_fsm_cls(cls_name, cond_config)
+    fsm_cls = generate_fsm_cls(cls_name, cond_config)
 
-    FSM_CONFIG_PATH = os.path.join(CONFIG_PATH, 'FSM.json')
-    with open(FSM_CONFIG_PATH, 'r') as fsm_config_file:
+    fsm_config_path = os.path.join(CONFIG_PATH, 'FSM.json')
+    with open(fsm_config_path, 'r') as fsm_config_file:
         data = ujson.loads(jsmin(fsm_config_file.read()))
         states = data['states']
         transitions = data['transitions']
 
-    return FsmCls(
+    return fsm_cls(
         states=states,
         transitions=transitions,
         bot_client=line_bot_api,
@@ -70,52 +74,11 @@ def _get_fsm(language):
         try:
             dengue_bot_fsms[language] = _generate_fsm(language)
         except FileNotFoundError:
-            logger.info('{language} FSM is not supported'.format(language=language))
+            logger.info('%s FSM is not supported', language)
             return dengue_bot_fsms['zh_tw']
         else:
-            logger.info('{language} FSM is generated'.format(language=language))
+            logger.info('%s FSM is generated', language)
             return dengue_bot_fsms[language]
-
-
-def _log_line_api_error(e):
-    logger.warning(
-        ('LineBotApiError\n'
-         'Status Code: {status_code}\n'
-         'Error Message: {err_msg}\n'
-         'Error Details: {err_detail}').format(status_code=e.status_code,
-                                               err_msg=e.error.message,
-                                               err_detail=e.error.details)
-    )
-
-
-def _log_received_event(event, state):
-    user_id = event.source.user_id
-
-    logger.info(
-        ('Receive Event\n'
-         'User ID: {user_id}\n'
-         'Event Type: {event_type}\n'
-         'User state: {state}\n').format(
-             user_id=user_id,
-             event_type=event.type,
-             state=state)
-    )
-
-    if isinstance(event, MessageEvent):
-        message_type = event.message.type
-
-        logger.info('Message type: {message_type}\n'.format(message_type=message_type))
-        if isinstance(event.message, TextMessage):
-            content = event.message.text
-            logger.info('Text: {text}\n'.format(text=content))
-        else:
-            content = '===This is {message_type} type message.==='.format(message_type=message_type)
-
-        message_log = MessageLog(speaker=LineUser.objects.get(user_id=user_id),
-                                 speak_time=datetime.fromtimestamp(event.timestamp/1000),
-                                 message_type=message_type,
-                                 content=content)
-        message_log.save()
 
 
 @csrf_exempt
@@ -131,8 +94,7 @@ def login(request):
     if user is not None and user.is_active:
         auth.login(request, user)
         return HttpResponseRedirect('/')
-    else:
-        return render_to_response('dengue_linebot/login.html')
+    return render_to_response('dengue_linebot/login.html')
 
 
 def logout(request):
@@ -149,13 +111,13 @@ def reply(request):
         body = request.body.decode('utf-8')
         events = line_parser.parse(body, signature)
     except KeyError:
-        logger.warning('Not a Line request.\n{req}\n'.format(req=pformat(request)))
+        logger.warning('Not a Line request.\n%s\n', pformat(request))
         return HttpResponseBadRequest()
     except InvalidSignatureError:
-        logger.warning('Invalid Signature.\n{req}'.format(req=pformat(request)))
+        logger.warning('Invalid Signature.\n%s\n', pformat(request))
         return HttpResponseBadRequest()
-    except LineBotApiError as e:
-        _log_line_api_error(e)
+    except LineBotApiError as error:
+        log_line_api_error(error)
         return HttpResponseBadRequest()
 
     for event in events:
@@ -171,7 +133,9 @@ def reply(request):
 
         state = cache.get(user_id) or 'user'
         language = line_user.language
-        _log_received_event(event, state)
+
+        log_received_event(event, state)
+
         machine = _get_fsm(language)
         machine.set_state(state)
 
@@ -181,20 +145,17 @@ def reply(request):
 
             logger.info(
                 ('After Advance\n'
-                 'Advance Status: {status}\n'
-                 'User ID: {user_id}\n'
-                 'Macinhe State: {m_state}\n'
-                 'User State: {u_state}\n').format(
-                     status=advance_status,
-                     user_id=user_id,
-                     m_state=machine.state,
-                     u_state=cache.get(user_id))
+                 'Advance Status: %s\n'
+                 'User ID: %s\n'
+                 'Macinhe State: %s\n'
+                 'User State: %s\n'),
+                advance_status, user_id, machine.state, cache.get(user_id)
             )
-        except LineBotApiError as e:
-            _log_line_api_error(e)
+        except LineBotApiError as error:
+            log_line_api_error(error)
             machine.reset_state()
         except Exception as e:
-            logger.exception('Exception when recevie event.\n{}'.format(str(e)))
+            logger.exception('Exception occurs when recevie event.\n %s', str(e))
             machine.reset_state()
     return HttpResponse()
 
@@ -209,7 +170,7 @@ def show_fsm(request):
     machine = _get_fsm(DEFAULT_LANGUAGE)
     resp = HttpResponse(content_type="image/png")
     resp.name = 'state.png'
-    machine = get_fsm(DEFAULT_LANGUAGE)
+    machine = _get_fsm(DEFAULT_LANGUAGE)
     machine.draw_graph(resp, prog='dot')
     return resp
 
@@ -341,51 +302,8 @@ def push_msg_result(request):
         for area_id in areas_id:
             users.extend(LineUser.objects.filter(location=MinArea.objects.get(area_id=area_id)))
 
-    push_logs = _push_msg(users=users, text=content, img=img)
+    push_logs = push_msg(line_bot_api, users=users, text=content, img=img)
     return render(request, 'dengue_linebot/push_msg_result.html', {
-        'error_msgs':error_msgs,
-        'push_logs':push_logs
+        'error_msgs': error_msgs,
+        'push_logs': push_logs
     })
-
-
-def _push_msg(users, text, img):
-    """Push message to specific users in Line Bot
-    
-    Use multicast of line_bot_api to push message to specific users, then
-    yields the logs of push message.
-
-    Args:
-        users (List[LineUser]): users who we send message to
-        text (str): the text in message
-        img (str): url of the picture in message
-
-    Yields:
-        List[str]: the logs of push message to users
-
-    Examples:
-        >>> for logs in _push_msg(users=users, text=content, img=img):
-                for log in logs:
-                    print(log)
-        'Successfully pushed msg to XXX'
-    """
-    splited_users_lists = [users[i:i + MULTICAST_LIMIT] for i in range(0, len(users), MULTICAST_LIMIT)]
-    msgs = list()
-    push_logs = list()
-
-    if text:
-        msgs.append(TextSendMessage(text=text))
-    if img:
-        msgs.append(ImageSendMessage(original_content_url=img, preview_image_url=img))
-
-    if msgs and splited_users_lists:
-        for users in splited_users_lists:
-            try:
-                line_bot_api.multicast([user.user_id for user in users], msgs)
-                push_logs = ["Successfully pushed msg to {user}".format(user=user) for user in users]
-            except LineBotApiError as e:
-                _log_line_api_error(e)
-                push_logs = [e.error.message]
-            finally:
-                yield push_logs
-    else:
-        logger.info('Fail to push message!')
