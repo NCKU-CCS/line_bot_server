@@ -88,6 +88,30 @@
         {
             "trigger": "advance",
             "source": "user",
+            "dest": "user_join",
+            "conditions": "is_follow_event"
+        },
+        {
+            "trigger": "advance",
+            "source": "user_join",
+            "dest": "receive_user_language",
+            "conditions": "is_valid_language"
+        },
+        {
+            "trigger": "advance",
+            "source": "user_join",
+            "dest": "user_join",
+            "conditions": "is_invalid_language"
+        },
+        {
+            "trigger": "finish",
+            "source": "receive_user_language",
+            "dest": "user"
+        },
+
+        {
+            "trigger": "advance",
+            "source": "user",
             "dest": "ask_prevention",
             "conditions": [
                 "is_text_message",
@@ -149,7 +173,7 @@
         {
             "trigger": "advance",
             "source": "ask_hospital",
-            "dest": "wait_user_location",
+            "dest": "wait_user_location"
         },
         {
             "trigger": "advance",
@@ -161,7 +185,7 @@
             "trigger": "advance",
             "source": "wait_user_location",
             "dest": "receive_user_address",
-            "conditions": "is_text_message",
+            "conditions": "is_text_message"
         },
 
         {
@@ -351,30 +375,6 @@
         {
             "trigger": "advance",
             "source": "user",
-            "dest": "user_join",
-            "conditions": "is_follow_event"
-        },
-        {
-            "trigger": "advance",
-            "source": "user_join",
-            "dest": "receive_user_language",
-            "conditions": "is_valid_language"
-        },
-        {
-            "trigger": "advance",
-            "source": "user_join",
-            "dest": "user_join",
-            "conditions": "is_invalid_language"
-        },
-        {
-            "trigger": "finish",
-            "source": "receive_user_language",
-            "dest": "user",
-        },
-
-        {
-            "trigger": "advance",
-            "source": "user",
             "dest": "ask_hospital_map",
             "conditions": [
                 "is_postback_event",
@@ -394,13 +394,13 @@
         {
             "trigger": "advance",
             "source": "gov_faculty_report",
-            "dest": "wait_gov_location",
+            "dest": "wait_gov_location"
         },
         {
             "trigger": "advance",
             "source": "wait_gov_location",
             "dest": "receive_gov_location",
-            "conditions": "is_location_message",
+            "conditions": "is_location_message"
         },
         {
             "trigger": "advance",
@@ -414,7 +414,7 @@
         {
             "trigger": "advance",
             "source": "user_register_location",
-            "dest": "wait_register_location",
+            "dest": "wait_register_location"
         },
         {
             "trigger": "advance",
