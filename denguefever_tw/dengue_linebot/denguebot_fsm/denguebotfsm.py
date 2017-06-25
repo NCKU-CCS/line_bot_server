@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-from functools import wraps, partial
+from functools import partial
 from urllib.parse import parse_qs
 
 from geopy.geocoders import GoogleV3
@@ -18,6 +18,7 @@ from ..models import (
     UnrecognizedMsg, MessageLog, BotReplyLog, ResponseToUnrecogMsg
 )
 from .botfsm import BotGraphMachine, LineBotEventConditionMixin
+from .decorators import log_fsm_condition, log_fsm_operation
 from .constants import (
     SYMPTOM_PREVIEW_URL, SYMPTOM_ORIGIN_URL, KNOWLEDGE_URL, QA_URL,
     LOC_STEP1_PREVIEW_URL, LOC_STEP1_ORIGIN_URL, LOC_STEP2_PREVIEW_URL, LOC_STEP2_ORIGIN_URL,
@@ -25,38 +26,6 @@ from .constants import (
 
 
 logger = logging.getLogger(__name__)
-
-
-def log_fsm_condition(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        result = func(*args, **kwargs)
-        logger.info(
-            '{condition} is {result}\n'.format(
-                condition=func.__name__,
-                result=result)
-        )
-        return result
-    return wrapper
-
-
-def log_fsm_operation(func):
-    @wraps(func)
-    def wrapper(self, *args, **kwargs):
-        pre_state = self.state
-        result = func(self, *args, **kwargs)
-        post_state = self.state
-        logger.info(
-            ('FSM Opertion\n'
-             'Beforce Advance: {pre_state}\n'
-             'Triggered Function: {func}\n'
-             'After Advance: {post_state}\n').format(
-                 pre_state=pre_state,
-                 func=func.__name__,
-                 post_state=post_state)
-        )
-        return result
-    return wrapper
 
 
 class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
@@ -378,7 +347,7 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
 
     @log_fsm_operation
     def on_enter_receive_user_location(self, event):
-        hospital_list = hospital.views.get_nearby_hospital(event.message.longitude,
+        hospital_list = hospital.utils.get_nearby_hospital(event.message.longitude,
                                                            event.message.latitude)
         self._send_hospital_msgs(hospital_list, event)
         self.finish_ans()
@@ -389,7 +358,7 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
         address = event.message.text
         geocode = coder.geocode(address)
         if geocode:
-            hospital_list = hospital.views.get_nearby_hospital(geocode.longitude, geocode.latitude)
+            hospital_list = hospital.utils.get_nearby_hospital(geocode.longitude, geocode.latitude)
             self._send_hospital_msgs(hospital_list, event)
             self.finish_ans()
         else:
@@ -505,8 +474,6 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
             line_user.save()
             self._send_template_text(event, 'register_location_success.j2')
         self.finish_ans()
-
-
 
 
 def generate_fsm_cls(cls_name, condition_config,
