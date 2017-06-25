@@ -1,18 +1,39 @@
 {% extends "base.html" %}
 
-{% block title %} Dengue LineBot {% endblock %}
+{% block page_content %}
+<h3>Functionality</h3>
+<ul class="list-group">
+  <a href="{% url 'Push Message' %}">
+    <li class="list-group-item">Push Message</li>
+  </a>
+</ul>
 
+<h3>Report</h3>
+<ul class="list-group">
+  <a href="{% url 'User List' %}">
+    <li class="list-group-item">User List</li>
+  </a>
+  <a href="{% url 'Msg Log List' %}">
+    <li class="list-group-item">Message Log</li>
+  </a>
+  <a href="{% url 'Unrecognized Msg List' %}">
+    <li class="list-group-item">Unrecognized Message List</li>
+  </a>
+  <a href="{% url 'Suggestion List' %}">
+    <li class="list-group-item">Suggestion List</li>
+  </a>
+  <a href="{% url 'Gov Report List' %}">
+    <li class="list-group-item">Government Report List</li>
+  </a>
+</ul>
 
-{% block content %}
-  <h1>Function List</h1>
-  <ul>
-    <li><a href="/dengue_linebot/show_fsm/">Show FSM</a></li>
-    <li><a href="/dengue_linebot/reload_fsm/">Reload FSM</a></li>
-    <li><a href="/dengue_linebot/user_list/">User List</a></li>
-    <li><a href="/dengue_linebot/msg_log_list/">Message Log</a></li>
-    <li><a href="/dengue_linebot/unrecog_msgs/">Unrecognized Message List</a></li>
-    <li><a href="/dengue_linebot/suggestion_list/">Suggestion List</a></li>
-    <li><a href="/dengue_linebot/gov_report_list/">Government Report List</a></li>
-    <li><a href="/dengue_linebot/push_msg/">Push Message</a></li>
-  </ul>
+<h3>FSM Operation</h3>
+<ul class="list-group">
+  <a href="{% url 'Show FSM' %}">
+    <li class="list-group-item">Show FSM</li>
+  </a>
+  <a href="{% url 'Reload FSM' %}">
+    <li class="list-group-item">Reload FSM</li>
+  </a>
+</ul>
 {% endblock %}

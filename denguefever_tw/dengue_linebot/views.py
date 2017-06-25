@@ -1,4 +1,4 @@
-from django.contrib import auth
+from django.contrib import auth, messages
 from django.conf import settings
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
 from django.core.cache import cache
@@ -179,7 +179,8 @@ def show_fsm(request):
 def reload_fsm(request):
     for language in dengue_bot_fsms.keys():
         dengue_bot_fsms[language] = _generate_fsm(language)
-    return HttpResponse()
+    messages.success(request, 'Reload Success')
+    return HttpResponseRedirect('/')
 
 
 @login_required
@@ -246,13 +247,13 @@ def handle_unrecognized_msg(request, mid):
 
     if request.method == 'POST':
         response_content = request.POST['proper_response']
-        response_to_unrecog_msg = ResponseToUnrecogMsg(
-            unrecognized_msg_content=msg_content,
-            content=response_content
+        response_to_unrecog_msg, _ = ResponseToUnrecogMsg.objects.get_or_create(
+            unrecognized_msg_content=msg_content
         )
-        response_to_unrecog_msg.save()
+        response_to_unrecog_msg.content = response_content
 
         context = {'msg_content': msg_content, 'proper_response': response_content}
+        messages.success(request, 'Update Response to %s' % response_content)
         return render(request, 'dengue_linebot/handle_unrecog_msg.html', context)
     else:
         try:
