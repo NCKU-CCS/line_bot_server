@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Area List{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+  <h1>Area List</h1>
+</div>
+<div class="col-md-8">
+  <ul>
+    {% for area_name, count in areas.items %}
+    <li>
+      {{ area_name }} ( {{count}} )
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}

@@ -40,9 +40,9 @@ class MinArea(models.Model):
     area = models.PolygonField(srid=4326)
 
     def __str__(self):
-        return ' {name} ({id})'.format(
-            name=self.area_name,
-            id=self.area_id
+        return ' {dis} {area}'.format(
+            dis=self.district_name,
+            area=self.area_name
         )
 
 

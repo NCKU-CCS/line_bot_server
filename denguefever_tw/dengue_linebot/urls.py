@@ -22,4 +22,5 @@ urlpatterns = [
     url(r'^export_msg_log/$', export_msg_log, name='Export Msg Log'),
     url(r'^push_msg/$', push_msg_form, name='Push Message'),
     url(r'^push_msg_result/$', push_msg_result, name='push_msg_result'),
+    url(r'^area_list/$', area_list, name='area_list')
 ]

@@ -308,3 +308,14 @@ def push_msg_result(request):
         'error_msgs': error_msgs,
         'push_logs': push_logs
     })
+
+
+@login_required
+def area_list(request):
+    areas = dict()
+    for minarea in MinArea.objects.all():
+        user_count = minarea.lineuser_set.count()
+        if user_count != 0:
+            areas[str(minarea)] = user_count
+    print(areas)
+    return render(request, 'dengue_linebot/area_list.html', {'areas': areas})
