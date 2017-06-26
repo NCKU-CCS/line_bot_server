@@ -8,9 +8,9 @@
 </div>
 <div class="col-md-8">
   <ul>
-    {% for area_name, count in areas.items %}
+    {% for area, count in areas.items %}
     <li>
-      {{ area_name }} ( {{count}} )
+      <a href="{% url 'Area Detail' area.area_id %}">{{area}} ( {{count}} )</a>
     </li>
     {% endfor %}
   </ul>

@@ -316,6 +316,13 @@ def area_list(request):
     for minarea in MinArea.objects.all():
         user_count = minarea.lineuser_set.count()
         if user_count != 0:
-            areas[str(minarea)] = user_count
-    print(areas)
+            areas[minarea] = user_count
     return render(request, 'dengue_linebot/area_list.html', {'areas': areas})
+
+
+@login_required
+def area_detail(request, area_id):
+    print(area_id)
+    minarea = MinArea.objects.get(area_id=area_id)
+    context = {'area': minarea, 'users': minarea.lineuser_set.all()}
+    return render(request, 'dengue_linebot/area_detail.html', context)
