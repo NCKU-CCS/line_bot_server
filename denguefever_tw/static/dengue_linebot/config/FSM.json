@@ -88,6 +88,30 @@
         {
             "trigger": "advance",
             "source": "user",
+            "dest": "user_join",
+            "conditions": "is_follow_event"
+        },
+        {
+            "trigger": "advance",
+            "source": "user_join",
+            "dest": "receive_user_language",
+            "conditions": "is_valid_language"
+        },
+        {
+            "trigger": "advance",
+            "source": "user_join",
+            "dest": "user_join",
+            "conditions": "is_invalid_language"
+        },
+        {
+            "trigger": "finish",
+            "source": "receive_user_language",
+            "dest": "user"
+        },
+
+        {
+            "trigger": "advance",
+            "source": "user",
             "dest": "ask_prevention",
             "conditions": [
                 "is_text_message",
@@ -351,30 +375,6 @@
         {
             "trigger": "advance",
             "source": "user",
-            "dest": "user_join",
-            "conditions": "is_follow_event"
-        },
-        {
-            "trigger": "advance",
-            "source": "user_join",
-            "dest": "receive_user_language",
-            "conditions": "is_valid_language"
-        },
-        {
-            "trigger": "advance",
-            "source": "user_join",
-            "dest": "user_join",
-            "conditions": "is_invalid_language"
-        },
-        {
-            "trigger": "finish",
-            "source": "receive_user_language",
-            "dest": "user",
-        },
-
-        {
-            "trigger": "advance",
-            "source": "user",
             "dest": "ask_hospital_map",
             "conditions": [
                 "is_postback_event",
@@ -394,7 +394,7 @@
         {
             "trigger": "advance",
             "source": "gov_faculty_report",
-            "dest": "wait_gov_location",
+            "dest": "wait_gov_location"
         },
         {
             "trigger": "advance",
@@ -414,7 +414,7 @@
         {
             "trigger": "advance",
             "source": "user_register_location",
-            "dest": "wait_register_location",
+            "dest": "wait_register_location"
         },
         {
             "trigger": "advance",
