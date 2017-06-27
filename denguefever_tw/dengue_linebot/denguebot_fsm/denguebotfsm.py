@@ -216,7 +216,7 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
         profile = self.bot_client.get_profile(user_id)
         user, created = LineUser.objects.get_or_create(user_id=profile.user_id)
         user.name = profile.display_name
-        user.picture_url = profile.picture_url or '',
+        user.picture_url = profile.picture_url or ''
         user.status_message = profile.status_message or ''
         user.save()
 
