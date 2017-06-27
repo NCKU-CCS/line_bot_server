@@ -322,7 +322,6 @@ def area_list(request):
 
 @login_required
 def area_detail(request, area_id):
-    print(area_id)
     minarea = MinArea.objects.get(area_id=area_id)
     context = {'area': minarea, 'users': minarea.lineuser_set.all()}
     return render(request, 'dengue_linebot/area_detail.html', context)
