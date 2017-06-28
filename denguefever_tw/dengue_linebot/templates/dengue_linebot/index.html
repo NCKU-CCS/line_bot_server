@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block page_content %}
+<h3>Functionality</h3>
+<ul class="list-group">
+  <a href="{% url 'Push Message' %}">
+    <li class="list-group-item">Push Message</li>
+  </a>
+</ul>
+
+<h3>Report</h3>
+<ul class="list-group">
+  <a href="{% url 'User List' %}">
+    <li class="list-group-item">User List</li>
+  </a>
+  <a href="{% url 'Msg Log List' %}">
+    <li class="list-group-item">Message Log</li>
+  </a>
+  <a href="{% url 'Unrecognized Msg List' %}">
+    <li class="list-group-item">Unrecognized Message List</li>
+  </a>
+  <a href="{% url 'Suggestion List' %}">
+    <li class="list-group-item">Suggestion List</li>
+  </a>
+  <a href="{% url 'Gov Report List' %}">
+    <li class="list-group-item">Government Report List</li>
+  </a>
+  <a href="{% url 'Area List' %}">
+    <li class="list-group-item">Area List</li>
+  </a>
+</ul>
+
+<h3>FSM Operation</h3>
+<ul class="list-group">
+  <a href="{% url 'Show FSM' %}">
+    <li class="list-group-item">Show FSM</li>
+  </a>
+  <a href="{% url 'Reload FSM' %}">
+    <li class="list-group-item">Reload FSM</li>
+  </a>
+</ul>
+{% endblock %}

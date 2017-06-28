@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Push Message{% endblock %}
+
+{% block page_content %}
+<form action="{% url 'push_msg_result' %}" method="POST">
+  {% csrf_token %}
+  <strong>Msg to :</strong>
+  <br>
+  <div style="width:95%;">
+    {% for area in areas %}
+    <div style="display:inline-block;">
+      <input type="checkbox" name="msg_to" value="{{area.area_id}}">{{area.district_name}}{{area.area_name}}
+    </div>
+    {% endfor %}
+  </div>
+  <div class="form-group">
+    <label for="content">Content</label>
+    <textarea class="form-control" name="content" id="content" style="height:50%; width:50%;"></textarea>
+  </div>
+  <div class="form-group">
+    <label for="img-url">Image (https URL)</label>
+    <input type="text" class="form-control" id="img-url" name="img" placeholder="Enter URL">
+  </div>
+  <button type="submit" class="btn btn-primary">Submit</button>
+</form>
+{% endblock %}

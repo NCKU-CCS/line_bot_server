@@ -2,16 +2,22 @@
 
 {% block title %}User List{% endblock %}
 
-{% block content %}
-<h1>Handler Unrecognized Message</h1>
-<br />
-Message: {{msg_content}}
-<br />
-<form method="POST">
-  {% csrf_token %}
-  <input id="proper_response" type="text" name="proper_response"
-         value="{{proper_response}}">
-  <br />
-  <input type="submit" value="Submit">
-</form>
+{% block page_content %}
+<div class="page-header">
+  <h1>Handler Unrecognized Message</h1>
+</div>
+
+<div class="col-md-8">
+  <form method="POST">
+    {% csrf_token %}
+    <div class="form-group">
+      <label class="col-from-label">Message: {{msg_content}}</label>
+      <br>
+      <input type="text" class="form-control"
+             id="proper_response" name="proper_response"
+             value="{{proper_response}}" placeholder="Response">
+    </div>
+    <button type="submit" class="btn btn-primary">Submit</button>
+  </form>
+</div>
 {% endblock %}

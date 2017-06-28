@@ -1,20 +1,24 @@
 {% extends "base.html" %}
 
-{% block title %} Message Log{% endblock %}
+{% block title %} Message Log {% endblock %}
 
-{% block content %}
-<label>Message Log</label><br>
-<ul>
-{% for msg_log in all_msg_logs %}
-  <li>
-    {{msg_log.speak_time}} -
+{% block page_content %}
+<div class="page-header">
+  <h1>Message Log</h1>
+</div>
+<div class="col-md-8">
+  <ul>
+    {% for msg_log in all_msg_logs %}
+    <li>
+      {{msg_log.speak_time}} -
       {% if msg_log.speaker %}
         {{msg_log.speaker.name}}
       {% else %}
         bot
       {% endif %}
-    - {{msg_log.content}}
-  </li>
-{% endfor %}
-</ul>
+      - {{msg_log.content}}
+    </li>
+    {% endfor %}
+  </ul>
+</div>
 {% endblock %}

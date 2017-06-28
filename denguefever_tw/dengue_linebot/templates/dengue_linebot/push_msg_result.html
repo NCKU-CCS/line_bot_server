@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Push Message Result{% endblock %}
+
+{% block page_content %}
+
+<div class="col-md-8">
+  {% if error_msgs %}
+    {% for msg in error_msgs %}
+    <strong>{{ msg }}</strong><br>
+    {% endfor %}
+
+  {% else %}
+    {% for logs in push_logs %}
+      {% for log in logs %}
+        {{ log }}<br>
+      {% endfor %}
+      {% endfor %}
+  {% endif %}
+  <br>
+  <a href=javascript:onclick=history.go(-1)>Previous page</a><br>
+  <a href="{% url 'index' %}">Go back to home page</a>
+</div>
+{% endblock}

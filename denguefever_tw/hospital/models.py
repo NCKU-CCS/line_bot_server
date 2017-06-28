@@ -15,9 +15,9 @@ class Hospital(models.Model):
     class Meta:
         unique_together = ('name', 'address', 'location')
 
-    def __str__(self):
-        return self.hospital_id
-
-    def save(self, **kwargs):
+    def save(self, *args, **kwargs):
         self.location = Point(float(self.lng), float(self.lat))
-        super(Hospital, self).save(**kwargs)
+        super().save(*args, **kwargs)
+
+    def __repr__(self):
+        return self.name

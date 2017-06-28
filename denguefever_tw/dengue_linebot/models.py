@@ -1,12 +1,29 @@
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import Point
 
+import logging
+
+
+logger = logging.getLogger(__name__)
+
 
 class LineUser(models.Model):
     user_id = models.TextField(primary_key=True)
     name = models.TextField()
     picture_url = models.TextField(blank=True)
     status_message = models.TextField(blank=True)
+    language = models.TextField(default='zh_tw')
+    lng = models.FloatField(default=0.0)
+    lat = models.FloatField(default=0.0)
+    location = models.ForeignKey('MinArea', null=True)
+
+    def save(self, *args, **kwargs):
+        if self.lng and self.lat:
+            try:
+                self.location = MinArea.objects.get(area__contains=Point(float(self.lng), float(self.lat)))
+            except MinArea.DoesNotExist:
+                logger.error('The location of the user can not match any minarea')
+        super(LineUser, self).save(*args, **kwargs)
 
     def __str__(self):
         return '{name} ({user_id})'.format(
@@ -15,13 +32,27 @@ class LineUser(models.Model):
         )
 
 
-class Advice(models.Model):
-    content = models.TextField()
-    user_id = models.TextField()
+class MinArea(models.Model):
+    area_id = models.TextField()
+    area_sn = models.TextField(primary_key=True)
+    area_name = models.TextField(null=True)
+    district_name = models.TextField(null=True)
+    area = models.PolygonField(srid=4326)
 
     def __str__(self):
-        return '{user_id}: {content}'.format(
-            user_id=self.user_id,
+        return ' {district} {area}'.format(
+            district=self.district_name,
+            area=self.area_name
+        )
+
+
+class Suggestion(models.Model):
+    content = models.TextField()
+    user = models.ForeignKey(LineUser, related_name='suggestion')
+
+    def __str__(self):
+        return '{user}: {content}'.format(
+            user=self.user.name,
             content=self.content
         )
 
@@ -61,13 +92,9 @@ class BotReplyLog(models.Model):
             content=self.content
         )
 
-    def __str__(self):
-        return self.__repr__()
-
 
 class UnrecognizedMsg(models.Model):
-    message_log = models.ForeignKey(MessageLog,
-                                    related_name='unrecognized_message_log')
+    message_log = models.ForeignKey(MessageLog, related_name='unrecognized_message_log')
 
     def __str__(self):
         return str(self.message_log)
@@ -79,13 +106,13 @@ class ResponseToUnrecogMsg(models.Model):
 
     def __str__(self):
         return 'Unrecognized Message: {unrecog_msg}\nResponse: {proper_response}'.format(
-            unrecog_msg=self.unrecognized_msg.content,
+            unrecog_msg=self.unrecognized_msg_content,
             proper_response=self.content
         )
 
 
 class GovReport(models.Model):
-    user_id = models.ForeignKey(LineUser, related_name='gov_faculty')
+    user = models.ForeignKey(LineUser, related_name='gov_faculty')
     action = models.TextField()
     note = models.TextField()
     report_time = models.DateTimeField()

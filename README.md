@@ -9,6 +9,11 @@ Including the following functionality
 
 The main logic of this bot is based on finite state machine.  
 
+# Clone This Project
+```sh
+git clone --recursive https://github.com/NCKU-CCS/line_bot_server
+```
+
 ---
 - [Pre Requirements](#prereq)
 - [Setup](#setup)
@@ -149,6 +154,13 @@ Import tainan hosptial data
 ```sh
 python manage.py import_dengue_hospital
 ```
+
+### Import Tainan Minimum Area Data
+
+```sh
+python manage.py import_tainan_minarea
+```
+
 
 ## <a name='cache'></a> Cache
 Cache is used to store user state.  

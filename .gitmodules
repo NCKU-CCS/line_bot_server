@@ -1,0 +1,3 @@
+[submodule "denguefever_tw/dengue_linebot/denguebot_fsm/botfsm"]
+	path = denguefever_tw/dengue_linebot/denguebot_fsm/botfsm
+	url = https://github.com/Lee-W/botfsm
