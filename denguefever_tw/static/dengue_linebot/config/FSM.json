@@ -82,7 +82,10 @@
         "unrecognized_msg",
         "user_register_location",
         "wait_register_location",
-        "receive_register_location"
+        "receive_register_location",
+        "user_bind_zapper",
+        "wait_bind_zapper",
+        "receive_zapper_id"
     ],
     "transitions": [
         {
@@ -423,6 +426,27 @@
             "conditions": "is_location_message"
         },
 
+        {
+            "trigger": "advance",
+            "source": "user",
+            "dest": "user_bind_zapper",
+            "conditions": [
+                "is_text_message",
+                "is_selecting_bind_zapper"
+            ]
+        },
+        {
+            "trigger": "advance",
+            "source": "user_bind_zapper",
+            "dest": "wait_bind_zapper"
+        },
+        {
+            "trigger": "advance",
+            "source": "wait_bind_zapper",
+            "dest": "receive_zapper_id",
+            "conditions": "is_zapper_id"
+        },
+
 
         {
             "trigger": "finish_ans",
@@ -439,7 +463,8 @@
                 "ask_breeding_source",
                 "ask_who_we_are",
                 "receive_gov_location",
-                "receive_register_location"
+                "receive_register_location",
+                "receive_zapper_id"
             ],
             "dest": "user"
         },
