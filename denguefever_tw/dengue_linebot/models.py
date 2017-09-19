@@ -16,7 +16,7 @@ class LineUser(models.Model):
     lng = models.FloatField(default=0.0)
     lat = models.FloatField(default=0.0)
     location = models.ForeignKey('MinArea', null=True)
-    zapper_id = models.TextField()
+    zapper_id = models.TextField(null=True)
 
     def save(self, *args, **kwargs):
         if self.lng and self.lat:
