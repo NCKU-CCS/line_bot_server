@@ -16,6 +16,7 @@ class LineUser(models.Model):
     lng = models.FloatField(default=0.0)
     lat = models.FloatField(default=0.0)
     location = models.ForeignKey('MinArea', null=True)
+    zapper_id = models.TextField()
 
     def save(self, *args, **kwargs):
         if self.lng and self.lat:
@@ -124,3 +125,9 @@ class GovReport(models.Model):
         if self.lng and self.lat:
             self.location = Point(float(self.lng), float(self.lat))
         super(GovReport, self).save(**kwargs)
+
+
+class ReportZapperMsg(models.Model):
+    reporter = models.ForeignKey(LineUser, related_name='report_zapper_msg')
+    report_time = models.DateTimeField()
+    content = models.TextField()
