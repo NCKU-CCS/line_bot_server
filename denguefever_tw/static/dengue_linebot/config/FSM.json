@@ -445,7 +445,7 @@
             "trigger": "advance",
             "source": "wait_bind_zapper",
             "dest": "receive_zapper_id",
-            "conditions": "is_zapper_id"
+            "conditions": "is_text_message"
         },
 
 

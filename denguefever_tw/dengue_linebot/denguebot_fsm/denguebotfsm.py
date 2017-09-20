@@ -479,6 +479,18 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
             self._send_template_text(event, 'register_location_success.j2')
         self.finish_ans()
 
+    @log_fsm_operation
+    def on_enter_receive_zapper_id(self, event):
+        try:
+            line_user = LineUser.objects.get(user_id=event.source.user_id)
+        except LineUser.DoesNotExist:
+            pass
+        else:
+            line_user.zapper_id = event.message.text
+            line_user.save()
+            self._send_template_text(event, 'bind_zapper_success.j2')
+        self.finish_ans()
+
 
 def generate_fsm_cls(cls_name, condition_config,
                      *, template_args=None, external_globals=None, cond_var_name=None):
