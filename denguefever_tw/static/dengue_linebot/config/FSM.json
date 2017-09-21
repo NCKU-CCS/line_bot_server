@@ -83,6 +83,7 @@
         "user_register_location",
         "wait_register_location",
         "receive_register_location",
+        "zapper_function",
         {
             "name": "wait_bind_zapper",
             "on_enter": {
@@ -435,6 +436,15 @@
         {
             "trigger": "advance",
             "source": "user",
+            "dest": "zapper_function",
+            "conditions": [
+                "is_text_message",
+                "is_selecting_zapper_func"
+            ]
+        },
+        {
+            "trigger": "advance",
+            "source": "user",
             "dest": "wait_bind_zapper",
             "conditions": [
                 "is_text_message",
@@ -465,6 +475,7 @@
                 "ask_who_we_are",
                 "receive_gov_location",
                 "receive_register_location",
+                "zapper_function",
                 "receive_zapper_id"
             ],
             "dest": "user"

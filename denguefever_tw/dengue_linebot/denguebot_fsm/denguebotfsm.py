@@ -29,37 +29,6 @@ logger = logging.getLogger(__name__)
 
 
 class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
-    ZAPPER_INFO_IMG_MSG = ImagemapSendMessage(
-        base_url='https://i.imgur.com/9piGQjS.jpg',
-        alt_text='zapper data',
-        base_size=BaseSize(height=1040, width=1040),
-        actions=[
-            URIImagemapAction(
-                link_uri='https://example.com/',
-                area=ImagemapArea(
-                    x=0, y=0, width=520, height=520
-                )
-            ),
-            MessageImagemapAction(
-                text='我想了解整個商圈的蚊蟲情況',
-                area=ImagemapArea(
-                    x=520, y=0, width=520, height=520
-                )
-            ),
-            MessageImagemapAction(
-                text='我的補蚊燈需要專人協助',
-                area=ImagemapArea(
-                    x=0, y=520, width=520, height=520
-                )
-            ),
-            MessageImagemapAction(
-                text='test',
-                area=ImagemapArea(
-                    x=520, y=520, width=520, height=520
-                )
-            ),
-        ]
-    )
     LOCATION_SEND_TUTOIRAL_MSG = [
         ImageSendMessage(
             original_content_url=LOC_STEP1_ORIGIN_URL,
@@ -146,8 +115,12 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
         return '7' == event.message.text
 
     @log_fsm_condition
-    def is_selecting_bind_zapper(self, event):
+    def is_selecting_zapper_func(self, event):
         return '8' == event.message.text
+
+    @log_fsm_condition
+    def is_selecting_bind_zapper(self, event):
+        return '我要綁定補蚊燈！' == event.message.text
 
     @log_fsm_condition
     def is_hospital_address(self, event):
@@ -243,6 +216,46 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
 
         hospital_messages = [template_message]
         return hospital_messages
+
+    def _create_zapper_imgmap(self, event):
+        zapper_imgmap = ImagemapSendMessage(
+            base_url='https://i.imgur.com/9piGQjS.jpg',
+            alt_text='user zapper information',
+            base_size=BaseSize(height=1040, width=1040),
+            actions=[
+                URIImagemapAction(
+                    link_uri='',
+                    area=ImagemapArea(
+                        x=0, y=0, width=520, height=520
+                    )
+                ),
+                MessageImagemapAction(
+                    text='我想了解整個商圈的蚊蟲情況',
+                    area=ImagemapArea(
+                        x=520, y=0, width=520, height=520
+                    )
+                ),
+                MessageImagemapAction(
+                    text='我的補蚊燈需要專人協助',
+                    area=ImagemapArea(
+                        x=0, y=520, width=520, height=520
+                    )
+                ),
+                MessageImagemapAction(
+                    text='我要綁定補蚊燈！',
+                    area=ImagemapArea(
+                        x=520, y=520, width=520, height=520
+                    )
+                ),
+            ]
+        )
+
+        line_user = LineUser.objects.get(user_id=event.source.user_id)
+        if line_user.zapper_id:
+            zapper_imgmap.actions[0].link_uri = 'https://example.com/' + line_user.zapper_id
+
+        print(zapper_imgmap)
+        return zapper_imgmap
 
     # --static--
     @log_fsm_operation
@@ -511,6 +524,18 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
         self.finish_ans()
 
     @log_fsm_operation
+    def on_enter_zapper_function(self, event):
+        messages = [
+            TextSendMessage(text=self.render_text('zapper_function.j2')),
+        ]
+        messages.append(self._create_zapper_imgmap(event))
+        self.reply_message_with_logging(
+            event,
+            messages=messages
+        )
+        self.finish_ans()
+
+    @log_fsm_operation
     def on_enter_receive_zapper_id(self, event):
         try:
             line_user = LineUser.objects.get(user_id=event.source.user_id)
@@ -523,8 +548,7 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
             messages = [
                 TextSendMessage(text=self.render_text('bind_zapper_success.j2'))
             ]
-            self.ZAPPER_INFO_IMG_MSG.actions[0].link_uri += line_user.zapper_id
-            messages.append(self.ZAPPER_INFO_IMG_MSG)
+            messages.append(self._create_zapper_imgmap(event))
             self.reply_message_with_logging(
                 event,
                 messages=messages
