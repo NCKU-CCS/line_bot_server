@@ -7,9 +7,9 @@ from geopy.geocoders import GoogleV3
 from condconf import CondMeta, cond_func_generator
 from linebot.models import (
     TextSendMessage, ImageSendMessage, LocationSendMessage,
-    TemplateSendMessage, CarouselTemplate,
+    TemplateSendMessage, ImagemapSendMessage, BaseSize, ImagemapArea, CarouselTemplate,
     CarouselColumn, MessageTemplateAction, URITemplateAction,
-    ButtonsTemplate, PostbackTemplateAction
+    ButtonsTemplate, PostbackTemplateAction, URIImagemapAction, MessageImagemapAction
 )
 
 import hospital
@@ -29,6 +29,37 @@ logger = logging.getLogger(__name__)
 
 
 class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
+    ZAPPER_INFO_IMG_MSG = ImagemapSendMessage(
+        base_url='https://i.imgur.com/9piGQjS.jpg',
+        alt_text='zapper data',
+        base_size=BaseSize(height=1040, width=1040),
+        actions=[
+            URIImagemapAction(
+                link_uri='https://example.com/',
+                area=ImagemapArea(
+                    x=0, y=0, width=520, height=520
+                )
+            ),
+            MessageImagemapAction(
+                text='我想了解整個商圈的蚊蟲情況',
+                area=ImagemapArea(
+                    x=520, y=0, width=520, height=520
+                )
+            ),
+            MessageImagemapAction(
+                text='我的補蚊燈需要專人協助',
+                area=ImagemapArea(
+                    x=0, y=520, width=520, height=520
+                )
+            ),
+            MessageImagemapAction(
+                text='test',
+                area=ImagemapArea(
+                    x=520, y=520, width=520, height=520
+                )
+            ),
+        ]
+    )
     LOCATION_SEND_TUTOIRAL_MSG = [
         ImageSendMessage(
             original_content_url=LOC_STEP1_ORIGIN_URL,
@@ -488,7 +519,16 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
         else:
             line_user.zapper_id = event.message.text
             line_user.save()
-            self._send_template_text(event, 'bind_zapper_success.j2')
+
+            messages = [
+                TextSendMessage(text=self.render_text('bind_zapper_success.j2'))
+            ]
+            self.ZAPPER_INFO_IMG_MSG.actions[0].link_uri += line_user.zapper_id
+            messages.append(self.ZAPPER_INFO_IMG_MSG)
+            self.reply_message_with_logging(
+                event,
+                messages=messages
+            )
         self.finish_ans()
 
 
