@@ -253,8 +253,6 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
         line_user = LineUser.objects.get(user_id=event.source.user_id)
         if line_user.zapper_id:
             zapper_imgmap.actions[0].link_uri = 'https://example.com/' + line_user.zapper_id
-
-        print(zapper_imgmap)
         return zapper_imgmap
 
     # --static--
