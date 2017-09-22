@@ -227,8 +227,20 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
             alt_text='user zapper information',
             base_size=BaseSize(height=1040, width=1040),
             actions=[
+                MessageImagemapAction(
+                    text='我要綁定補蚊燈！',
+                    area=ImagemapArea(
+                        x=520, y=520, width=520, height=520
+                    )
+                )
+            ]
+        )
+
+        line_user = LineUser.objects.get(user_id=event.source.user_id)
+        if line_user.zapper_id:
+            zapper_imgmap.actions[:0] = [
                 URIImagemapAction(
-                    link_uri='',
+                    link_uri='https://example.com/{id}'.format(id=line_user.zapper_id),
                     area=ImagemapArea(
                         x=0, y=0, width=520, height=520
                     )
@@ -244,19 +256,8 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
                     area=ImagemapArea(
                         x=0, y=520, width=520, height=520
                     )
-                ),
-                MessageImagemapAction(
-                    text='我要綁定補蚊燈！',
-                    area=ImagemapArea(
-                        x=520, y=520, width=520, height=520
-                    )
-                ),
+                )
             ]
-        )
-
-        line_user = LineUser.objects.get(user_id=event.source.user_id)
-        if line_user.zapper_id:
-            zapper_imgmap.actions[0].link_uri = 'https://example.com/{id}'.format(id=line_user.zapper_id)
         return zapper_imgmap
 
     # --static--
