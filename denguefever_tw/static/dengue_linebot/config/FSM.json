@@ -92,7 +92,16 @@
                 "template": "bind_zapper.j2"
             }
         },
-        "receive_zapper_id"
+        "receive_zapper_id",
+        {
+            "name": "wait_zapper_problem",
+            "on_enter": {
+                "name": "on_enter_wait_zapper_problem",
+                "oper_type": "text",
+                "template": "zapper_assist.j2"
+            }
+        },
+        "receive_zapper_problem"
     ],
     "transitions": [
         {
@@ -457,7 +466,21 @@
             "dest": "receive_zapper_id",
             "conditions": "is_text_message"
         },
-
+        {
+            "trigger": "advance",
+            "source": "user",
+            "dest": "wait_zapper_problem",
+            "conditions": [
+                "is_text_message",
+                "is_selecting_zapper_problem"
+            ]
+        },
+        {
+            "trigger": "advance",
+            "source": "wait_zapper_problem",
+            "dest": "receive_zapper_problem",
+            "conditions": "is_text_message"
+        },
 
         {
             "trigger": "finish_ans",
@@ -476,7 +499,8 @@
                 "receive_gov_location",
                 "receive_register_location",
                 "zapper_function",
-                "receive_zapper_id"
+                "receive_zapper_id",
+                "receive_zapper_problem"
             ],
             "dest": "user"
         },
@@ -490,7 +514,8 @@
                 "wait_user_location",
                 "wait_gov_location",
                 "wait_register_location",
-                "wait_bind_zapper"
+                "wait_bind_zapper",
+                "wait_zapper_problem"
             ],
             "dest": "unrecognized_msg",
             "conditions": "is_pass"

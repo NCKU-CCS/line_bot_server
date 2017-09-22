@@ -15,7 +15,7 @@ from linebot.models import (
 import hospital
 from ..models import (
     LineUser, Suggestion, GovReport,
-    UnrecognizedMsg, MessageLog, BotReplyLog, ResponseToUnrecogMsg
+    UnrecognizedMsg, MessageLog, BotReplyLog, ResponseToUnrecogMsg, ReportZapperMsg
 )
 from .botfsm import BotGraphMachine, LineBotEventConditionMixin
 from .decorators import log_fsm_condition, log_fsm_operation
@@ -121,6 +121,10 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
     @log_fsm_condition
     def is_selecting_bind_zapper(self, event):
         return '我要綁定補蚊燈！' == event.message.text
+
+    @log_fsm_condition
+    def is_selecting_zapper_problem(self, event):
+        return '我的補蚊燈需要專人協助' == event.message.text
 
     @log_fsm_condition
     def is_hospital_address(self, event):
@@ -551,6 +555,17 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
                 event,
                 messages=messages
             )
+        self.finish_ans()
+
+    @log_fsm_operation
+    def on_enter_receive_zapper_problem(self, event):
+        self._send_template_text(event, 'thank_zapper_report.j2')
+        report = ReportZapperMsg(
+            reporter=LineUser.objects.get(user_id=event.source.user_id),
+            report_time=datetime.fromtimestamp(event.timestamp/1000),
+            content=event.message.text
+        )
+        report.save()
         self.finish_ans()
 
 
