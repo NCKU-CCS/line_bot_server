@@ -20,7 +20,7 @@ from ..models import (
 from .botfsm import BotGraphMachine, LineBotEventConditionMixin
 from .decorators import log_fsm_condition, log_fsm_operation
 from .constants import (
-    SYMPTOM_PREVIEW_URL, SYMPTOM_ORIGIN_URL, KNOWLEDGE_URL, QA_URL,
+    SYMPTOM_PREVIEW_URL, SYMPTOM_ORIGIN_URL, KNOWLEDGE_URL, QA_URL, ZAPPER_IMGMAP_URL,
     LOC_STEP1_PREVIEW_URL, LOC_STEP1_ORIGIN_URL, LOC_STEP2_PREVIEW_URL, LOC_STEP2_ORIGIN_URL,
 )
 
@@ -223,7 +223,7 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
 
     def _create_zapper_imgmap(self, event):
         zapper_imgmap = ImagemapSendMessage(
-            base_url='https://i.imgur.com/9piGQjS.jpg',
+            base_url=ZAPPER_IMGMAP_URL,
             alt_text='user zapper information',
             base_size=BaseSize(height=1040, width=1040),
             actions=[
