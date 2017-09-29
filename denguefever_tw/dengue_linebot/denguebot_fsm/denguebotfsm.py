@@ -582,8 +582,7 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
 
 def generate_fsm_cls(cls_name, condition_config,
                      *, template_args=None, external_globals=None, cond_var_name=None):
-    """Generate FSM class through condition config"""
-
+    """Generate FSM class through condition config."""
     if not template_args:
         template_args = {
             'decorators': ['log_fsm_condition'],
