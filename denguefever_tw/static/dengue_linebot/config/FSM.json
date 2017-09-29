@@ -101,7 +101,8 @@
                 "template": "zapper_assist.j2"
             }
         },
-        "receive_zapper_problem"
+        "receive_zapper_problem",
+        "ask_area_zapper_cond"
     ],
     "transitions": [
         {
@@ -481,6 +482,15 @@
             "dest": "receive_zapper_problem",
             "conditions": "is_text_message"
         },
+        {
+            "trigger": "advance",
+            "source": "user",
+            "dest": "ask_area_zapper_cond",
+            "conditions": [
+                "is_text_message",
+                "is_selecting_area_cond"
+            ]
+        },
 
         {
             "trigger": "finish_ans",
@@ -500,7 +510,8 @@
                 "receive_register_location",
                 "zapper_function",
                 "receive_zapper_id",
-                "receive_zapper_problem"
+                "receive_zapper_problem",
+                "ask_area_zapper_cond"
             ],
             "dest": "user"
         },

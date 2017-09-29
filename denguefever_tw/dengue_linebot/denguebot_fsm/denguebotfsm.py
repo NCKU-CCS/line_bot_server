@@ -127,6 +127,10 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
         return '我的補蚊燈需要專人協助' == event.message.text
 
     @log_fsm_condition
+    def is_selecting_area_cond(self, event):
+        return '我想了解整個商圈的蚊蟲情況' == event.message.text
+
+    @log_fsm_condition
     def is_hospital_address(self, event):
         return 'hosptial_address' in parse_qs(event.postback.data)
 
@@ -568,6 +572,11 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
             content=event.message.text
         )
         report.save()
+        self.finish_ans()
+
+    @log_fsm_operation
+    def on_enter_ask_area_zapper_cond(self, event):
+        self._send_template_text(event, 'ask_area_zapper.j2')
         self.finish_ans()
 
 
