@@ -10,3 +10,5 @@ ZAPPER_IMGMAP_URL = 'https://i.imgur.com/Alxxg9u.jpg'
 
 KNOWLEDGE_URL = 'http://www.denguefever.tw/knowledge'
 QA_URL = 'http://www.denguefever.tw/qa'
+
+IMGUR_API_URL = 'https://api.imgur.com/3/image'
