@@ -14,3 +14,5 @@ condconf==0.1.1
 typing==3.6.1
 jinja2==2.9.6
 six==1.10.0
+selenium==3.6.0
+pyvirtualdisplay==0.2.1

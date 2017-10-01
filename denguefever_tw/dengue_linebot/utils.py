@@ -11,9 +11,10 @@ from linebot.exceptions import LineBotApiError
 from linebot.models import TextSendMessage, ImageSendMessage
 
 from .decorators import log_line_api_error
-from .constants import IMGUR_API_URL
 
 MULTICAST_LIMIT = 150
+IMGUR_API_URL = 'https://api.imgur.com/3/image'
+ZAPPER_MAP_URL = 'https://netdbncku.github.io/zapper-web/zapper_web/public'
 
 logger = logging.getLogger('django')
 
@@ -62,11 +63,12 @@ def push_msg(line_bot_api, users, text, img):
         logger.info('Fail to push message!')
 
 
-def get_web_screenshot(web_url):
+def get_web_screenshot(zapper_id, web_url=ZAPPER_MAP_URL):
+    logger.info('Getting zapper web screenshot and uploading......\n')
     display = Display(visible=0)
     display.start()
 
-    browser = webdriver.Chrome(executable_path="/home/chiehcheng/Downloads/chromedriver")
+    browser = webdriver.Chrome(executable_path=settings.CHROME_DRIVER_PATH)
     browser.set_window_size(1200, 900)
     browser.implicitly_wait(10)
     browser.get(web_url)
@@ -81,8 +83,15 @@ def get_web_screenshot(web_url):
         "POST", url=IMGUR_API_URL, data=img_base64,
         headers={'authorization': 'Client-ID {client_id}'.format(client_id=settings.IMGUR_CLIENT_ID)}
     )
+    response_json = response.json()
 
-    if response.status == 200:
-        return [response.status, response.data.link]
+    if response.status_code == 200:
+        return response_json['data']['link']
     else:
-        return [response.status, response.data.error]
+        logger.warning(
+            ('ImgurApiError\n'
+             'Status Code: %s\n'
+             'Error Message: %s\n'),
+            response.status_code, response_json['data']['error']
+        )
+        return False
