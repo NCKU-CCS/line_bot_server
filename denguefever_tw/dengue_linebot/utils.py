@@ -3,7 +3,6 @@ from django.conf import settings
 import logging
 import requests
 from time import sleep
-
 from selenium import webdriver
 from pyvirtualdisplay import Display
 
