@@ -46,6 +46,9 @@ brew install redis
 sudo apt-get install redis-server
 ```
 
+- Xvfb
+- [ChromeDrirver](https://sites.google.com/a/chromium.org/chromedriver/)
+
 
 
 ## Install Dependency
@@ -89,6 +92,8 @@ The variables needed including
 - `POSTGRESQL_PASSWORD`
 - `POSTGRESQL_HOST`
 - `POSTGRESQL_PORT`
+- `IMGUR_CLIENT_ID`
+- `CHROME_DRIVER_PATH`
 
 ### Develop
 When developing, you should define your own `local.py` under `settings/`.  
@@ -106,6 +111,8 @@ Then, set up the following variables
 - `DATABASES`
 - `LINE_CHANNEL_SECRET`
 - `LINE_CHANNEL_ACCESS_TOKEN`
+- `IMGUR_CLIENT_ID`
+- `CHROME_DRIVER_PATH`
 
 e.g.
 
@@ -115,6 +122,8 @@ from .base import *
 SECRET_KEY = 'This is the secret key'
 LINE_CHANNEL_SECRET = 'This is your Line channel secret'
 LINE_CHANNEL_ACCESS_TOKEN = 'This is your Line access token'
+IMGUR_CLIENT_ID = 'This is your client id of Imgur application'
+CHROME_DRIVER_PATH = 'This is path of your Chrome browser driver'
 
 DATABASES = {
     'default': {
