@@ -1,18 +1,25 @@
+from django.conf import settings
+
 import logging
+import requests
+from time import sleep
+from selenium import webdriver
+from pyvirtualdisplay import Display
 
 from linebot.exceptions import LineBotApiError
 from linebot.models import TextSendMessage, ImageSendMessage
 
 from .decorators import log_line_api_error
 
-
 MULTICAST_LIMIT = 150
+IMGUR_API_URL = 'https://api.imgur.com/3/image'
+ZAPPER_MAP_URL = 'https://netdbncku.github.io/zapper-web/zapper_web/public'
 
 logger = logging.getLogger('django')
 
 
 def push_msg(line_bot_api, users, text, img):
-    """Push message to specific users in Line Bot
+    """Push message to specific users in Line Bot.
 
     Use multicast of line_bot_api to push message to specific users, then
     yields the logs of push message.
@@ -53,3 +60,37 @@ def push_msg(line_bot_api, users, text, img):
                 yield push_logs
     else:
         logger.info('Fail to push message!')
+
+
+def get_web_screenshot(zapper_id, web_url=ZAPPER_MAP_URL):
+    logger.info('Getting zapper web screenshot and uploading......\n')
+    display = Display(visible=0)
+    display.start()
+
+    browser = webdriver.Chrome(executable_path=settings.CHROME_DRIVER_PATH)
+    browser.set_window_size(1200, 900)
+    browser.implicitly_wait(10)
+    browser.get(web_url)
+
+    sleep(3)
+    img_base64 = browser.get_screenshot_as_base64()
+    browser.close()
+    display.stop()
+
+    # upload to imgur.com
+    response = requests.request(
+        "POST", url=IMGUR_API_URL, data=img_base64,
+        headers={'authorization': 'Client-ID {client_id}'.format(client_id=settings.IMGUR_CLIENT_ID)}
+    )
+    response_json = response.json()
+
+    if response.status_code == 200:
+        return response_json['data']['link']
+    else:
+        logger.warning(
+            ('ImgurApiError\n'
+             'Status Code: %s\n'
+             'Error Message: %s\n'),
+            response.status_code, response_json['data']['error']
+        )
+        return False

@@ -8,7 +8,7 @@ from condconf import CondMeta, cond_func_generator
 from linebot.models import (
     TextSendMessage, ImageSendMessage, LocationSendMessage,
     TemplateSendMessage, ImagemapSendMessage, BaseSize, ImagemapArea, CarouselTemplate,
-    CarouselColumn, MessageTemplateAction, URITemplateAction,
+    CarouselColumn, MessageTemplateAction, URITemplateAction, ConfirmTemplate,
     ButtonsTemplate, PostbackTemplateAction, URIImagemapAction, MessageImagemapAction
 )
 
@@ -23,6 +23,7 @@ from .constants import (
     SYMPTOM_PREVIEW_URL, SYMPTOM_ORIGIN_URL, KNOWLEDGE_URL, QA_URL, ZAPPER_IMGMAP_URL,
     LOC_STEP1_PREVIEW_URL, LOC_STEP1_ORIGIN_URL, LOC_STEP2_PREVIEW_URL, LOC_STEP2_ORIGIN_URL,
 )
+from ..utils import get_web_screenshot
 
 
 logger = logging.getLogger(__name__)
@@ -125,6 +126,10 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
     @log_fsm_condition
     def is_selecting_zapper_problem(self, event):
         return '我的補蚊燈需要專人協助' == event.message.text
+
+    @log_fsm_condition
+    def is_selecting_area_cond(self, event):
+        return '我想了解整個商圈的蚊蟲情況' == event.message.text
 
     @log_fsm_condition
     def is_hospital_address(self, event):
@@ -570,11 +575,46 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
         report.save()
         self.finish_ans()
 
+    @log_fsm_operation
+    def on_enter_ask_area_zapper_cond(self, event):
+        self.reply_message_with_logging(
+            event,
+            messages=TemplateSendMessage(
+                alt_text=self.render_text('ask_area_zapper.j2'),
+                template=ButtonsTemplate(
+                    title=self.render_text('zapper_map.j2'),
+                    text=self.render_text('ask_area_zapper.j2'),
+                    actions=[
+                        PostbackTemplateAction(
+                            label=self.render_text('label/confirm_label.j2'),
+                            data='confirm'
+                        )
+                    ]
+                )
+            )
+        )
+
+    @log_fsm_operation
+    def on_enter_send_area_zapper_cond(self, event):
+        img_url = get_web_screenshot(
+            zapper_id=LineUser.objects.get(user_id=event.source.user_id).zapper_id
+        )
+        if img_url:
+            self.reply_message_with_logging(
+                event,
+                messages=ImageSendMessage(
+                    original_content_url=img_url,
+                    preview_image_url=img_url
+                )
+            )
+        else:
+            self._send_template_text(event, 'get_img_fail.j2')
+        self.finish_ans()
+
 
 def generate_fsm_cls(cls_name, condition_config,
                      *, template_args=None, external_globals=None, cond_var_name=None):
-    """Generate FSM class through condition config"""
-
+    """Generate FSM class through condition config."""
     if not template_args:
         template_args = {
             'decorators': ['log_fsm_condition'],

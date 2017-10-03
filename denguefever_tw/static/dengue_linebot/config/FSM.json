@@ -101,7 +101,9 @@
                 "template": "zapper_assist.j2"
             }
         },
-        "receive_zapper_problem"
+        "receive_zapper_problem",
+        "ask_area_zapper_cond",
+        "send_area_zapper_cond"
     ],
     "transitions": [
         {
@@ -481,6 +483,21 @@
             "dest": "receive_zapper_problem",
             "conditions": "is_text_message"
         },
+        {
+            "trigger": "advance",
+            "source": "user",
+            "dest": "ask_area_zapper_cond",
+            "conditions": [
+                "is_text_message",
+                "is_selecting_area_cond"
+            ]
+        },
+        {
+            "trigger": "advance",
+            "source": "ask_area_zapper_cond",
+            "dest": "send_area_zapper_cond",
+            "conditions": "is_postback_event"
+        },
 
         {
             "trigger": "finish_ans",
@@ -500,7 +517,8 @@
                 "receive_register_location",
                 "zapper_function",
                 "receive_zapper_id",
-                "receive_zapper_problem"
+                "receive_zapper_problem",
+                "send_area_zapper_cond"
             ],
             "dest": "user"
         },
@@ -515,7 +533,8 @@
                 "wait_gov_location",
                 "wait_register_location",
                 "wait_bind_zapper",
-                "wait_zapper_problem"
+                "wait_zapper_problem",
+                "ask_area_zapper_cond"
             ],
             "dest": "unrecognized_msg",
             "conditions": "is_pass"
