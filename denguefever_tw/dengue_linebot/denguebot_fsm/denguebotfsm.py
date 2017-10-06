@@ -235,7 +235,7 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
                 MessageImagemapAction(
                     text='我要綁定補蚊燈！',
                     area=ImagemapArea(
-                        x=520, y=520, width=520, height=520
+                        x=0, y=0, width=520, height=520
                     )
                 )
             ]
