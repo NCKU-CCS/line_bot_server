@@ -82,7 +82,28 @@
         "unrecognized_msg",
         "user_register_location",
         "wait_register_location",
-        "receive_register_location"
+        "receive_register_location",
+        "zapper_function",
+        {
+            "name": "wait_bind_zapper",
+            "on_enter": {
+                "name": "on_enter_wait_bind_zapper",
+                "oper_type": "text",
+                "template": "bind_zapper.j2"
+            }
+        },
+        "receive_zapper_id",
+        {
+            "name": "wait_zapper_problem",
+            "on_enter": {
+                "name": "on_enter_wait_zapper_problem",
+                "oper_type": "text",
+                "template": "zapper_assist.j2"
+            }
+        },
+        "receive_zapper_problem",
+        "ask_area_zapper_cond",
+        "send_area_zapper_cond"
     ],
     "transitions": [
         {
@@ -423,6 +444,60 @@
             "conditions": "is_location_message"
         },
 
+        {
+            "trigger": "advance",
+            "source": "user",
+            "dest": "zapper_function",
+            "conditions": [
+                "is_text_message",
+                "is_selecting_zapper_func"
+            ]
+        },
+        {
+            "trigger": "advance",
+            "source": "user",
+            "dest": "wait_bind_zapper",
+            "conditions": [
+                "is_text_message",
+                "is_selecting_bind_zapper"
+            ]
+        },
+        {
+            "trigger": "advance",
+            "source": "wait_bind_zapper",
+            "dest": "receive_zapper_id",
+            "conditions": "is_text_message"
+        },
+        {
+            "trigger": "advance",
+            "source": "user",
+            "dest": "wait_zapper_problem",
+            "conditions": [
+                "is_text_message",
+                "is_selecting_zapper_problem"
+            ]
+        },
+        {
+            "trigger": "advance",
+            "source": "wait_zapper_problem",
+            "dest": "receive_zapper_problem",
+            "conditions": "is_text_message"
+        },
+        {
+            "trigger": "advance",
+            "source": "user",
+            "dest": "ask_area_zapper_cond",
+            "conditions": [
+                "is_text_message",
+                "is_selecting_area_cond"
+            ]
+        },
+        {
+            "trigger": "advance",
+            "source": "ask_area_zapper_cond",
+            "dest": "send_area_zapper_cond",
+            "conditions": "is_postback_event"
+        },
 
         {
             "trigger": "finish_ans",
@@ -439,7 +514,11 @@
                 "ask_breeding_source",
                 "ask_who_we_are",
                 "receive_gov_location",
-                "receive_register_location"
+                "receive_register_location",
+                "zapper_function",
+                "receive_zapper_id",
+                "receive_zapper_problem",
+                "send_area_zapper_cond"
             ],
             "dest": "user"
         },
@@ -452,7 +531,10 @@
                 "ask_prevention",
                 "wait_user_location",
                 "wait_gov_location",
-                "wait_register_location"
+                "wait_register_location",
+                "wait_bind_zapper",
+                "wait_zapper_problem",
+                "ask_area_zapper_cond"
             ],
             "dest": "unrecognized_msg",
             "conditions": "is_pass"
