@@ -235,12 +235,12 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
                 MessageImagemapAction(
                     text='我要綁定補蚊燈！',
                     area=ImagemapArea(
-                        x=520, y=520, width=520, height=520
+                        x=0, y=0, width=520, height=520
                     )
                 )
             ]
         )
-
+        '''
         line_user = LineUser.objects.get(user_id=event.source.user_id)
         if line_user.zapper_id:
             # Use slice to prepend these three object to actions list.
@@ -264,6 +264,7 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
                     )
                 )
             ]
+        '''
         return zapper_imgmap
 
     # --static--
