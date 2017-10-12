@@ -241,7 +241,6 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
                 )
             ]
         )
-        '''
         line_user = LineUser.objects.get(user_id=event.source.user_id)
         if line_user.zapper_id:
             # Use slice to prepend these three object to actions list.
@@ -249,7 +248,7 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
                 URIImagemapAction(
                     link_uri='https://example.com/{id}'.format(id=line_user.zapper_id),
                     area=ImagemapArea(
-                        x=0, y=0, width=520, height=520
+                        x=520, y=520, width=520, height=520
                     )
                 ),
                 MessageImagemapAction(
@@ -265,7 +264,6 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
                     )
                 )
             ]
-        '''
         return zapper_imgmap
 
     # --static--
@@ -548,10 +546,10 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
 
     @log_fsm_operation
     def on_enter_receive_zapper_id(self, event):
-        request = requests.get('https://mosquitokiller.csie.ncku.edu.tw/apis/lamps/{id}?key=hash'.format(
+        response = requests.get('https://mosquitokiller.csie.ncku.edu.tw/apis/lamps/{id}?key=hash'.format(
             id=event.message.text
         ))
-        if request.status_code == 200:
+        if response.status_code == 200:
             line_user = LineUser.objects.get(user_id=event.source.user_id)
             line_user.zapper_id = event.message.text
             line_user.save()

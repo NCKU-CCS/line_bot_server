@@ -13,7 +13,7 @@ from .decorators import log_line_api_error
 
 MULTICAST_LIMIT = 150
 IMGUR_API_URL = 'https://api.imgur.com/3/image'
-ZAPPER_MAP_URL = 'https://netdbncku.github.io/zapper-web/zapper_web/public'
+ZAPPER_MAP_URL = 'http://mosquitokiller.csie.ncku.edu.tw/zapperTown/index.html'
 
 logger = logging.getLogger('django')
 
@@ -62,15 +62,24 @@ def push_msg(line_bot_api, users, text, img):
         logger.info('Fail to push message!')
 
 
-def get_web_screenshot(zapper_id, web_url=ZAPPER_MAP_URL):
+def get_web_screenshot(zapper_id):
     logger.info('Getting zapper web screenshot and uploading......\n')
     display = Display(visible=0)
     display.start()
 
+    response = requests.get('https://mosquitokiller.csie.ncku.edu.tw/apis/lamps/{id}?key=hash'.format(
+        id=zapper_id
+    ))
+    response_json = response.json()
+
     browser = webdriver.Chrome(executable_path=settings.CHROME_DRIVER_PATH)
     browser.set_window_size(1200, 900)
     browser.implicitly_wait(10)
-    browser.get(web_url)
+    browser.get('{url}?lng={lng}&lat={lat}'.format(
+        url=ZAPPER_MAP_URL,
+        lng=response_json['lamp_location'][0],
+        lat=response_json['lamp_location'][1]
+    ))
 
     sleep(3)
     img_base64 = browser.get_screenshot_as_base64()
