@@ -1,4 +1,5 @@
 import logging
+import requests
 from datetime import datetime
 from functools import partial
 from urllib.parse import parse_qs
@@ -547,11 +548,11 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
 
     @log_fsm_operation
     def on_enter_receive_zapper_id(self, event):
-        try:
+        request = requests.get('https://mosquitokiller.csie.ncku.edu.tw/apis/lamps/{id}?key=hash'.format(
+            id=event.message.text
+        ))
+        if request.status_code == 200:
             line_user = LineUser.objects.get(user_id=event.source.user_id)
-        except LineUser.DoesNotExist:
-            pass
-        else:
             line_user.zapper_id = event.message.text
             line_user.save()
 
@@ -563,6 +564,8 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
                 event,
                 messages=messages
             )
+        else:
+            self._send_template_text(event, 'bind_zapper_fail.j2')
         self.finish_ans()
 
     @log_fsm_operation
