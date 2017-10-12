@@ -81,7 +81,7 @@ def get_web_screenshot(zapper_id):
         lat=response_json['lamp_location'][1]
     ))
 
-    sleep(3)
+    sleep(1)
     img_base64 = browser.get_screenshot_as_base64()
     browser.close()
     display.stop()
