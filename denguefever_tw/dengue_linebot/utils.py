@@ -5,7 +5,7 @@ import requests
 from time import sleep
 from selenium import webdriver
 from pyvirtualdisplay import Display
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlencode
 
 from linebot.exceptions import LineBotApiError
 from linebot.models import TextSendMessage, ImageSendMessage
@@ -76,11 +76,10 @@ def get_web_screenshot(zapper_id):
     browser = webdriver.Chrome(executable_path=settings.CHROME_DRIVER_PATH)
     browser.set_window_size(1200, 900)
     browser.implicitly_wait(10)
-    browser.get('{url}?lng={lng}&lat={lat}'.format(
-        url=ZAPPER_MAP_URL,
-        lng=response_json['lamp_location'][0],
-        lat=response_json['lamp_location'][1]
-    ))
+
+    params = urlencode({'lng': response_json['lamp_location'][0], 'lat': response_json['lamp_location'][1]})
+    web_url = urljoin(BASE_ZAPPER_API_URL, '/zapperTown/index.html?%s' % params)
+    browser.get(web_url)
 
     sleep(1)
     img_base64 = browser.get_screenshot_as_base64()
