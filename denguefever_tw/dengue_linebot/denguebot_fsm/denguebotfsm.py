@@ -2,7 +2,7 @@ import logging
 import requests
 from datetime import datetime
 from functools import partial
-from urllib.parse import parse_qs
+from urllib.parse import parse_qs, urljoin
 
 from geopy.geocoders import GoogleV3
 from condconf import CondMeta, cond_func_generator
@@ -23,6 +23,7 @@ from .decorators import log_fsm_condition, log_fsm_operation
 from .constants import (
     SYMPTOM_PREVIEW_URL, SYMPTOM_ORIGIN_URL, KNOWLEDGE_URL, QA_URL, ZAPPER_IMGMAP_URL,
     LOC_STEP1_PREVIEW_URL, LOC_STEP1_ORIGIN_URL, LOC_STEP2_PREVIEW_URL, LOC_STEP2_ORIGIN_URL,
+    BASE_ZAPPER_API_URL
 )
 from ..utils import get_web_screenshot
 
@@ -546,9 +547,8 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
 
     @log_fsm_operation
     def on_enter_receive_zapper_id(self, event):
-        response = requests.get('https://mosquitokiller.csie.ncku.edu.tw/apis/lamps/{id}?key=hash'.format(
-            id=event.message.text
-        ))
+        zapper_api = urljoin(BASE_ZAPPER_API_URL, 'lamps/{id}?key=hash'.format(id=event.message.text))
+        response = requests.get(zapper_api)
         if response.status_code == 200:
             line_user = LineUser.objects.get(user_id=event.source.user_id)
             line_user.zapper_id = event.message.text
@@ -569,8 +569,13 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
     @log_fsm_operation
     def on_enter_receive_zapper_problem(self, event):
         self._send_template_text(event, 'thank_zapper_report.j2')
+        line_user = LineUser.objects.get(user_id=event.source.user_id)
+        payload = {'lamp_id': line_user.zapper_id, 'comment_content': event.message.text}
+        zapper_api = urljoin(BASE_ZAPPER_API_URL, 'comments')
+        requests.post(url=zapper_api, data=payload)
+
         report = ReportZapperMsg(
-            reporter=LineUser.objects.get(user_id=event.source.user_id),
+            reporter=line_user,
             report_time=datetime.fromtimestamp(event.timestamp/1000),
             content=event.message.text
         )
