@@ -5,6 +5,7 @@ import requests
 from time import sleep
 from selenium import webdriver
 from pyvirtualdisplay import Display
+from urllib.parse import urljoin
 
 from linebot.exceptions import LineBotApiError
 from linebot.models import TextSendMessage, ImageSendMessage
@@ -14,6 +15,7 @@ from .decorators import log_line_api_error
 MULTICAST_LIMIT = 150
 IMGUR_API_URL = 'https://api.imgur.com/3/image'
 ZAPPER_MAP_URL = 'http://mosquitokiller.csie.ncku.edu.tw/zapperTown/index.html'
+BASE_ZAPPER_API_URL = 'https://mosquitokiller.csie.ncku.edu.tw/apis/'
 
 logger = logging.getLogger('django')
 
@@ -67,9 +69,8 @@ def get_web_screenshot(zapper_id):
     display = Display(visible=0)
     display.start()
 
-    response = requests.get('https://mosquitokiller.csie.ncku.edu.tw/apis/lamps/{id}?key=hash'.format(
-        id=zapper_id
-    ))
+    zapper_api = urljoin(BASE_ZAPPER_API_URL, 'lamps/{id}?key=hash'.format(id=zapper_id))
+    response = requests.get(zapper_api)
     response_json = response.json()
 
     browser = webdriver.Chrome(executable_path=settings.CHROME_DRIVER_PATH)
