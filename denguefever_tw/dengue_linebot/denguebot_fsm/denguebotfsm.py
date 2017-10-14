@@ -242,29 +242,33 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
                 )
             ]
         )
-        line_user = LineUser.objects.get(user_id=event.source.user_id)
-        if line_user.zapper_id:
-            # Use slice to prepend these three object to actions list.
-            zapper_imgmap.actions[:0] = [
-                URIImagemapAction(
-                    link_uri='https://example.com/{id}'.format(id=line_user.zapper_id),
-                    area=ImagemapArea(
-                        x=520, y=520, width=520, height=520
+        try:
+            line_user = LineUser.objects.get(user_id=event.source.user_id)
+        except LineUser.DoesNotExist:
+            logger.error('Line User Does Not Exist')
+        else:
+            if line_user.zapper_id:
+                # Use slice to prepend these three object to actions list.
+                zapper_imgmap.actions[:0] = [
+                    URIImagemapAction(
+                        link_uri='https://example.com/{id}'.format(id=line_user.zapper_id),
+                        area=ImagemapArea(
+                            x=520, y=520, width=520, height=520
+                        )
+                    ),
+                    MessageImagemapAction(
+                        text='我想了解整個商圈的蚊蟲情況',
+                        area=ImagemapArea(
+                            x=520, y=0, width=520, height=520
+                        )
+                    ),
+                    MessageImagemapAction(
+                        text='我的補蚊燈需要專人協助',
+                        area=ImagemapArea(
+                            x=0, y=520, width=520, height=520
+                        )
                     )
-                ),
-                MessageImagemapAction(
-                    text='我想了解整個商圈的蚊蟲情況',
-                    area=ImagemapArea(
-                        x=520, y=0, width=520, height=520
-                    )
-                ),
-                MessageImagemapAction(
-                    text='我的補蚊燈需要專人協助',
-                    area=ImagemapArea(
-                        x=0, y=520, width=520, height=520
-                    )
-                )
-            ]
+                ]
         return zapper_imgmap
 
     # --static--
@@ -525,7 +529,7 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
         try:
             line_user = LineUser.objects.get(user_id=event.source.user_id)
         except LineUser.DoesNotExist:
-            pass
+            logger.error('Line User Does Not Exist')
         else:
             line_user.lat = event.message.latitude
             line_user.lng = event.message.longitude
@@ -550,18 +554,22 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
         zapper_api = urljoin(BASE_ZAPPER_API_URL, 'lamps/{id}?key=hash'.format(id=event.message.text))
         response = requests.get(zapper_api)
         if response.status_code == 200:
-            line_user = LineUser.objects.get(user_id=event.source.user_id)
-            line_user.zapper_id = event.message.text
-            line_user.save()
+            try:
+                line_user = LineUser.objects.get(user_id=event.source.user_id)
+            except LineUser.DoesNotExist:
+                logger.error('Line User Does Not Exist')
+            else:
+                line_user.zapper_id = event.message.text
+                line_user.save()
 
-            messages = [
-                TextSendMessage(text=self.render_text('bind_zapper_success.j2'))
-            ]
-            messages.append(self._create_zapper_imgmap(event))
-            self.reply_message_with_logging(
-                event,
-                messages=messages
-            )
+                messages = [
+                    TextSendMessage(text=self.render_text('bind_zapper_success.j2'))
+                ]
+                messages.append(self._create_zapper_imgmap(event))
+                self.reply_message_with_logging(
+                    event,
+                    messages=messages
+                )
         else:
             self._send_template_text(event, 'bind_zapper_fail.j2')
         self.finish_ans()
@@ -569,17 +577,21 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
     @log_fsm_operation
     def on_enter_receive_zapper_problem(self, event):
         self._send_template_text(event, 'thank_zapper_report.j2')
-        line_user = LineUser.objects.get(user_id=event.source.user_id)
-        payload = {'lamp_id': line_user.zapper_id, 'comment_content': event.message.text}
-        zapper_api = urljoin(BASE_ZAPPER_API_URL, 'comments')
-        requests.post(url=zapper_api, data=payload)
+        try:
+            line_user = LineUser.objects.get(user_id=event.source.user_id)
+        except LineUser.DoesNotExist:
+            logger.error('Line User Does Not Exist')
+        else:
+            payload = {'lamp_id': line_user.zapper_id, 'comment_content': event.message.text}
+            zapper_api = urljoin(BASE_ZAPPER_API_URL, 'comments')
+            requests.post(url=zapper_api, data=payload)
 
-        report = ReportZapperMsg(
-            reporter=line_user,
-            report_time=datetime.fromtimestamp(event.timestamp/1000),
-            content=event.message.text
-        )
-        report.save()
+            report = ReportZapperMsg(
+                reporter=line_user,
+                report_time=datetime.fromtimestamp(event.timestamp/1000),
+                content=event.message.text
+            )
+            report.save()
         self.finish_ans()
 
     @log_fsm_operation
@@ -603,19 +615,22 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
 
     @log_fsm_operation
     def on_enter_send_area_zapper_cond(self, event):
-        img_url = get_web_screenshot(
-            zapper_id=LineUser.objects.get(user_id=event.source.user_id).zapper_id
-        )
-        if img_url:
-            self.reply_message_with_logging(
-                event,
-                messages=ImageSendMessage(
-                    original_content_url=img_url,
-                    preview_image_url=img_url
-                )
-            )
+        try:
+            line_user = LineUser.objects.get(user_id=event.source.user_id)
+        except LineUser.DoesNotExist:
+            logger.error('Line User Does Not Exist')
         else:
-            self._send_template_text(event, 'get_img_fail.j2')
+            img_url = get_web_screenshot(zapper_id=line_user.zapper_id)
+            if img_url:
+                self.reply_message_with_logging(
+                    event,
+                    messages=ImageSendMessage(
+                        original_content_url=img_url,
+                        preview_image_url=img_url
+                    )
+                )
+            else:
+                self._send_template_text(event, 'get_img_fail.j2')
         self.finish_ans()
 
 
