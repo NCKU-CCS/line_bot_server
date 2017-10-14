@@ -1,12 +1,12 @@
 from django.conf import settings
 
 import logging
-import requests
 from time import sleep
-from selenium import webdriver
-from pyvirtualdisplay import Display
 from urllib.parse import urljoin, urlencode
 
+import requests
+from selenium import webdriver
+from pyvirtualdisplay import Display
 from linebot.exceptions import LineBotApiError
 from linebot.models import TextSendMessage, ImageSendMessage
 

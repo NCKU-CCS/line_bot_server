@@ -1,9 +1,9 @@
 import logging
-import requests
 from datetime import datetime
 from functools import partial
 from urllib.parse import parse_qs, urljoin
 
+import requests
 from geopy.geocoders import GoogleV3
 from condconf import CondMeta, cond_func_generator
 from linebot.models import (
