@@ -14,7 +14,6 @@ from .decorators import log_line_api_error
 
 MULTICAST_LIMIT = 150
 IMGUR_API_URL = 'https://api.imgur.com/3/image'
-ZAPPER_MAP_URL = 'http://mosquitokiller.csie.ncku.edu.tw/zapperTown/index.html'
 BASE_ZAPPER_API_URL = 'https://mosquitokiller.csie.ncku.edu.tw/apis/'
 
 logger = logging.getLogger('django')
