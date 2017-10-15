@@ -10,3 +10,5 @@ ZAPPER_IMGMAP_URL = 'https://i.imgur.com/VSzcxtq.jpg'
 
 KNOWLEDGE_URL = 'http://www.denguefever.tw/knowledge'
 QA_URL = 'http://www.denguefever.tw/qa'
+
+BASE_ZAPPER_API_URL = 'https://mosquitokiller.csie.ncku.edu.tw/apis/'
