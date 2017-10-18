@@ -63,22 +63,35 @@ def push_msg(line_bot_api, users, text, img):
         logger.info('Fail to push message!')
 
 
-def get_web_screenshot(zapper_id):
+def get_web_info(zapper_id, mode):
+    web_info = dict()
+    if mode == 'area':
+        zapper_api = urljoin(BASE_ZAPPER_API_URL, 'lamps/{id}?key=hash'.format(id=zapper_id))
+        response = requests.get(zapper_api)
+        response_json = response.json()
+
+        params = urlencode({'lng': response_json['lamp_location'][0], 'lat': response_json['lamp_location'][1]})
+        web_info['url'] = urljoin(BASE_ZAPPER_API_URL, '/zapperTown/index.html?%s' % params)
+        web_info['width'] = 1200
+        web_info['height'] = 900
+    elif mode == 'self':
+        web_info['url'] = urljoin(BASE_ZAPPER_API_URL, '/zapperCitizen?%s' % zapper_id)
+        web_info['width'] = 1000
+        web_info['height'] = 700
+    else:
+        pass
+    return web_info
+
+
+def get_web_screenshot(web_info):
     logger.info('Getting zapper web screenshot and uploading......\n')
     display = Display(visible=0)
     display.start()
 
-    zapper_api = urljoin(BASE_ZAPPER_API_URL, 'lamps/{id}?key=hash'.format(id=zapper_id))
-    response = requests.get(zapper_api)
-    response_json = response.json()
-
     browser = webdriver.Chrome(executable_path=settings.CHROME_DRIVER_PATH)
-    browser.set_window_size(1200, 900)
+    browser.set_window_size(web_info['width'], web_info['height'])
     browser.implicitly_wait(10)
-
-    params = urlencode({'lng': response_json['lamp_location'][0], 'lat': response_json['lamp_location'][1]})
-    web_url = urljoin(BASE_ZAPPER_API_URL, '/zapperTown/index.html?%s' % params)
-    browser.get(web_url)
+    browser.get(web_info['url'])
 
     sleep(1)
     img_base64 = browser.get_screenshot_as_base64()

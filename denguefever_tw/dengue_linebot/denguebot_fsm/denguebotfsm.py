@@ -25,7 +25,7 @@ from .constants import (
     LOC_STEP1_PREVIEW_URL, LOC_STEP1_ORIGIN_URL, LOC_STEP2_PREVIEW_URL, LOC_STEP2_ORIGIN_URL,
     BASE_ZAPPER_API_URL
 )
-from ..utils import get_web_screenshot
+from ..utils import get_web_info, get_web_screenshot
 
 
 logger = logging.getLogger(__name__)
@@ -123,11 +123,15 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
 
     @log_fsm_condition
     def is_selecting_bind_zapper(self, event):
-        return '我要綁定補蚊燈！' == event.message.text
+        return '我要綁定捕蚊燈！' == event.message.text
+
+    @log_fsm_condition
+    def is_selecting_zapper_cond(self, event):
+        return '我的捕蚊燈狀況' == event.message.text
 
     @log_fsm_condition
     def is_selecting_zapper_problem(self, event):
-        return '我的補蚊燈需要專人協助' == event.message.text
+        return '我的捕蚊燈需要專人協助' == event.message.text
 
     @log_fsm_condition
     def is_selecting_area_cond(self, event):
@@ -235,7 +239,7 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
             base_size=BaseSize(height=1040, width=1040),
             actions=[
                 MessageImagemapAction(
-                    text='我要綁定補蚊燈！',
+                    text='我要綁定捕蚊燈！',
                     area=ImagemapArea(
                         x=0, y=0, width=520, height=520
                     )
@@ -250,22 +254,22 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
             if line_user.zapper_id:
                 # Use slice to prepend these three object to actions list.
                 zapper_imgmap.actions[:0] = [
-                    URIImagemapAction(
-                        link_uri='https://example.com/{id}'.format(id=line_user.zapper_id),
-                        area=ImagemapArea(
-                            x=520, y=520, width=520, height=520
-                        )
-                    ),
                     MessageImagemapAction(
-                        text='我想了解整個商圈的蚊蟲情況',
+                        text='我的捕蚊燈狀況',
                         area=ImagemapArea(
                             x=520, y=0, width=520, height=520
                         )
                     ),
                     MessageImagemapAction(
-                        text='我的補蚊燈需要專人協助',
+                        text='我想了解整個商圈的蚊蟲情況',
                         area=ImagemapArea(
                             x=0, y=520, width=520, height=520
+                        )
+                    ),
+                    MessageImagemapAction(
+                        text='我的捕蚊燈需要專人協助',
+                        area=ImagemapArea(
+                            x=520, y=520, width=520, height=520
                         )
                     )
                 ]
@@ -595,6 +599,46 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
         self.finish_ans()
 
     @log_fsm_operation
+    def on_enter_ask_zapper_cond(self, event):
+        self.reply_message_with_logging(
+            event,
+            messages=TemplateSendMessage(
+                alt_text=self.render_text('ask_zapper_cond.j2'),
+                template=ButtonsTemplate(
+                    title=self.render_text('zapper.j2'),
+                    text=self.render_text('ask_zapper_cond.j2'),
+                    actions=[
+                        PostbackTemplateAction(
+                            label=self.render_text('label/confirm_label.j2'),
+                            data='confirm'
+                        )
+                    ]
+                )
+            )
+        )
+
+    @log_fsm_operation
+    def on_enter_send_zapper_cond(self, event):
+        try:
+            line_user = LineUser.objects.get(user_id=event.source.user_id)
+        except LineUser.DoesNotExist:
+            logger.error('Line User Does Not Exist')
+        else:
+            web_info = get_web_info(zapper_id=line_user.zapper_id, mode='self')
+            img_url = get_web_screenshot(web_info=web_info)
+            if img_url:
+                self.reply_message_with_logging(
+                    event,
+                    messages=ImageSendMessage(
+                        original_content_url=img_url,
+                        preview_image_url=img_url
+                    )
+                )
+            else:
+                self._send_template_text(event, 'get_img_fail.j2')
+        self.finish_ans()
+
+    @log_fsm_operation
     def on_enter_ask_area_zapper_cond(self, event):
         self.reply_message_with_logging(
             event,
@@ -620,7 +664,8 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
         except LineUser.DoesNotExist:
             logger.error('Line User Does Not Exist')
         else:
-            img_url = get_web_screenshot(zapper_id=line_user.zapper_id)
+            web_info = get_web_info(zapper_id=line_user.zapper_id, mode='area')
+            img_url = get_web_screenshot(web_info=web_info)
             if img_url:
                 self.reply_message_with_logging(
                     event,
