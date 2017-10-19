@@ -275,6 +275,43 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
                 ]
         return zapper_imgmap
 
+    def _send_confirm_template_msg(self, event, title, text):
+        self.reply_message_with_logging(
+            event,
+            messages=TemplateSendMessage(
+                alt_text=text,
+                template=ButtonsTemplate(
+                    title=title,
+                    text=text,
+                    actions=[
+                        PostbackTemplateAction(
+                            label=self.render_text('label/confirm_label.j2'),
+                            data='confirm'
+                        )
+                    ]
+                )
+            )
+        )
+
+    def _send_zapper_cond_img(self, event, mode):
+        try:
+            line_user = LineUser.objects.get(user_id=event.source.user_id)
+        except LineUser.DoesNotExist:
+            logger.error('Line User Does Not Exist')
+        else:
+            web_info = get_web_info(zapper_id=line_user.zapper_id, mode=mode)
+            img_url = get_web_screenshot(web_info=web_info)
+            if img_url:
+                self.reply_message_with_logging(
+                    event,
+                    messages=ImageSendMessage(
+                        original_content_url=img_url,
+                        preview_image_url=img_url
+                    )
+                )
+            else:
+                self._send_template_text(event, 'get_img_fail.j2')
+
     # --static--
     @log_fsm_operation
     def on_enter_user_join(self, event):
@@ -600,82 +637,28 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
 
     @log_fsm_operation
     def on_enter_ask_zapper_cond(self, event):
-        self.reply_message_with_logging(
+        self._send_confirm_template_msg(
             event,
-            messages=TemplateSendMessage(
-                alt_text=self.render_text('ask_zapper_cond.j2'),
-                template=ButtonsTemplate(
-                    title=self.render_text('zapper.j2'),
-                    text=self.render_text('ask_zapper_cond.j2'),
-                    actions=[
-                        PostbackTemplateAction(
-                            label=self.render_text('label/confirm_label.j2'),
-                            data='confirm'
-                        )
-                    ]
-                )
-            )
+            title=self.render_text('zapper.j2'),
+            text=self.render_text('ask_zapper_cond.j2')
         )
 
     @log_fsm_operation
     def on_enter_send_zapper_cond(self, event):
-        try:
-            line_user = LineUser.objects.get(user_id=event.source.user_id)
-        except LineUser.DoesNotExist:
-            logger.error('Line User Does Not Exist')
-        else:
-            web_info = get_web_info(zapper_id=line_user.zapper_id, mode='self')
-            img_url = get_web_screenshot(web_info=web_info)
-            if img_url:
-                self.reply_message_with_logging(
-                    event,
-                    messages=ImageSendMessage(
-                        original_content_url=img_url,
-                        preview_image_url=img_url
-                    )
-                )
-            else:
-                self._send_template_text(event, 'get_img_fail.j2')
+        self._send_zapper_cond_img(event, mode='self')
         self.finish_ans()
 
     @log_fsm_operation
     def on_enter_ask_area_zapper_cond(self, event):
-        self.reply_message_with_logging(
+        self._send_confirm_template_msg(
             event,
-            messages=TemplateSendMessage(
-                alt_text=self.render_text('ask_area_zapper.j2'),
-                template=ButtonsTemplate(
-                    title=self.render_text('zapper_map.j2'),
-                    text=self.render_text('ask_area_zapper.j2'),
-                    actions=[
-                        PostbackTemplateAction(
-                            label=self.render_text('label/confirm_label.j2'),
-                            data='confirm'
-                        )
-                    ]
-                )
-            )
+            title=self.render_text('zapper_map.j2'),
+            text=self.render_text('ask_area_zapper.j2')
         )
 
     @log_fsm_operation
     def on_enter_send_area_zapper_cond(self, event):
-        try:
-            line_user = LineUser.objects.get(user_id=event.source.user_id)
-        except LineUser.DoesNotExist:
-            logger.error('Line User Does Not Exist')
-        else:
-            web_info = get_web_info(zapper_id=line_user.zapper_id, mode='area')
-            img_url = get_web_screenshot(web_info=web_info)
-            if img_url:
-                self.reply_message_with_logging(
-                    event,
-                    messages=ImageSendMessage(
-                        original_content_url=img_url,
-                        preview_image_url=img_url
-                    )
-                )
-            else:
-                self._send_template_text(event, 'get_img_fail.j2')
+        self._send_zapper_cond_img(event, mode='area')
         self.finish_ans()
 
 
