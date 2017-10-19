@@ -223,7 +223,7 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
             base_size=BaseSize(height=1040, width=1040),
             actions=[
                 MessageImagemapAction(
-                    text='我要綁定捕蚊燈！',
+                    text=self.render_text('zapper_imgmap/bind_zapper.j2'),
                     area=ImagemapArea(
                         x=0, y=0, width=520, height=520
                     )
@@ -239,19 +239,19 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
                 # Use slice to prepend these three object to actions list.
                 zapper_imgmap.actions[:0] = [
                     MessageImagemapAction(
-                        text='我的捕蚊燈狀況',
+                        text=self.render_text('zapper_imgmap/self_zapper_cond.j2'),
                         area=ImagemapArea(
                             x=520, y=0, width=520, height=520
                         )
                     ),
                     MessageImagemapAction(
-                        text='我想了解整個商圈的蚊蟲情況',
+                        text=self.render_text('zapper_imgmap/area_zapper_cond.j2'),
                         area=ImagemapArea(
                             x=0, y=520, width=520, height=520
                         )
                     ),
                     MessageImagemapAction(
-                        text='我的捕蚊燈需要專人協助',
+                        text=self.render_text('zapper_imgmap/zapper_assist.j2'),
                         area=ImagemapArea(
                             x=520, y=520, width=520, height=520
                         )
