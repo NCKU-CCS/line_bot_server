@@ -123,19 +123,19 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
 
     @log_fsm_condition
     def is_selecting_bind_zapper(self, event):
-        return '我要綁定捕蚊燈！' == event.message.text
+        return self.is_binding_zapper(event)
 
     @log_fsm_condition
     def is_selecting_zapper_cond(self, event):
-        return '我的捕蚊燈狀況' == event.message.text
+        return self.is_asking_zapper_cond(event)
 
     @log_fsm_condition
     def is_selecting_zapper_problem(self, event):
-        return '我的捕蚊燈需要專人協助' == event.message.text
+        return self.is_zapper_problem(event)
 
     @log_fsm_condition
     def is_selecting_area_cond(self, event):
-        return '我想了解整個商圈的蚊蟲情況' == event.message.text
+        return self.is_asking_area_cond(event)
 
     @log_fsm_condition
     def is_hospital_address(self, event):
