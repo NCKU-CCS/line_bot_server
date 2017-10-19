@@ -78,8 +78,6 @@ def get_web_info(zapper_id, mode):
         web_info['url'] = urljoin(BASE_ZAPPER_API_URL, '/zapperCitizen?%s' % zapper_id)
         web_info['width'] = 1000
         web_info['height'] = 700
-    else:
-        pass
     return web_info
 
 
