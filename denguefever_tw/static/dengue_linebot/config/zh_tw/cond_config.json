@@ -277,28 +277,28 @@
         }
     },
     {
-        "name": "is_binding_zapper",
+        "name": "is_selecting_bind_zapper",
         "condition": {
             "type": "match",
             "content": ["我要綁定捕蚊燈！"]
         }
     },
     {
-        "name": "is_asking_zapper_cond",
+        "name": "is_selecting_zapper_cond",
         "condition": {
             "type": "match",
             "content": ["我的捕蚊燈狀況"]
         }
     },
     {
-        "name": "is_zapper_problem",
+        "name": "is_selecting_zapper_problem",
         "condition": {
             "type": "match",
             "content": ["我的捕蚊燈需要專人協助"]
         }
     },
     {
-        "name": "is_asking_area_cond",
+        "name": "is_selecting_area_cond",
         "condition": {
             "type": "match",
             "content": ["我想了解整個商圈的蚊蟲情況"]

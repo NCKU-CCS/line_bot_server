@@ -122,22 +122,6 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
         return '8' == event.message.text
 
     @log_fsm_condition
-    def is_selecting_bind_zapper(self, event):
-        return self.is_binding_zapper(event)
-
-    @log_fsm_condition
-    def is_selecting_zapper_cond(self, event):
-        return self.is_asking_zapper_cond(event)
-
-    @log_fsm_condition
-    def is_selecting_zapper_problem(self, event):
-        return self.is_zapper_problem(event)
-
-    @log_fsm_condition
-    def is_selecting_area_cond(self, event):
-        return self.is_asking_area_cond(event)
-
-    @log_fsm_condition
     def is_hospital_address(self, event):
         return 'hosptial_address' in parse_qs(event.postback.data)
 
