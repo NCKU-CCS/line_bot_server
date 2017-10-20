@@ -86,7 +86,9 @@ def get_web_screenshot(web_info):
     display = Display(visible=0)
     display.start()
 
-    browser = webdriver.Chrome(executable_path=settings.CHROME_DRIVER_PATH)
+    chrome_options = webdriver.ChromeOptions()
+    chrome_options.add_argument('--no-sandbox')
+    browser = webdriver.Chrome(executable_path=settings.CHROME_DRIVER_PATH, chrome_options=chrome_options)
     browser.set_window_size(web_info['width'], web_info['height'])
     browser.implicitly_wait(10)
     browser.get(web_info['url'])
