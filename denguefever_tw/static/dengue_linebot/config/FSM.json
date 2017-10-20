@@ -103,7 +103,9 @@
         },
         "receive_zapper_problem",
         "ask_area_zapper_cond",
-        "send_area_zapper_cond"
+        "send_area_zapper_cond",
+        "ask_zapper_cond",
+        "send_zapper_cond"
     ],
     "transitions": [
         {
@@ -498,6 +500,21 @@
             "dest": "send_area_zapper_cond",
             "conditions": "is_postback_event"
         },
+        {
+            "trigger": "advance",
+            "source": "user",
+            "dest": "ask_zapper_cond",
+            "conditions": [
+                "is_text_message",
+                "is_selecting_zapper_cond"
+            ]
+        },
+        {
+            "trigger": "advance",
+            "source": "ask_zapper_cond",
+            "dest": "send_zapper_cond",
+            "conditions": "is_postback_event"
+        },
 
         {
             "trigger": "finish_ans",
@@ -518,7 +535,8 @@
                 "zapper_function",
                 "receive_zapper_id",
                 "receive_zapper_problem",
-                "send_area_zapper_cond"
+                "send_area_zapper_cond",
+                "send_zapper_cond"
             ],
             "dest": "user"
         },
@@ -534,7 +552,8 @@
                 "wait_register_location",
                 "wait_bind_zapper",
                 "wait_zapper_problem",
-                "ask_area_zapper_cond"
+                "ask_area_zapper_cond",
+                "ask_zapper_cond"
             ],
             "dest": "unrecognized_msg",
             "conditions": "is_pass"
