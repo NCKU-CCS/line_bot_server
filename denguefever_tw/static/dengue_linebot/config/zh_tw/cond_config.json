@@ -275,5 +275,33 @@
                 }
             ]
         }
+    },
+    {
+        "name": "is_selecting_bind_zapper",
+        "condition": {
+            "type": "match",
+            "content": ["我要綁定捕蚊燈！"]
+        }
+    },
+    {
+        "name": "is_selecting_zapper_cond",
+        "condition": {
+            "type": "match",
+            "content": ["我的捕蚊燈狀況"]
+        }
+    },
+    {
+        "name": "is_selecting_zapper_problem",
+        "condition": {
+            "type": "match",
+            "content": ["我的捕蚊燈需要專人協助"]
+        }
+    },
+    {
+        "name": "is_selecting_area_cond",
+        "condition": {
+            "type": "match",
+            "content": ["我想了解整個商圈的蚊蟲情況"]
+        }
     }
 ]
