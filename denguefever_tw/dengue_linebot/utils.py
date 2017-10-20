@@ -1,11 +1,12 @@
 from django.conf import settings
 
 import logging
-import requests
 from time import sleep
+from urllib.parse import urljoin, urlencode
+
+import requests
 from selenium import webdriver
 from pyvirtualdisplay import Display
-
 from linebot.exceptions import LineBotApiError
 from linebot.models import TextSendMessage, ImageSendMessage
 
@@ -13,7 +14,7 @@ from .decorators import log_line_api_error
 
 MULTICAST_LIMIT = 150
 IMGUR_API_URL = 'https://api.imgur.com/3/image'
-ZAPPER_MAP_URL = 'https://netdbncku.github.io/zapper-web/zapper_web/public'
+BASE_ZAPPER_API_URL = 'https://mosquitokiller.csie.ncku.edu.tw/apis/'
 
 logger = logging.getLogger('django')
 
@@ -62,17 +63,35 @@ def push_msg(line_bot_api, users, text, img):
         logger.info('Fail to push message!')
 
 
-def get_web_screenshot(zapper_id, web_url=ZAPPER_MAP_URL):
+def get_web_info(zapper_id, mode):
+    web_info = dict()
+    if mode == 'area':
+        zapper_api = urljoin(BASE_ZAPPER_API_URL, 'lamps/{id}?key=hash'.format(id=zapper_id))
+        response = requests.get(zapper_api)
+        response_json = response.json()
+
+        params = urlencode({'lng': response_json['lamp_location'][0], 'lat': response_json['lamp_location'][1]})
+        web_info['url'] = urljoin(BASE_ZAPPER_API_URL, '/zapperTown/index.html?%s' % params)
+        web_info['width'] = 1200
+        web_info['height'] = 900
+    elif mode == 'self':
+        web_info['url'] = urljoin(BASE_ZAPPER_API_URL, '/zapperCitizen?%s' % zapper_id)
+        web_info['width'] = 1000
+        web_info['height'] = 700
+    return web_info
+
+
+def get_web_screenshot(web_info):
     logger.info('Getting zapper web screenshot and uploading......\n')
     display = Display(visible=0)
     display.start()
 
     browser = webdriver.Chrome(executable_path=settings.CHROME_DRIVER_PATH)
-    browser.set_window_size(1200, 900)
+    browser.set_window_size(web_info['width'], web_info['height'])
     browser.implicitly_wait(10)
-    browser.get(web_url)
+    browser.get(web_info['url'])
 
-    sleep(3)
+    sleep(1)
     img_base64 = browser.get_screenshot_as_base64()
     browser.close()
     display.stop()

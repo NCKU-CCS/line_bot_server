@@ -1,8 +1,9 @@
 import logging
 from datetime import datetime
 from functools import partial
-from urllib.parse import parse_qs
+from urllib.parse import parse_qs, urljoin
 
+import requests
 from geopy.geocoders import GoogleV3
 from condconf import CondMeta, cond_func_generator
 from linebot.models import (
@@ -22,8 +23,9 @@ from .decorators import log_fsm_condition, log_fsm_operation
 from .constants import (
     SYMPTOM_PREVIEW_URL, SYMPTOM_ORIGIN_URL, KNOWLEDGE_URL, QA_URL, ZAPPER_IMGMAP_URL,
     LOC_STEP1_PREVIEW_URL, LOC_STEP1_ORIGIN_URL, LOC_STEP2_PREVIEW_URL, LOC_STEP2_ORIGIN_URL,
+    BASE_ZAPPER_API_URL
 )
-from ..utils import get_web_screenshot
+from ..utils import get_web_info, get_web_screenshot
 
 
 logger = logging.getLogger(__name__)
@@ -118,18 +120,6 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
     @log_fsm_condition
     def is_selecting_zapper_func(self, event):
         return '8' == event.message.text
-
-    @log_fsm_condition
-    def is_selecting_bind_zapper(self, event):
-        return '我要綁定補蚊燈！' == event.message.text
-
-    @log_fsm_condition
-    def is_selecting_zapper_problem(self, event):
-        return '我的補蚊燈需要專人協助' == event.message.text
-
-    @log_fsm_condition
-    def is_selecting_area_cond(self, event):
-        return '我想了解整個商圈的蚊蟲情況' == event.message.text
 
     @log_fsm_condition
     def is_hospital_address(self, event):
@@ -233,39 +223,78 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
             base_size=BaseSize(height=1040, width=1040),
             actions=[
                 MessageImagemapAction(
-                    text='我要綁定補蚊燈！',
+                    text=self.render_text('zapper_imgmap/bind_zapper.j2'),
                     area=ImagemapArea(
                         x=0, y=0, width=520, height=520
                     )
                 )
             ]
         )
-        '''
-        line_user = LineUser.objects.get(user_id=event.source.user_id)
-        if line_user.zapper_id:
-            # Use slice to prepend these three object to actions list.
-            zapper_imgmap.actions[:0] = [
-                URIImagemapAction(
-                    link_uri='https://example.com/{id}'.format(id=line_user.zapper_id),
-                    area=ImagemapArea(
-                        x=0, y=0, width=520, height=520
+        try:
+            line_user = LineUser.objects.get(user_id=event.source.user_id)
+        except LineUser.DoesNotExist:
+            logger.error('Line User Does Not Exist')
+        else:
+            if line_user.zapper_id:
+                # Use slice to prepend these three object to actions list.
+                zapper_imgmap.actions[:0] = [
+                    MessageImagemapAction(
+                        text=self.render_text('zapper_imgmap/self_zapper_cond.j2'),
+                        area=ImagemapArea(
+                            x=520, y=0, width=520, height=520
+                        )
+                    ),
+                    MessageImagemapAction(
+                        text=self.render_text('zapper_imgmap/area_zapper_cond.j2'),
+                        area=ImagemapArea(
+                            x=0, y=520, width=520, height=520
+                        )
+                    ),
+                    MessageImagemapAction(
+                        text=self.render_text('zapper_imgmap/zapper_assist.j2'),
+                        area=ImagemapArea(
+                            x=520, y=520, width=520, height=520
+                        )
                     )
-                ),
-                MessageImagemapAction(
-                    text='我想了解整個商圈的蚊蟲情況',
-                    area=ImagemapArea(
-                        x=520, y=0, width=520, height=520
-                    )
-                ),
-                MessageImagemapAction(
-                    text='我的補蚊燈需要專人協助',
-                    area=ImagemapArea(
-                        x=0, y=520, width=520, height=520
+                ]
+        return zapper_imgmap
+
+    def _send_confirm_template_msg(self, event, title, text):
+        self.reply_message_with_logging(
+            event,
+            messages=TemplateSendMessage(
+                alt_text=text,
+                template=ButtonsTemplate(
+                    title=title,
+                    text=text,
+                    actions=[
+                        PostbackTemplateAction(
+                            label=self.render_text('label/confirm_label.j2'),
+                            data='confirm'
+                        )
+                    ]
+                )
+            )
+        )
+
+    def _send_zapper_cond_img(self, event, mode):
+        try:
+            line_user = LineUser.objects.get(user_id=event.source.user_id)
+        except LineUser.DoesNotExist:
+            logger.error('Line User Does Not Exist')
+        else:
+            web_info = get_web_info(zapper_id=line_user.zapper_id, mode=mode)
+            img_url = get_web_screenshot(web_info=web_info)
+            if img_url:
+                self.reply_message_with_logging(
+                    event,
+                    messages=ImageSendMessage(
+                        original_content_url=img_url,
+                        preview_image_url=img_url
                     )
                 )
-            ]
-        '''
-        return zapper_imgmap
+            else:
+                self._send_template_text(event, 'get_img_fail.j2')
 
     # --static--
     @log_fsm_operation
@@ -525,7 +554,7 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
         try:
             line_user = LineUser.objects.get(user_id=event.source.user_id)
         except LineUser.DoesNotExist:
-            pass
+            logger.error('Line User Does Not Exist')
         else:
             line_user.lat = event.message.latitude
             line_user.lng = event.message.longitude
@@ -547,69 +576,73 @@ class DengueBotMachine(BotGraphMachine, LineBotEventConditionMixin):
 
     @log_fsm_operation
     def on_enter_receive_zapper_id(self, event):
-        try:
-            line_user = LineUser.objects.get(user_id=event.source.user_id)
-        except LineUser.DoesNotExist:
-            pass
-        else:
-            line_user.zapper_id = event.message.text
-            line_user.save()
+        zapper_api = urljoin(BASE_ZAPPER_API_URL, 'lamps/{id}?key=hash'.format(id=event.message.text))
+        response = requests.get(zapper_api)
+        if response.status_code == 200:
+            try:
+                line_user = LineUser.objects.get(user_id=event.source.user_id)
+            except LineUser.DoesNotExist:
+                logger.error('Line User Does Not Exist')
+            else:
+                line_user.zapper_id = event.message.text
+                line_user.save()
 
-            messages = [
-                TextSendMessage(text=self.render_text('bind_zapper_success.j2'))
-            ]
-            messages.append(self._create_zapper_imgmap(event))
-            self.reply_message_with_logging(
-                event,
-                messages=messages
-            )
+                messages = [
+                    TextSendMessage(text=self.render_text('bind_zapper_success.j2'))
+                ]
+                messages.append(self._create_zapper_imgmap(event))
+                self.reply_message_with_logging(
+                    event,
+                    messages=messages
+                )
+        else:
+            self._send_template_text(event, 'bind_zapper_fail.j2')
         self.finish_ans()
 
     @log_fsm_operation
     def on_enter_receive_zapper_problem(self, event):
         self._send_template_text(event, 'thank_zapper_report.j2')
-        report = ReportZapperMsg(
-            reporter=LineUser.objects.get(user_id=event.source.user_id),
-            report_time=datetime.fromtimestamp(event.timestamp/1000),
-            content=event.message.text
+        try:
+            line_user = LineUser.objects.get(user_id=event.source.user_id)
+        except LineUser.DoesNotExist:
+            logger.error('Line User Does Not Exist')
+        else:
+            payload = {'lamp_id': line_user.zapper_id, 'comment_content': event.message.text}
+            zapper_api = urljoin(BASE_ZAPPER_API_URL, 'comments')
+            requests.post(url=zapper_api, data=payload)
+
+            report = ReportZapperMsg(
+                reporter=line_user,
+                report_time=datetime.fromtimestamp(event.timestamp/1000),
+                content=event.message.text
+            )
+            report.save()
+        self.finish_ans()
+
+    @log_fsm_operation
+    def on_enter_ask_zapper_cond(self, event):
+        self._send_confirm_template_msg(
+            event,
+            title=self.render_text('zapper.j2'),
+            text=self.render_text('ask_zapper_cond.j2')
         )
-        report.save()
+
+    @log_fsm_operation
+    def on_enter_send_zapper_cond(self, event):
+        self._send_zapper_cond_img(event, mode='self')
         self.finish_ans()
 
     @log_fsm_operation
     def on_enter_ask_area_zapper_cond(self, event):
-        self.reply_message_with_logging(
+        self._send_confirm_template_msg(
             event,
-            messages=TemplateSendMessage(
-                alt_text=self.render_text('ask_area_zapper.j2'),
-                template=ButtonsTemplate(
-                    title=self.render_text('zapper_map.j2'),
-                    text=self.render_text('ask_area_zapper.j2'),
-                    actions=[
-                        PostbackTemplateAction(
-                            label=self.render_text('label/confirm_label.j2'),
-                            data='confirm'
-                        )
-                    ]
-                )
-            )
+            title=self.render_text('zapper_map.j2'),
+            text=self.render_text('ask_area_zapper.j2')
         )
 
     @log_fsm_operation
     def on_enter_send_area_zapper_cond(self, event):
-        img_url = get_web_screenshot(
-            zapper_id=LineUser.objects.get(user_id=event.source.user_id).zapper_id
-        )
-        if img_url:
-            self.reply_message_with_logging(
-                event,
-                messages=ImageSendMessage(
-                    original_content_url=img_url,
-                    preview_image_url=img_url
-                )
-            )
-        else:
-            self._send_template_text(event, 'get_img_fail.j2')
+        self._send_zapper_cond_img(event, mode='area')
         self.finish_ans()
 
 
