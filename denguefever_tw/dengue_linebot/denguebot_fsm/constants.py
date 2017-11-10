@@ -6,7 +6,7 @@ LOC_STEP1_ORIGIN_URL = "https://i.imgur.com/NAQFUgk.jpg"
 LOC_STEP2_PREVIEW_URL = "https://i.imgur.com/3HEfVb7.jpg"
 LOC_STEP2_ORIGIN_URL = "https://i.imgur.com/4mwZjtG.jpg"
 
-ZAPPER_IMGMAP_URL = 'https://i.imgur.com/OedZCOh.jpg'
+ZAPPER_IMGMAP_URL = 'https://i.imgur.com/Rnf9S6K.jpg/300'
 
 KNOWLEDGE_URL = 'http://www.denguefever.tw/knowledge'
 QA_URL = 'http://www.denguefever.tw/qa'
