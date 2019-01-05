@@ -5,6 +5,8 @@ DEBUG = False
 SECRET_KEY = get_env_variable('DJANGO_SECRET_KEY')
 LINE_CHANNEL_SECRET = get_env_variable('LINE_CHANNEL_SECRET')
 LINE_CHANNEL_ACCESS_TOKEN = get_env_variable('LINE_CHANNEL_ACCESS_TOKEN')
+IMGUR_CLIENT_ID = get_env_variable('IMGUR_CLIENT_ID')
+CHROME_DRIVER_PATH = get_env_variable('CHROME_DRIVER_PATH')
 
 DATABASES = {
     'default': {

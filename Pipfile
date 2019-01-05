@@ -20,6 +20,8 @@ six = "==1.10.0"
 Django = "==2.1.5"
 uWSGI = "==2.0.13.1"
 "Jinja2" = "==2.9.6"
+selenium = "*"
+pyvirtualdisplay = "*"
 
 [dev-packages]
 

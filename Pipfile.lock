@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "b048672eea963a263654d73e3ec8e48fd6c687f7d48d4fb5d1a9e5dcaa53c9b9"
+            "sha256": "f4c2d2c5f132951421e6c395c5fbc67902022a492b9b5bf9a3e86e868d751767"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -37,6 +37,12 @@
             ],
             "index": "pypi",
             "version": "==1.7.1"
+        },
+        "easyprocess": {
+            "hashes": [
+                "sha256:13adcbb2333819358798a8e10213c5774dd24fa75f3423a2d036a3778637b43d"
+            ],
+            "version": "==0.2.5"
         },
         "future": {
             "hashes": [
@@ -159,6 +165,13 @@
             ],
             "version": "==2018.7"
         },
+        "pyvirtualdisplay": {
+            "hashes": [
+                "sha256:012883851a992f9c53f0dc6a512765a95cf241bdb734af79e6bdfef95c6e9982"
+            ],
+            "index": "pypi",
+            "version": "==0.2.1"
+        },
         "redis": {
             "hashes": [
                 "sha256:2100750629beff143b6a200a2ea8e719fcf26420adabb81402895e144c5083cf",
@@ -173,6 +186,14 @@
             ],
             "index": "pypi",
             "version": "==2.11.1"
+        },
+        "selenium": {
+            "hashes": [
+                "sha256:2d7131d7bc5a5b99a2d9b04aaf2612c411b03b8ca1b1ee8d3de5845a9be2cb3c",
+                "sha256:deaf32b60ad91a4611b98d8002757f29e6f2c2d5fcaf202e1c9ad06d6772300d"
+            ],
+            "index": "pypi",
+            "version": "==3.141.0"
         },
         "shortuuid": {
             "hashes": [
@@ -209,6 +230,13 @@
             ],
             "index": "pypi",
             "version": "==1.35"
+        },
+        "urllib3": {
+            "hashes": [
+                "sha256:61bf29cada3fc2fbefad4fdf059ea4bd1b4a86d2b6d15e1c7c0b582b9752fe39",
+                "sha256:de9529817c93f27c8ccbfead6985011db27bd0ddfcdb2d86f3f663385c6a9c22"
+            ],
+            "version": "==1.24.1"
         },
         "uwsgi": {
             "hashes": [
