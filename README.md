@@ -15,6 +15,7 @@ git clone --recursive https://github.com/NCKU-CCS/line_bot_server
 ```
 
 ---
+
 - [Pre Requirements](#prereq)
 - [Setup](#setup)
 - [Usage](#usage)
@@ -23,6 +24,7 @@ git clone --recursive https://github.com/NCKU-CCS/line_bot_server
 
 # <a name="prereq"></a> Pre requirements
 - Python 3
+- pipenv
 - pygraphviz (For visualizing Finite State Machine) 
     - [Setup pygraphviz on Ubuntu](http://www.jianshu.com/p/a3da7ecc5303)
 - postgres (Database)
@@ -51,7 +53,7 @@ sudo apt-get install redis-server
 ## Install Dependency
 
 ```sh
-pip install -r requirements.txt
+pipenv install
 ```
 
 
