@@ -15,7 +15,7 @@ class LineUser(models.Model):
     language = models.TextField(default='zh_tw')
     lng = models.FloatField(default=0.0)
     lat = models.FloatField(default=0.0)
-    location = models.ForeignKey('MinArea', null=True)
+    location = models.ForeignKey('MinArea', null=True, on_delete=models.SET_NULL)
 
     def save(self, *args, **kwargs):
         if self.lng and self.lat:
@@ -48,7 +48,7 @@ class MinArea(models.Model):
 
 class Suggestion(models.Model):
     content = models.TextField()
-    user = models.ForeignKey(LineUser, related_name='suggestion')
+    user = models.ForeignKey(LineUser, related_name='suggestion', on_delete=models.CASCADE)
 
     def __str__(self):
         return '{user}: {content}'.format(
@@ -58,7 +58,7 @@ class Suggestion(models.Model):
 
 
 class MessageLog(models.Model):
-    speaker = models.ForeignKey(LineUser, related_name='message_log')
+    speaker = models.ForeignKey(LineUser, related_name='message_log', on_delete=models.CASCADE)
     speak_time = models.DateTimeField()
     message_type = models.TextField()
     content = models.TextField(null=True, blank=True)
@@ -79,7 +79,7 @@ class MessageLog(models.Model):
 
 
 class BotReplyLog(models.Model):
-    receiver = models.ForeignKey(LineUser, related_name='bot_reply_log')
+    receiver = models.ForeignKey(LineUser, related_name='bot_reply_log', on_delete=models.CASCADE)
     speak_time = models.DateTimeField()
     message_type = models.TextField()
     content = models.TextField(null=True, blank=True)
@@ -94,7 +94,7 @@ class BotReplyLog(models.Model):
 
 
 class UnrecognizedMsg(models.Model):
-    message_log = models.ForeignKey(MessageLog, related_name='unrecognized_message_log')
+    message_log = models.ForeignKey(MessageLog, related_name='unrecognized_message_log', on_delete=models.CASCADE)
 
     def __str__(self):
         return str(self.message_log)
@@ -112,7 +112,7 @@ class ResponseToUnrecogMsg(models.Model):
 
 
 class GovReport(models.Model):
-    user = models.ForeignKey(LineUser, related_name='gov_faculty')
+    user = models.ForeignKey(LineUser, related_name='gov_faculty', on_delete=models.CASCADE)
     action = models.TextField()
     note = models.TextField()
     report_time = models.DateTimeField()
