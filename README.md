@@ -263,3 +263,8 @@ Under `denguefever_tw/denguefever_tw/static/dengue_bot_config`
 
 # <a name="callback-url"></a> Setup callback URL on LINE
 Add **https://`Your Domain Name`/callback/** to `Webhook URL` on your LINE Developer page.
+
+# License
+Copyright (c) NCKU The Mosquito Man Project. All rights reserved.
+
+Licensed under the MIT License.
