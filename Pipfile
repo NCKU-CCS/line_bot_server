@@ -18,12 +18,13 @@ condconf = "==0.1.1"
 typing = "==3.6.1"
 six = "==1.10.0"
 Django = "==2.1.5"
-uWSGI = "==2.0.13.1"
+uWSGI = "==2.0.17.1"
 "Jinja2" = "==2.9.6"
 selenium = "*"
 pyvirtualdisplay = "*"
 
 [dev-packages]
+pylint = "*"
 
 [requires]
 python_version = "3.6"
